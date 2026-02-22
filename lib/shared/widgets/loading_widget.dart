@@ -4,11 +4,7 @@ import '../../core/theme/app_colors.dart';
 
 /// Reusable loading widget with different variants
 class LoadingWidget extends StatelessWidget {
-  final String? message;
-  final double? size;
-  final Color? color;
-  final LoadingType type;
-  
+  // Constructors first
   const LoadingWidget({
     super.key,
     this.message,
@@ -32,6 +28,12 @@ class LoadingWidget extends StatelessWidget {
     this.color,
   }) : size = 50,
        type = LoadingType.circular;
+
+  // Fields after constructors
+  final String? message;
+  final double? size;
+  final Color? color;
+  final LoadingType type;
 
   @override
   Widget build(BuildContext context) {
@@ -79,27 +81,26 @@ class LoadingWidget extends StatelessWidget {
 
 /// Full screen loading overlay
 class LoadingOverlay extends StatelessWidget {
-  final Widget child;
-  final bool isLoading;
-  final String message;
-  final Color? backgroundColor;
-  
   const LoadingOverlay({
-    super.key,
     required this.child,
     required this.isLoading,
+    super.key,
     this.message = 'Đang tải...',
     this.backgroundColor,
   });
 
+  final Widget child;
+  final bool isLoading;
+  final String message;
+  final Color? backgroundColor;
+
   @override
-  Widget build(BuildContext context) {
-    return Stack(
+  Widget build(BuildContext context) => Stack(
       children: [
         child,
         if (isLoading)
           Container(
-            color: backgroundColor ?? Colors.black.withOpacity(0.5),
+            color: backgroundColor ?? Colors.black.withValues(alpha: 0.5),
             child: Center(
               child: Card(
                 child: Padding(
@@ -111,7 +112,6 @@ class LoadingOverlay extends StatelessWidget {
           ),
       ],
     );
-  }
 }
 
 enum LoadingType {

@@ -25,9 +25,9 @@ linter:
     control_flow_in_finally: true
     empty_statements: true
     hash_and_equals: true
-    invariant_booleans: true
-    iterable_contains_unrelated_type: true
-    list_remove_unrelated_type: true
+    # invariant_booleans: true  # Removed in Dart 3.0.0
+    # iterable_contains_unrelated_type: true  # Removed in Dart 3.3.0
+    # list_remove_unrelated_type: true  # Removed in Dart 3.3.0
     literal_only_boolean_expressions: true
     no_adjacent_strings_in_list: true
     no_duplicate_case_values: true
@@ -56,7 +56,7 @@ linter:
     avoid_redundant_argument_values: true
     avoid_renaming_method_parameters: true
     avoid_return_types_on_setters: true
-    avoid_returning_null_for_future: true
+    # avoid_returning_null_for_future: true  # Removed in Dart 3.3.0
     avoid_returning_null_for_void: true
     avoid_setters_without_getters: true
     avoid_shadowing_type_parameters: true
@@ -88,7 +88,7 @@ linter:
     omit_local_variable_types: true
     only_throw_errors: true
     overridden_fields: true
-    package_api_docs: false
+    # package_api_docs: false  # Removed in Dart 3.7.0
     package_names: true
     package_prefixed_library_names: true
     parameter_assignments: true
@@ -103,7 +103,7 @@ linter:
     prefer_const_literals_to_create_immutables: true
     prefer_constructors_over_static_methods: true
     prefer_contains: true
-    prefer_equal_for_default_values: true
+    # prefer_equal_for_default_values: true  # Removed in Dart 3.0.0
     prefer_expression_function_bodies: true
     prefer_final_fields: true
     prefer_final_in_for_each: true

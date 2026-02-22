@@ -6,12 +6,10 @@ import 'app_colors.dart';
 class AppTheme {
   
   /// Light theme configuration
-  static ThemeData get lightTheme {
-    return ThemeData(
+  static ThemeData get lightTheme => ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primaryColor,
-        brightness: Brightness.light,
       ),
       
       // App Bar Theme
@@ -139,7 +137,7 @@ class AppTheme {
       ),
       
       // Card Theme
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 2,
         color: AppColors.cardBackground,
         shape: RoundedRectangleBorder(
@@ -179,7 +177,7 @@ class AppTheme {
       ),
       
       // Dialog Theme
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16.r),
@@ -287,11 +285,9 @@ class AppTheme {
         ),
       ),
     );
-  }
   
   /// Dark theme configuration
-  static ThemeData get darkTheme {
-    return ThemeData(
+  static ThemeData get darkTheme => ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primaryColor,
@@ -301,5 +297,4 @@ class AppTheme {
       // For now, using the same structure as light theme
       // You can customize colors for dark mode
     );
-  }
 }

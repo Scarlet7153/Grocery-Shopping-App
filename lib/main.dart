@@ -1,33 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'core/theme/app_theme.dart';
-import 'core/constants/app_constants.dart';
 
-void main() {
-  runApp(const GroceryApp());
-}
+import 'core/constants/app_constants.dart';
+import 'core/theme/app_theme.dart';
+
+void main() => runApp(const GroceryApp());
 
 class GroceryApp extends StatelessWidget {
   const GroceryApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return ScreenUtilInit(
+  Widget build(BuildContext context) => ScreenUtilInit(
       designSize: const Size(375, 812), // iPhone X design size
-      minTextAdapt: true,
       splitScreenMode: true,
-      builder: (context, child) {
-        return MaterialApp(
+      builder: (context, child) => MaterialApp(
           title: AppConstants.appName,
-          debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
-          themeMode: ThemeMode.system,
           home: const SplashScreen(),
-        );
-      },
+        ),
     );
-  }
 }
 
 /// Temporary splash screen for Phase 1
@@ -35,8 +27,7 @@ class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -69,7 +60,7 @@ class SplashScreen extends StatelessWidget {
               Text(
                 'Phase 1: Setup Complete',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white.withOpacity(0.8),
+                  color: Colors.white.withValues(alpha: 0.8),
                 ),
               ),
               SizedBox(height: 50.h),
@@ -82,5 +73,4 @@ class SplashScreen extends StatelessWidget {
         ),
       ),
     );
-  }
 }

@@ -21,6 +21,8 @@ class NetworkConfig {
     dio.interceptors.add(
       PrettyDioLogger(
         requestHeader: true,
+        requestBody: true,
+        responseBody: true,
       ),
     );
 

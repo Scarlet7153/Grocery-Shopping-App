@@ -27,15 +27,79 @@ flutter doctor
 **⚠️ LƯU Ý:** Tạo Flutter project **TRONG** thư mục project hiện tại, không tạo project riêng biệt!
 
 ### 1.2 Xóa files không cần thiết
+**Cho PowerShell (Windows):**
+```powershell
+# Xóa main.dart (nếu tồn tại)
+if (Test-Path "lib/main.dart") { Remove-Item "lib/main.dart" }
+
+# Xóa thư mục test (nếu tồn tại)  
+if (Test-Path "test") { Remove-Item -Recurse -Force "test" }
+```
+
+**Cho Bash/Terminal (macOS/Linux):**
 ```bash
 rm lib/main.dart
 rm -rf test/
 ```
 
 ### 1.3 Tạo cấu trúc thư mục
-Chạy từng lệnh sau:
 
+**⚠️ QUAN TRỌNG: Chạy các lệnh này TRONG thư mục `mobile_app/` (đã cd vào rồi)**
+
+**Cho PowerShell (Windows):**
+```powershell
+# Đảm bảo bạn đang ở trong thư mục mobile_app
+pwd  # Kiểm tra đường dẫn hiện tại (phải là .../mobile_app)
+
+# Core directories
+New-Item -ItemType Directory -Force -Path "lib/core/constants"
+New-Item -ItemType Directory -Force -Path "lib/core/errors"
+New-Item -ItemType Directory -Force -Path "lib/core/network"
+New-Item -ItemType Directory -Force -Path "lib/core/theme"
+New-Item -ItemType Directory -Force -Path "lib/core/utils"
+
+# Auth feature (complete structure)
+New-Item -ItemType Directory -Force -Path "lib/features/auth/data/datasources"
+New-Item -ItemType Directory -Force -Path "lib/features/auth/data/repositories"
+New-Item -ItemType Directory -Force -Path "lib/features/auth/domain/entities"
+New-Item -ItemType Directory -Force -Path "lib/features/auth/domain/usecases"
+New-Item -ItemType Directory -Force -Path "lib/features/auth/presentation/bloc"
+New-Item -ItemType Directory -Force -Path "lib/features/auth/presentation/pages"
+New-Item -ItemType Directory -Force -Path "lib/features/auth/presentation/widgets"
+
+# Other features (basic structure for now)
+New-Item -ItemType Directory -Force -Path "lib/features/home/data"
+New-Item -ItemType Directory -Force -Path "lib/features/home/domain"
+New-Item -ItemType Directory -Force -Path "lib/features/home/presentation"
+
+New-Item -ItemType Directory -Force -Path "lib/features/products/data"
+New-Item -ItemType Directory -Force -Path "lib/features/products/domain"
+New-Item -ItemType Directory -Force -Path "lib/features/products/presentation"
+
+New-Item -ItemType Directory -Force -Path "lib/features/orders/data"
+New-Item -ItemType Directory -Force -Path "lib/features/orders/domain"
+New-Item -ItemType Directory -Force -Path "lib/features/orders/presentation"
+
+New-Item -ItemType Directory -Force -Path "lib/features/profile/data"
+New-Item -ItemType Directory -Force -Path "lib/features/profile/domain"
+New-Item -ItemType Directory -Force -Path "lib/features/profile/presentation"
+
+# Shared directories
+New-Item -ItemType Directory -Force -Path "lib/shared/widgets"
+New-Item -ItemType Directory -Force -Path "lib/shared/models"
+New-Item -ItemType Directory -Force -Path "lib/shared/services"
+
+# Assets directories
+New-Item -ItemType Directory -Force -Path "assets/images"
+New-Item -ItemType Directory -Force -Path "assets/icons"
+New-Item -ItemType Directory -Force -Path "assets/fonts"
+```
+
+**Cho Bash/Terminal (macOS/Linux):**
 ```bash
+# Đảm bảo bạn đang ở trong thư mục mobile_app
+pwd  # Kiểm tra đường dẫn hiện tại (phải là .../mobile_app)
+
 # Core directories
 mkdir -p lib/core/constants
 mkdir -p lib/core/errors  
@@ -80,8 +144,11 @@ mkdir -p assets/icons
 mkdir -p assets/fonts
 ```
 
-### 1.4 Tạo file pubspec.yaml
-Copy nội dung này vào file `pubspec.yaml`:
+### 1.4 Cấu hình pubspec.yaml
+**⚠️ QUAN TRỌNG: Thay thế TOÀN BỘ nội dung file `pubspec.yaml` hiện tại**
+
+**Cách 1: Copy trực tiếp (Khuyến khích)**
+Copy toàn bộ nội dung dưới đây và paste vào file `pubspec.yaml`:
 
 ```yaml
 name: grocery_shopping_app
@@ -169,31 +236,161 @@ flutter:
           weight: 300
 ```
 
-### 1.5 Tạo analysis_options.yaml
-Copy nội dung từ file đã tạo trước đó.
+**Cách 2: Copy từ file gốc (Alternative)**
+**Cho PowerShell (Windows):**
+```powershell
+# Copy từ project gốc (nếu có)
+Copy-Item "..\pubspec_template.yaml" -Destination "pubspec.yaml" -ErrorAction SilentlyContinue
+```
+
+**⚠️ Sau khi cấu hình, PHẢI chạy:**
+```powershell
+flutter pub get
+```
+
+### 1.5 Kiểm tra analysis_options.yaml
+File `analysis_options.yaml` đã có sẵn trong project với cấu hình linting phù hợp cho Flutter. 
+
+**Kiểm tra nội dung file:**
+**Cho PowerShell (Windows):**
+```powershell
+Get-Content analysis_options.yaml | Select-Object -First 10
+```
+
+**Cho Bash/Terminal (macOS/Linux):**
+```bash
+head -10 analysis_options.yaml
+```
+
+File này đã được cấu hình với:
+- ✅ Flutter lints rules
+- ✅ Exclude build files và generated files
+- ✅ Custom linting rules cho code quality
+- ✅ Error handling configuration
+
+**Không cần tạo mới file này!** 📝
 
 ---
 
 ## 🎯 BƯỚC 2: CORE DEPENDENCIES
 
 ### 2.1 Cài đặt packages
+
+**Cho PowerShell (Windows):**
+```powershell
+flutter pub get
+flutter pub deps
+```
+
+**Cho Bash/Terminal (macOS/Linux):**
 ```bash
 flutter pub get
+flutter pub deps
 ```
 
 ### 2.2 Tạo App Constants
-Tạo file `lib/core/constants/app_constants.dart` với nội dung từ file đã tạo.
+File `lib/core/constants/app_constants.dart` **đã có sẵn** trong project gốc.
+
+**⚠️ LƯU Ý: Đảm bảo bạn đang ở trong thư mục `mobile_app/`**
+
+**Bạn cần COPY file này vào Flutter project:**
+
+**Cho PowerShell (Windows):**
+```powershell
+# Đảm bảo bạn đang ở trong mobile_app/
+cd mobile_app  # Nếu chưa vào
+
+# Copy từ thư mục gốc (đi lên 1 cấp) vào mobile_app
+Copy-Item "..\lib\core\constants\app_constants.dart" -Destination "lib\core\constants\app_constants.dart"
+```
+
+**Cho Bash/Terminal (macOS/Linux):**
+```bash
+# Đảm bảo bạn đang ở trong mobile_app/
+cd mobile_app  # Nếu chưa vào
+
+# Copy từ thư mục gốc vào mobile_app  
+cp ../lib/core/constants/app_constants.dart lib/core/constants/app_constants.dart
+```
+
+**Hoặc tạo mới nếu chưa có:**
+```dart
+// lib/core/constants/app_constants.dart
+class AppConstants {
+  static const String appName = 'Grocery Shopping App';
+  static const String appVersion = '1.0.0';
+  static const String baseUrl = 'http://localhost:8080/api';
+  static const String apiVersion = 'v1';
+  
+  // Storage Keys  
+  static const String accessTokenKey = 'access_token';
+  static const String refreshTokenKey = 'refresh_token';
+  static const String userDataKey = 'user_data';
+  
+  // API Endpoints
+  static const String loginEndpoint = '/auth/login';
+  static const String registerEndpoint = '/auth/register';
+  
+  // Validation
+  static const int minPasswordLength = 6;
+  static const int phoneNumberLength = 10;
+}
+```
 
 ### 2.3 Tạo App Colors & Theme
-Tạo 2 files:
-- `lib/core/theme/app_colors.dart` 
-- `lib/core/theme/app_theme.dart`
+Các file theme **đã có sẵn** trong project gốc.
+
+**⚠️ LƯU Ý: Đảm bảo bạn đang ở trong thư mục `mobile_app/`**
+
+**Bạn cần COPY các file này vào Flutter project:**
+
+**Cho PowerShell (Windows):**
+```powershell
+# Copy app_colors.dart
+Copy-Item "..\lib\core\theme\app_colors.dart" -Destination "lib\core\theme\app_colors.dart"
+
+# Copy app_theme.dart  
+Copy-Item "..\lib\core\theme\app_theme.dart" -Destination "lib\core\theme\app_theme.dart"
+```
+
+**Cho Bash/Terminal (macOS/Linux):**
+```bash
+# Copy app_colors.dart
+cp ../lib/core/theme/app_colors.dart lib/core/theme/app_colors.dart
+
+# Copy app_theme.dart
+cp ../lib/core/theme/app_theme.dart lib/core/theme/app_theme.dart
+```
 
 ### 2.4 Tạo Network Config
-Tạo file `lib/core/network/network_config.dart`
+File `lib/core/network/network_config.dart` **đã có sẵn** trong project gốc.
+
+**Copy vào Flutter project:**
+
+**Cho PowerShell (Windows):**
+```powershell
+Copy-Item "..\lib\core\network\network_config.dart" -Destination "lib\core\network\network_config.dart"
+```
+
+**Cho Bash/Terminal (macOS/Linux):**
+```bash
+cp ../lib/core/network/network_config.dart lib/core/network/network_config.dart
+```
 
 ### 2.5 Tạo Error Handling
-Tạo file `lib/core/errors/failures.dart`
+File `lib/core/errors/failures.dart` **đã có sẵn** trong project gốc.
+
+**Copy vào Flutter project:**
+
+**Cho PowerShell (Windows):**
+```powershell
+Copy-Item "..\lib\core\errors\failures.dart" -Destination "lib\core\errors\failures.dart"
+```
+
+**Cho Bash/Terminal (macOS/Linux):**
+```bash
+cp ../lib/core/errors/failures.dart lib/core/errors/failures.dart
+```
 
 ---
 
@@ -544,13 +741,46 @@ class SplashScreen extends StatelessWidget {
 ## 🎯 BƯỚC 5: TEST & VERIFICATION
 
 ### 5.1 Chạy build runner (cho future JSON serialization)
-```bash
-flutter packages pub run build_runner build --delete-conflicting-outputs
+
+**⚠️ LƯU Ý: Lệnh này chỉ cần thiết khi có JSON serialization. Hiện tại có thể bỏ qua.**
+
+**Nếu muốn chạy (cho tương lai):**
+
+**Cho PowerShell (Windows):**
+```powershell
+# Lệnh mới (thay thế lệnh cũ đã deprecated)
+dart run build_runner build --delete-conflicting-outputs
 ```
 
+**Cho Bash/Terminal (macOS/Linux):**
+```bash
+# Lệnh mới (thay thế lệnh cũ đã deprecated)  
+dart run build_runner build --delete-conflicting-outputs
+```
+
+**Nếu gặp lỗi "Could not find package build_runner", hãy bỏ qua bước này vì:**
+- ✅ Phase 1 chưa có JSON models cần generate
+- ✅ `build_runner` sẽ cần thiết ở Phase 2 khi tạo models
+- ✅ Hiện tại chỉ cần test chạy app thôi
+
 ### 5.2 Test chạy app
+
+**Cho PowerShell (Windows):**
+```powershell
+flutter run
+# Hoặc để chạy trên thiết bị cụ thể:
+flutter devices        # Xem danh sách thiết bị
+flutter run -d chrome  # Chạy trên web browser
+flutter run -d windows # Chạy trên Windows desktop
+```
+
+**Cho Bash/Terminal (macOS/Linux):**
 ```bash
 flutter run
+# Hoặc để chạy trên thiết bị cụ thể:
+flutter devices        # Xem danh sách thiết bị  
+flutter run -d chrome  # Chạy trên web browser
+flutter run -d macos   # Chạy trên macOS (chỉ trên Mac)
 ```
 
 ### 5.3 Kiểm tra Phase 1 hoàn thành

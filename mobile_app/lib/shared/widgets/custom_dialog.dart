@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 // import 'package:flutter_screenutil/flutter_screenutil.dart';  // Tạm thời comment
 // import '../../core/theme/app_colors.dart';  // Không cần thiết, dùng hardcode
-import 'custom_button.dart';
+import 'buttons/custom_button.dart';
 
 class CustomDialog extends StatelessWidget {
   final String? title;
@@ -107,17 +107,18 @@ class CustomDialog extends StatelessWidget {
                     child: CustomButton(
                       text: cancelText!,
                       onPressed: onCancel,
-                      isOutlined: true,
+                      type: ButtonType.secondary,  // Fixed - Use ButtonType.secondary instead of outlined
                     ),
                   ),
-                  const SizedBox(width: 12.0), // Thay .w bằng .0
+                  const SizedBox(width: 12.0),
                 ],
                 if (confirmText != null) ...[
                   Expanded(
                     child: CustomButton(
                       text: confirmText!,
                       onPressed: onConfirm ?? () => Navigator.of(context).pop(),
-                      backgroundColor: const Color(0xFF4CAF50), // Hardcode primaryColor
+                      type: ButtonType.primary,  // Fixed - Use ButtonType.primary
+                      customColor: const Color(0xFF4CAF50), // Fixed - Use customColor instead of backgroundColor
                     ),
                   ),
                 ],

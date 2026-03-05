@@ -101,7 +101,11 @@ public class SecurityConfig {
                 
                 // Shipper endpoints
                 .requestMatchers("/shipper/**").hasRole("SHIPPER")
-                
+
+                // Review endpoints
+                    .requestMatchers("/reviews").hasRole("CUSTOMER")
+                    .requestMatchers("/reviews/**").permitAll()
+
                 // Các request khác đều cần authentication
                 .anyRequest().authenticated()
             )

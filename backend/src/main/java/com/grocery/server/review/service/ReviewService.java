@@ -136,7 +136,7 @@ public class ReviewService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
 
         boolean isOwner = review.getReviewer().getId().equals(userId);
-        boolean isAdmin = user.getRole() == User.Role.ADMIN;
+        boolean isAdmin = user.getRole() == User.UserRole.ADMIN;
 
         if (!isOwner && !isAdmin) {
             throw new UnauthorizedException("You can only delete your own reviews");

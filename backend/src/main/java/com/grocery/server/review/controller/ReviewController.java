@@ -136,8 +136,8 @@ public class ReviewController {
      * Helper method: Lấy User ID từ Authentication
      */
     private Long getUserIdFromAuthentication(Authentication authentication) {
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email)
+        String phone = authentication.getName();
+        User user = userRepository.findByPhoneNumber(phone)
                 .orElseThrow(() -> new UnauthorizedException("User not found"));
         return user.getId();
     }

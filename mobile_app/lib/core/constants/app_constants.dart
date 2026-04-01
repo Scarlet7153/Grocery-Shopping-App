@@ -22,6 +22,12 @@ class AppConstants {
   static const String refreshTokenEndpoint = '/auth/refresh';
   static const String logoutEndpoint = '/auth/logout';
   static const String getCurrentUserEndpoint = '/auth/me';
+
+  // order endpoints (shipper)
+  static const String availableOrdersEndpoint = '/orders/available';
+  static const String myDeliveriesEndpoint = '/orders/my-deliveries';
+  static const String assignShipperEndpoint = '/orders/:id/assign-shipper';
+  static const String orderStatusEndpoint = '/orders/:id/status';
   
   // Validation
   static const int phoneNumberLength = 10;

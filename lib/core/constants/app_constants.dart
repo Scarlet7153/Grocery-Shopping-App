@@ -23,6 +23,11 @@ class AppConstants {
   static const String logoutEndpoint = '/auth/logout';
   static const String getCurrentUserEndpoint = '/auth/me';
   
+  // Order endpoints
+  static const String ordersBaseEndpoint = '/orders';
+  static const String availableOrdersEndpoint = '/orders/available';
+  static const String myDeliveriesEndpoint = '/orders/my-deliveries';
+  
   // Validation
   static const int phoneNumberLength = 10;
   static const int minPasswordLength = 6;

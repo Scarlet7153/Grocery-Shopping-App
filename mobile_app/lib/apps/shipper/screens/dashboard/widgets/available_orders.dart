@@ -1,0 +1,128 @@
+import 'package:flutter/material.dart';
+import 'package:grocery_shopping_app/core/theme/shipper_theme.dart';
+import 'package:grocery_shopping_app/apps/shipper/models/shipper_order.dart';
+
+class AvailableOrdersList extends StatelessWidget {
+  final List<ShipperOrder> orders;
+  final void Function(int orderId)? onAccept;
+  final void Function(int orderId)? onComplete;
+
+  const AvailableOrdersList({
+    super.key,
+    required this.orders,
+    this.onAccept,
+    this.onComplete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (orders.isEmpty) {
+      return const Center(child: Text('Không có đơn hàng sẵn có'));
+    }
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: orders.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final order = orders[index];
+        return Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          elevation: 2,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: ShipperTheme.primaryColor.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.delivery_dining,
+                          color: ShipperTheme.primaryColor, size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Đơn #${order.id}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            order.deliveryAddress,
+                            style: const TextStyle(color: Colors.black54),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Khách: ${order.customerName}',
+                            style: const TextStyle(color: Colors.black54),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '${order.grandTotal.toStringAsFixed(0)}₫',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: ShipperTheme.primaryColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          order.status.label,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: order.status == OrderStatus.AVAILABLE
+                                ? ShipperTheme.primaryColor
+                                : Colors.grey[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    if (order.status == OrderStatus.AVAILABLE && onAccept != null)
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => onAccept?.call(order.id),
+                          child: const Text('Nhận đơn'),
+                        ),
+                      ),
+                    if (order.status == OrderStatus.PICKING_UP ||
+                        order.status == OrderStatus.DELIVERING)
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed:
+                              onComplete != null ? () => onComplete?.call(order.id) : null,
+                          child: const Text('Hoàn thành'),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}

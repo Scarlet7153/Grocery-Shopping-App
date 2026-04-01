@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/shipper_theme.dart';
-import '../../../../shared/widgets/custom_text_field.dart';
-import 'shipper_register_screen.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:grocery_shopping_app/core/theme/shipper_theme.dart';
+import 'package:grocery_shopping_app/shared/widgets/custom_text_field.dart';
+import 'package:grocery_shopping_app/apps/shipper/bloc/shipper_auth_bloc.dart';
+import 'package:grocery_shopping_app/apps/shipper/screens/auth/shipper_register_screen.dart';
+import 'package:grocery_shopping_app/apps/shipper/screens/dashboard/shipper_dashboard_screen.dart';
 
 class ShipperLoginScreen extends StatefulWidget {
   const ShipperLoginScreen({super.key});
@@ -16,35 +20,76 @@ class _ShipperLoginScreenState extends State<ShipperLoginScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
 
+  late ShipperAuthBloc _authBloc;
+
   @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: ShipperTheme.backgroundColor,
-    body: SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 40),
-              _buildHeader(),
-              const SizedBox(height: 48),
-              _buildLoginForm(),
-              const SizedBox(height: 32),
-              _buildLoginButton(),
-              const SizedBox(height: 16),
-              _buildRegisterLink(),
-              const SizedBox(height: 16),
-              _buildForgotPasswordLink(),
-              const SizedBox(height: 24),
-              _buildShipperBenefits(),
-            ],
+  void initState() {
+    super.initState();
+    _authBloc = context.read<ShipperAuthBloc>();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<ShipperAuthBloc, ShipperAuthState>(
+      listener: (context, state) {
+        if (state is ShipperAuthLoading) {
+          setState(() => _isLoading = true);
+        } else {
+          setState(() => _isLoading = false);
+        }
+
+        if (state is ShipperAuthAuthenticated) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Đăng nhập thành công! Chào mừng Shipper!'),
+              backgroundColor: ShipperTheme.primaryColor,
+            ),
+          );
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const ShipperDashboardScreen()),
+          );
+        }
+
+        if (state is ShipperAuthError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Đăng nhập thất bại: ${state.message}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      },
+      child: Scaffold(
+        backgroundColor: ShipperTheme.backgroundColor,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 40),
+                  _buildHeader(),
+                  const SizedBox(height: 48),
+                  _buildLoginForm(),
+                  const SizedBox(height: 32),
+                  _buildLoginButton(),
+                  const SizedBox(height: 16),
+                  _buildRegisterLink(),
+                  const SizedBox(height: 16),
+                  _buildForgotPasswordLink(),
+                  const SizedBox(height: 24),
+                  _buildShipperBenefits(),
+                ],
+              ),
+            ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
+
 
   Widget _buildHeader() => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -355,36 +400,11 @@ class _ShipperLoginScreenState extends State<ShipperLoginScreen> {
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _isLoading = true);
-
-    try {
-      // Mock shipper login API call
-      await Future.delayed(const Duration(seconds: 2));
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đăng nhập thành công! Chào mừng Shipper!'),
-            backgroundColor: ShipperTheme.primaryColor,
-          ),
-        );
-        // TODOhehe: Navigate to shipper dashboard
-      }
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Đăng nhập thất bại: $error'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
+    // dispatch event
+    _authBloc.add(ShipperLoginRequested(
+      phone: _phoneController.text.trim(),
+      password: _passwordController.text,
+    ));
   }
 
   @override

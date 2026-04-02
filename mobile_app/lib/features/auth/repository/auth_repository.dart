@@ -1,6 +1,7 @@
 import '../models/auth_response_model.dart';
 import '../models/user_model.dart';
 import '../../../core/config/app_config.dart'; // Thêm import này
+import '../../../core/enums/app_type.dart';
 
 /// Abstract repository for authentication operations
 abstract class AuthRepository {

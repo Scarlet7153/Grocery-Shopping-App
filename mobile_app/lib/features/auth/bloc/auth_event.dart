@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../../core/config/app_config.dart';
+import '../../../core/enums/app_type.dart';
 
 abstract class AuthEvent extends Equatable {
   const AuthEvent();

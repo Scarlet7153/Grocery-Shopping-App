@@ -7,6 +7,8 @@ import '../models/user_model.dart';
 import '../repository/auth_repository.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
+import '../../../core/enums/app_type.dart';
+
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _authRepository;

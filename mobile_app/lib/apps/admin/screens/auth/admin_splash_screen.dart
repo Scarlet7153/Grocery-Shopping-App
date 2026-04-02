@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/admin_theme.dart';
-import 'admin_login_screen.dart';
+// Đã xóa dòng import 'admin_login_screen.dart' bị sai
 
 class AdminSplashScreen extends StatefulWidget {
   const AdminSplashScreen({super.key});
@@ -59,17 +59,9 @@ class _AdminSplashScreenState extends State<AdminSplashScreen>
   Future<void> _navigateToLogin() async {
     await Future.delayed(const Duration(seconds: 3));
     if (mounted) {
-      // ✅ Enable navigation to Admin Login (no register option)
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => 
-              const AdminLoginScreen(),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-          transitionDuration: const Duration(milliseconds: 800),
-        ),
-      );
+      // ✅ Fix: Sử dụng Route đã định nghĩa trong main_admin.dart
+      // Điều này giúp gọi đúng LoginScreen dùng chung với UserRole.admin
+      Navigator.pushReplacementNamed(context, '/login');
     }
   }
 

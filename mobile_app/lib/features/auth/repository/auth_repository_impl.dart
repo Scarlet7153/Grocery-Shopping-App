@@ -9,6 +9,9 @@ import '../../../core/utils/logger.dart';
 import '../models/auth_response_model.dart';
 import '../models/user_model.dart';
 import 'auth_repository.dart';
+import '../../../core/enums/app_type.dart';
+
+
 
 class AuthRepositoryImpl implements AuthRepository {
   final ApiClient _apiClient;
@@ -49,6 +52,94 @@ class AuthRepositoryImpl implements AuthRepository {
         data: requestData.toJson(),
       );
 
+      final authResponse = AuthResponseModel.fromJson(response.data);
+
+      if (authResponse.isAuthenticated) {
+        AppLogger.info('✅ Login successful - User: ${authResponse.user?.fullName}, Role: ${authResponse.user?.role.name}');
+        
+        await _saveAuthData(authResponse);
+        
+        // Lấy thông tin user chi tiết nếu cần
+        if (authResponse.data?.token != null) {
+          await _fetchAndSaveUserProfile(authResponse.data!.token!);
+        }
+      } else {
+        AppLogger.warning('❌ Login failed: ${authResponse.message}');
+      }
+
+      final duration = stopwatch.elapsed;
+      if (duration.inMilliseconds > 2000) {
+        AppLogger.warning('⏱️ Login operation took ${duration.inMilliseconds}ms (slow)');
+      } else {
+        AppLogger.debug('⏱️ Login operation completed in ${duration.inMilliseconds}ms');
+      }
+      
+      return authResponse;
+      
+    } on DioException catch (e) {
+      AppLogger.error('🔥 Login DioException: ${e.message}', e);
+      
+      throw ServerException(
+        message: 'Đăng nhập thất bại: ${e.response?.data?['message'] ?? e.message}',
+        statusCode: e.response?.statusCode ?? 400,
+      );
+    } catch (e) {
+      AppLogger.error('💥 Login unexpected error: ${e.toString()}', e);
+      
+      throw ServerException(
+        message: 'Đã xảy ra lỗi không xác định: ${e.toString()}',
+        statusCode: 400,
+      );
+    } finally {
+      stopwatch.stop();
+    }
+  }
+    @override
+  Future<AuthResponseModel> login({
+    required String identifier,
+    required String password,
+    required AppType appType,
+    bool rememberMe = false,
+  }) async {
+    final stopwatch = Stopwatch()..start();
+    
+    try {
+      AppLogger.info('🔐 Login attempt for ${appType.name}');
+
+      // ==========================================
+      // ĐOẠN CODE GIẢ LẬP ĐỂ TEST (MOCK DATA)
+      // Sử dụng SĐT: 0123456789 và Mật khẩu: 123456
+      // ==========================================
+      if (identifier == '0123456789' && password == '123456') {
+        await Future.delayed(const Duration(seconds: 1)); // Giả lập độ trễ mạng
+        
+        final mockResponse = AuthResponseModel(
+          success: true,
+          message: 'Đăng nhập giả lập thành công!',
+          data: AuthDataModel(
+            token: 'fake_admin_token_abcdef123456',
+            userId: 'admin_test_id',
+          ),
+          user: UserModel(
+            id: 'admin_test_id',
+            phoneNumber: '0123456789',
+            fullName: 'Quản Trị Viên Tập Sự',
+            role: UserRole.admin, // Quan trọng: Phải trả về đúng Role Admin
+            isActive: true,
+          ),
+        );
+
+        await _saveAuthData(mockResponse);
+        return mockResponse;
+      }
+      // ==========================================
+
+      // Giữ nguyên đoạn code gọi API thật bên dưới để sau này dùng
+      final requestData = LoginRequestModel(
+        phoneNumber: identifier,
+        password: password,
+      );
+      
       final authResponse = AuthResponseModel.fromJson(response.data);
 
       if (authResponse.isAuthenticated) {

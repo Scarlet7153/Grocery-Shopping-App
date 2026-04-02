@@ -1,15 +1,31 @@
 import 'package:flutter/material.dart';
+import '../enums/app_type.dart'; // Import để sử dụng Enum và Extension displayName
 import 'app_config.dart';
 
 class AppLauncher extends StatelessWidget {
   const AppLauncher({super.key});
 
+  /// Helper cung cấp màu và tên riêng cho Launcher 
+  /// (Vì AppConfig hiện tại chỉ chứa thông tin của App đang build)
+  Map<String, dynamic> _getAppUIInfo(AppType type) {
+    switch (type) {
+      case AppType.customer:
+        return {'name': 'Khách Hàng', 'color': 0xFF2E7D32}; // Màu xanh lá
+      case AppType.store:
+        return {'name': 'Cửa Hàng', 'color': 0xFF1565C0};   // Màu xanh dương
+      case AppType.shipper:
+        return {'name': 'Giao Hàng', 'color': 0xFFE65100};  // Màu cam
+      case AppType.admin:
+        return {'name': 'Quản Trị Viên', 'color': 0xFF6A1B9A}; // Màu tím
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Choose App'),
-        backgroundColor: Colors.grey[800],
+        title: const Text('Dev Menu: Khởi động App'),
+        backgroundColor: Colors.grey[900],
         foregroundColor: Colors.white,
       ),
       body: Padding(
@@ -20,29 +36,33 @@ class AppLauncher extends StatelessWidget {
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
           children: AppType.values.map((appType) {
-            final config = AppConfig.getConfig(appType);
-            return _buildAppCard(context, appType, config);
+            final uiInfo = _getAppUIInfo(appType);
+            return _buildAppCard(context, appType, uiInfo);
           }).toList(),
         ),
       ),
     );
   }
 
-  Widget _buildAppCard(BuildContext context, AppType appType, AppConfiguration config) {
+  Widget _buildAppCard(BuildContext context, AppType appType, Map<String, dynamic> uiInfo) {
+    final Color primaryColor = Color(uiInfo['color']);
+    final String appName = uiInfo['name'];
+
     return Card(
       elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: () => _launchApp(context, appType),
-        borderRadius: BorderRadius.circular(8),
+        onTap: () => _launchApp(context, appType, appName, primaryColor),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Color(config.primaryColor),
-                Color(config.primaryColor).withValues(alpha: 0.7),
+                primaryColor,
+                primaryColor.withValues(alpha: 0.7),
               ],
             ),
           ),
@@ -51,12 +71,12 @@ class AppLauncher extends StatelessWidget {
             children: [
               Icon(
                 _getAppIcon(appType),
-                size: 48,
+                size: 42,
                 color: Colors.white,
               ),
               const SizedBox(height: 12),
               Text(
-                config.appName,
+                appName,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
@@ -66,7 +86,7 @@ class AppLauncher extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                appType.displayName,
+                appType.displayName, // Đã hoạt động nhờ extension bên app_type.dart
                 style: const TextStyle(
                   color: Colors.white70,
                   fontSize: 12,
@@ -92,10 +112,19 @@ class AppLauncher extends StatelessWidget {
     }
   }
 
-  void _launchApp(BuildContext context, AppType appType) {
-    AppConfig.switchApp(appType);
+  void _launchApp(BuildContext context, AppType appType, String appName, Color color) {
+    // Lưu ý: Không thể dùng AppConfig.switchApp(appType) vì ứng dụng đã fix cứng 
+    // AppType lúc biên dịch qua String.fromEnvironment.
     
-    // Navigate to the selected app
-    Navigator.of(context).pushReplacementNamed('/app');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Đang mô phỏng mở app $appName...'),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+
+    // Tuỳ vào file main.dart, bạn có thể đẩy người dùng về Route của app đó
+    // Navigator.of(context).pushReplacementNamed('/${appType.name}');
   }
 }

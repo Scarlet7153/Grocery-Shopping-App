@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/enums/user_role.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../shared/widgets/buttons/buttons.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
+import '../../../../core/config/app_config.dart';
+import '../../bloc/auth_bloc.dart';
+import '../../bloc/auth_event.dart';
+import '../../bloc/auth_state.dart';
 
 /// Login screen for different user roles
 /// Design adapted from Figma with role-specific theming
@@ -79,17 +84,36 @@ class _LoginScreenState extends State<LoginScreen>
       backgroundColor: _getBackgroundColor(),
       appBar: _buildAppBar(),
       body: SafeArea(
-        child: AnimatedBuilder(
-          animation: _animationController,
-          builder: (context, child) {
-            return FadeTransition(
-              opacity: _fadeAnimation,
-              child: SlideTransition(
-                position: _slideAnimation,
-                child: _buildBody(),
-              ),
-            );
+        child: BlocListener<AuthBloc, AuthState>(
+          listener: (context, state) {
+            // Xử lý trạng thái Loading
+            if (state is AuthLoading) {
+              setState(() => _isLoading = true);
+            } else {
+              setState(() => _isLoading = false);
+            }
+
+            // Xử lý trạng thái Thành công
+            if (state is AuthAuthenticated) {
+              _navigateToHome();
+            } 
+            // Xử lý trạng thái Lỗi
+            else if (state is AuthError) {
+              _showErrorSnackBar(state.message);
+            }
           },
+          child: AnimatedBuilder(
+            animation: _animationController,
+            builder: (context, child) {
+              return FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: _buildBody(),
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
@@ -363,29 +387,19 @@ class _LoginScreenState extends State<LoginScreen>
     return null;
   }
 
-  Future<void> _handleLogin() async {
+  void _handleLogin() {
     if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _isLoading = true);
     HapticFeedback.lightImpact();
 
-    try {
-      // TODOhehe: Implement actual login API call
-      await Future.delayed(const Duration(seconds: 2));
-      
-      if (mounted) {
-        // Navigate to role-specific home screen
-        _navigateToHome();
-      }
-    } catch (error) {
-      if (mounted) {
-        _showErrorSnackBar('Đăng nhập thất bại: ${error.toString()}');
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
+    // Kích hoạt sự kiện LoginRequested vào AuthBloc
+    context.read<AuthBloc>().add(
+      LoginRequested(
+        identifier: _phoneController.text.trim(),
+        password: _passwordController.text,
+        appType: AppConfig.currentApp,
+        rememberMe: _rememberMe,
+      ),
+    );
   }
 
   void _handleForgotPassword() {

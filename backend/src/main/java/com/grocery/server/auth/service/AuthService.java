@@ -230,4 +230,5 @@ public class AuthService {
                 .avatarUrl(user.getAvatarUrl())
                 .build();
     }
+
 }

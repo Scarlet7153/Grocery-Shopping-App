@@ -37,6 +37,9 @@ public class User {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
+    @Column(name ="email")
+    private String email;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole role;

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-// import 'package:flutter_screenutil/flutter_screenutil.dart';  // Tạm thời comment
-// import '../../core/theme/app_colors.dart';  // Không cần thiết, dùng hardcode
-import 'custom_button.dart';
+import 'buttons/custom_button.dart';  // Fixed import path
 
 class CustomErrorWidget extends StatelessWidget {
   final String? title;
@@ -38,38 +36,39 @@ class CustomErrorWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(32.0), // Thay .w/.h bằng .0
+      padding: const EdgeInsets.all(32.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           if (icon != null) ...[
             icon!,
-            const SizedBox(height: 24.0), // Thay .h bằng .0
+            const SizedBox(height: 24.0),
           ],
           if (title != null) ...[
             Text(
               title!,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: const Color(0xFFD32F2F), // Hardcode Colors.red
+                color: const Color(0xFFD32F2F),
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16.0), // Thay .h bằng .0
+            const SizedBox(height: 16.0),
           ],
           Text(
             message,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF757575), // Hardcode Colors.grey
+              color: const Color(0xFF757575),
             ),
             textAlign: TextAlign.center,
           ),
           if (onRetry != null && buttonText != null) ...[
-            const SizedBox(height: 24.0), // Thay .h bằng .0
-            CustomButton(
+            const SizedBox(height: 24.0),
+            CustomButton(  // Fixed - Now properly imports and uses CustomButton
               text: buttonText!,
               onPressed: onRetry,
-              backgroundColor: const Color(0xFF4CAF50), // Hardcode primaryColor
+              type: ButtonType.primary,  // Use proper ButtonType enum
+              customColor: const Color(0xFF4CAF50),
             ),
           ],
         ],

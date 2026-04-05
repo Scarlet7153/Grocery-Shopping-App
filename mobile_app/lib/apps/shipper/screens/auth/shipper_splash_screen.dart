@@ -58,20 +58,7 @@ class _ShipperSplashScreenState extends State<ShipperSplashScreen>
   }
 
   Future<void> _navigateToLogin() async {
-    await Future.delayed(const Duration(seconds: 3));
-    if (mounted) {
-      // ✅ Enable actual navigation
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => 
-              const ShipperLoginScreen(),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-          transitionDuration: const Duration(milliseconds: 800),
-        ),
-      );
-    }
+    // Removed automatic navigation - AuthWrapper handles this now
   }
 
   @override

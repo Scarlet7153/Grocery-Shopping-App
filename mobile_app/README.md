@@ -1,276 +1,73 @@
-# 📱 Grocery Shopping App - Multi-Platform Flutter Application
+🛒 Grocery Shopping App - Hệ sinh thái 4-trong-1
 
-> **Ứng dụng đi chợ hộ đa nền tảng với 4 giao diện riêng biệt: Customer, Store, Shipper & Admin**
+Ứng dụng đi chợ hộ đa nền tảng được xây dựng trên Flutter & Spring Boot.
 
-## 🎯 Tổng Quan Dự Án
+🎯 Tổng Quan Dự Án
 
-**Grocery Shopping App** là một hệ sinh thái hoàn chỉnh được xây dựng trên Flutter, cung cấp 4 ứng dụng độc lập trong cùng một codebase:
+Dự án cung cấp giải pháp toàn diện cho việc đi chợ hộ với 4 giao diện người dùng riêng biệt tích hợp trong cùng một mã nguồn (Single Codebase):
 
-- 🛒 **Customer App** - Khách hàng đặt hàng và theo dõi
-- 🏪 **Store App** - Chủ cửa hàng quản lý bán hàng  
-- 🚚 **Shipper App** - Người giao hàng nhận và giao đơn
-- 👑 **Admin App** - Quản trị viên điều hành hệ thống
+🛒 Customer App: Dành cho khách hàng tìm kiếm, đặt hàng và theo dõi đơn.
 
-### ✨ Đặc Điểm Nổi Bật
-- **Multi-App Architecture** - 4 apps trong 1 codebase
-- **Clean Architecture** - Dễ bảo trì và mở rộng
-- **Material 3 Design** - Giao diện hiện đại
-- **Cross-Platform** - Chạy trên mọi thiết bị
-- **Theme-Based** - Mỗi app có theme riêng
+🏪 Store App: Dành cho chủ cửa hàng quản lý sản phẩm và xử lý đơn hàng.
 
----
+🚚 Shipper App: Dành cho người giao hàng với hệ thống điều hướng và cập nhật trạng thái.
 
-## 🛠️ Công Nghệ Sử Dụng
+👑 Admin App: Dành cho quản trị viên điều hành hệ thống và xem báo cáo thống kê.
 
-| Công Nghệ | Version | Mục Đích |
-|-----------|---------|----------|
-| **Flutter** | >=3.10.0 | Framework đa nền tảng |
-| **Dart** | >=3.0.0 | Ngôn ngữ lập trình |
-| **flutter_bloc** | ^8.1.3 | Quản lý trạng thái |
-| **go_router** | ^12.1.1 | Điều hướng nâng cao |
-| **dio** | ^5.3.2 | HTTP Client |
-| **hive** | ^2.2.3 | Lưu trữ local |
-| **shared_preferences** | ^2.2.2 | Cài đặt ứng dụng |
-| **cached_network_image** | ^3.3.0 | Cache hình ảnh |
+🛠 Công Nghệ Sử Dụng
 
----
+Frontend: Flutter 3.10+, BLoC Pattern, Dio, Hive, GoRouter
 
-## 🚀 Hướng Dẫn Cài Đặt
+Backend: Java Spring Boot (Maven), RESTful API
 
-### 📋 Yêu Cầu Hệ Thống
+Thiết kế: Material 3, Clean Architecture, Theme-based
 
-**Bắt buộc:**
-- Flutter SDK >=3.10.0
-- Dart SDK >=3.0.0
-- Git
-- VS Code hoặc Android Studio
+🚀 Hướng Dẫn Chạy Nhanh
 
-**Tùy chọn (theo nền tảng):**
-- Android Studio (cho Android)
-- Xcode (cho iOS - chỉ macOS)
-- Chrome Browser (cho Web)
+1️⃣ Khởi động Backend
 
-### 🔧 Các Bước Cài Đặt
+Mở Terminal tại thư mục backend:
 
-#### 1️⃣ Clone Repository
-```bash
-git clone <repository-url>
-cd Grocery-Shopping-App/mobile_app
-```
+cd backend
+.\mvnw.cmd spring-boot:run
 
-#### 2️⃣ Kiểm Tra Flutter
-```bash
-flutter doctor
-```
-> Đảm bảo tất cả checkmarks đều ✅
 
-#### 3️⃣ Cài Đặt Dependencies  
-```bash
+2️⃣ Khởi động Frontend
+
+Mở Terminal tại thư mục mobile_app:
+
+cd mobile_app
 flutter pub get
-```
-
-#### 4️⃣ Tạo Generated Files (Nếu cần)
-```bash
-dart run build_runner build --delete-conflicting-outputs
-```
-
-#### 5️⃣ Kiểm Tra Thiết Bị
-```bash
-flutter devices
-```
-
----
-
-## 🔄 Chuyển Đổi Giữa Các App
-
-### 🎛️ Cấu Hình App Type
-
-**Bước 1:** Mở file cấu hình
-```bash
-# Đường dẫn: mobile_app/lib/core/config/app_config.dart
-```
-
-**Bước 2:** Thay đổi `currentApp`
-```dart
-// filepath: lib/core/config/app_config.dart
-class AppConfig {
-  // 🔄 THAY ĐỔI DÒNG NÀY để chuyển app
-  static AppType currentApp = AppType.customer;
-  
-  // 4 Tùy chọn:
-  // AppType.customer  🛒 - Màu xanh lá (#4CAF50)
-  // AppType.store     🏪 - Màu xanh dương (#2196F3)  
-  // AppType.shipper   🚚 - Màu cam (#FF9800)
-  // AppType.admin     👑 - Màu tím (#9C27B0)
-}
-```
-
-**Bước 3:** Restart App
-```bash
-# Trong terminal đang chạy app, nhấn:
-R    # Hot Restart để áp dụng thay đổi
-```
-
-### 🎨 App Themes & Features
-
-| App Type | Theme Color | Icon | Target User | Key Features |
-|----------|-------------|------|-------------|--------------|
-| **🛒 Customer** | Xanh lá #4CAF50 | shopping_cart | Người mua | Đặt hàng, thanh toán, theo dõi |
-| **🏪 Store** | Xanh dương #2196F3 | storefront | Chủ shop | Quản lý sản phẩm, đơn hàng |
-| **🚚 Shipper** | Cam #FF9800 | delivery_dining | Shipper | GPS, giao hàng, thu tiền |
-| **👑 Admin** | Tím #9C27B0 | admin_panel_settings | Admin | Dashboard, thống kê, quản lý |
-
----
-
-## 📱 Chạy Ứng Dụng
-
-### 🏃‍♂️ Quick Start
-```bash
-# Chạy app với auto-detect device
-flutter run
-```
-
-### 📱 Mobile Platforms
-
-#### Android
-```bash
-# Chạy trên Android device/emulator
-flutter run -d android
-
-# Build APK
-flutter build apk --release
-```
-
-#### iOS (chỉ macOS)
-```bash
-# Chạy trên iOS Simulator
-flutter run -d ios
-
-# Build for iOS
-flutter build ios --release
-```
-
-### 🌐 Web Platform
-```bash
-# Chạy trên Chrome (recommended)
-flutter run -d chrome
-
-# Chạy với port tùy chỉnh
-flutter run -d chrome --web-port 8080
-
-# Build for web
-flutter build web --release
-```
-
-### Chuyển đổi run app ###
-1. Truy cập theo đường dẫn: ..\Grocery-Shopping-App\mobile_app\lib\core\config\app_config.dart
-2. Bỏ comment để run app. VD: static const AppType currentApp = AppType.customer;
+# Chạy mặc định trên trình duyệt Chrome
+flutter run -d chrome --target lib/apps/customer/main_customer.dart
 
 
-### 💻 Desktop Platforms
+🔄 Cách Chuyển Đổi Giữa Các App (Role)
 
-#### Windows
-```bash
-# Chạy trên Windows
-flutter run -d windows
+Để thay đổi vai trò người dùng trong quá trình phát triển:
 
-# Build Windows app
-flutter build windows --release
-```
+Mở file: lib/core/config/app_config.dart
 
-#### macOS
-```bash
-# Chạy trên macOS  
-flutter run -d macos
+Thay đổi giá trị tại dòng currentApp:
+static const AppType currentApp = AppType.customer;
+(Các tùy chọn: .customer | .store | .shipper | .admin)
 
-# Build macOS app
-flutter build macos --release
-```
+Hot Restart (Nhấn R) trên Terminal để áp dụng.
 
-#### Linux
-```bash
-# Chạy trên Linux
-flutter run -d linux
+📂 Cấu Trúc Mã Nguồn Rút Gọn
 
-# Build Linux app
-flutter build linux --release
-```
-
-### ⚡ Development Modes
-
-| Mode | Command | Purpose |
-|------|---------|---------|
-| **Debug** | `flutter run --debug` | Development với hot reload |
-| **Profile** | `flutter run --profile` | Performance testing |
-| **Release** | `flutter run --release` | Production-like performance |
-
-**Hot Reload Shortcuts:**
-- `r` - Hot reload (nhanh)
-- `R` - Hot restart (đầy đủ)  
-- `h` - Help menu
-- `q` - Quit app
-
----
-
-## 🏗️ Cấu Trúc Dự Án
-
-```
 mobile_app/
-├── 📂 lib/
-│   ├── 🎯 apps/                    # 4 Apps riêng biệt
-│   │   ├── customer/               # 🛒 Customer App
-│   │   │   ├── screens/            # Màn hình Customer
-│   │   │   └── widgets/            # Widget Customer
-│   │   ├── store/                  # 🏪 Store App
-│   │   │   ├── screens/            # Màn hình Store
-│   │   │   └── widgets/            # Widget Store
-│   │   ├── shipper/                # 🚚 Shipper App
-│   │   │   ├── screens/            # Màn hình Shipper  
-│   │   │   └── widgets/            # Widget Shipper
-│   │   └── admin/                  # 👑 Admin App
-│   │       ├── screens/            # Màn hình Admin
-│   │       └── widgets/            # Widget Admin
-│   ├── ⚙️ core/                    # Core System
-│   │   ├── config/                 # 🔄 App Config (Switch Apps)
-│   │   ├── constants/              # Hằng số
-│   │   ├── errors/                 # Xử lý lỗi
-│   │   ├── network/                # API client
-│   │   ├── theme/                  # 4 App themes
-│   │   └── utils/                  # Utilities
-│   ├── 🔒 features/                # Business Features
-│   │   ├── auth/                   # Authentication
-│   │   ├── products/               # Product management
-│   │   ├── orders/                 # Order management
-│   │   ├── delivery/               # Delivery system
-│   │   └── analytics/              # Analytics & reports
-│   ├── 🔗 shared/                  # Shared Components
-│   │   ├── widgets/                # Reusable widgets
-│   │   ├── models/                 # Data models
-│   │   ├── services/               # Shared services
-│   │   └── repositories/           # Data repositories
-│   └── 🚀 main.dart               # App entry point
-├── 📁 assets/                      # Static Assets
-│   ├── images/                     # App images
-│   ├── icons/                      # App icons  
-│   └── fonts/                      # Custom fonts
-├── 🤖 android/                     # Android specific
-├── 🍎 ios/                         # iOS specific
-├── 🌐 web/                         # Web specific
-├── 💻 windows/                     # Windows specific
-├── 📄 pubspec.yaml                # Dependencies
-└── 📖 README.md                   # This file
-```
-
-## 👥 Development Team
-
-### 🚀 Frontend Team
-| STT | Tên | MSSV | Vai trò |
-|-----|-----|------|---------|
-| 1 | **Đàm Thị Ngọc Châu** | 3122411020 | 👑 **Team Leader** |
-| 2 | Phan Thị Hải Vân | 3122411243 | Frontend Developer |  
-| 3 | Võ Hoàng Kim Quyên | 3122411173 | Frontend Developer |
-| 4 | Lê Gia Hân | 3122411049 | Frontend Developer |
-| 5 | Phan Thị Hồng Nhiên | 3122411141 | Frontend Developer |
+├── 🎯 lib/apps/       # 4 Phân hệ người dùng độc lập
+├── ⚙️ lib/core/       # Config, Theme, Network client
+├── 🔒 lib/features/   # Tính năng nghiệp vụ (Auth, Orders, Products)
+├── 🔗 lib/shared/     # Widget, Model, Service dùng chung
+└── 🚀 lib/main.dart   # Điểm khởi chạy ứng dụng
 
 
-*Last updated: March 2026*
+👥 Đội Ngũ Phát Triển (Frontend Team)
+
+1. Đàm Thị Ngọc Châu (3122411020) - 👑 Team Leader
+2. Phan Thị Hải Vân (3122411243) - Frontend Developer
+3. Võ Hoàng Kim Quyên (3122411173) - Frontend Developer
+4. Lê Gia Hân (3122411049) - Frontend Developer
+5. Phan Thị Hồng Nhiên (3122411141) - Frontend Developer

@@ -73,6 +73,12 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   
+<<<<<<< HEAD
   # assets:
   #   - assets/images/
   #   - assets/icons/
+=======
+  assets:
+    # - assets/images/
+    - assets/icons/
+>>>>>>> mobile_app

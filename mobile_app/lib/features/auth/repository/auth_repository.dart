@@ -1,6 +1,10 @@
 import '../models/auth_response_model.dart';
 import '../models/user_model.dart';
+<<<<<<< HEAD
 import '../../../core/config/app_config.dart'; // Thêm import này
+=======
+// import '../../../core/config/app_config.dart'; // Thêm import này
+>>>>>>> mobile_app
 import '../../../core/enums/app_type.dart';
 
 /// Abstract repository for authentication operations

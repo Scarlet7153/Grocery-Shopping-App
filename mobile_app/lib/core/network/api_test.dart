@@ -1,6 +1,91 @@
 import '../utils/logger.dart'; // Import logger
-import 'api_client.dart';
+// import 'api_client.dart';
 import 'api_endpoints.dart';
+import 'package:dio/dio.dart';
+
+class ApiClient {
+  final Dio _dio;
+
+  ApiClient({
+    Dio? dio,
+    String? baseUrl,
+    Map<String, dynamic>? defaultHeaders,
+  }) : _dio = dio ?? Dio(BaseOptions(baseUrl: baseUrl ?? '', headers: defaultHeaders)) {
+    // add simple logging interceptor (optional)
+    _dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) {
+        // Optionally modify headers here
+        return handler.next(options);
+      },
+      onResponse: (response, handler) => handler.next(response),
+      onError: (err, handler) => handler.next(err),
+    ));
+  }
+
+  Future<Response<dynamic>> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) {
+    return _dio.get<dynamic>(
+      path,
+      queryParameters: queryParameters,
+      options: options,
+      cancelToken: cancelToken,
+    );
+  }
+
+  Future<Response<dynamic>> post(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) {
+    return _dio.post<dynamic>(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+      cancelToken: cancelToken,
+    );
+  }
+
+  Future<Response<dynamic>> put(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) {
+    return _dio.put<dynamic>(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+      cancelToken: cancelToken,
+    );
+  }
+
+  Future<Response<dynamic>> delete(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) {
+    return _dio.delete<dynamic>(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+      cancelToken: cancelToken,
+    );
+  }
+
+  Dio get dio => _dio;
+}
 
 class ApiTester {
   final ApiClient _apiClient;

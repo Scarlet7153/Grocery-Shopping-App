@@ -5,6 +5,7 @@ enum AppType {
   admin,     // Web app riêng cho admin
 }
 
+<<<<<<< HEAD
 extension AppTypeExtension on AppType {
   // Trả về chuỗi để gửi lên API (backend)
   String get roleString {
@@ -31,6 +32,33 @@ extension AppTypeExtension on AppType {
         return 'Giao hàng';
       case AppType.admin:
         return 'Quản trị viên';
+=======
+extension AppTypeExt on AppType {
+  String get displayName {
+    switch (this) {
+      case AppType.customer:
+        return 'Customer';
+      case AppType.store:
+        return 'Store';
+      case AppType.shipper:
+        return 'Shipper';
+      case AppType.admin:
+        return 'Admin';
+    }
+  }
+
+  /// String used by backend / permission mapping
+  String get roleString {
+    switch (this) {
+      case AppType.customer:
+        return 'customer';
+      case AppType.store:
+        return 'store_owner';
+      case AppType.shipper:
+        return 'shipper';
+      case AppType.admin:
+        return 'admin';
+>>>>>>> mobile_app
     }
   }
 }

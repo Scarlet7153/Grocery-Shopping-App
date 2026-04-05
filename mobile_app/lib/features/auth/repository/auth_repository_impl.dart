@@ -1,15 +1,100 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../core/network/api_client.dart';
+// import '../../../core/network/api_client.dart';
 import '../../../core/network/api_endpoints.dart';
-import '../../../core/config/app_config.dart';
+// import '../../../core/config/app_config.dart';
 import '../../../core/errors/exceptions.dart';
 import '../../../core/utils/logger.dart';
+import '../../../core/enums/app_type.dart';
 import '../models/auth_response_model.dart';
 import '../models/user_model.dart';
 import 'auth_repository.dart';
 import '../../../core/enums/app_type.dart';
+
+
+
+class ApiClient {
+  final Dio _dio;
+
+  ApiClient({
+    Dio? dio,
+    String? baseUrl,
+  }) : _dio = dio ?? Dio(BaseOptions(baseUrl: baseUrl ?? '')) {
+    // Optional: add interceptors, logging, auth interceptors, etc.
+    _dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) {
+        // Add global headers if needed
+        return handler.next(options);
+      },
+      onResponse: (response, handler) {
+        return handler.next(response);
+      },
+      onError: (e, handler) {
+        return handler.next(e);
+      },
+    ));
+  }
+
+  Future<Response> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) {
+    return _dio.get(
+      path,
+      queryParameters: queryParameters,
+      options: options,
+      cancelToken: cancelToken,
+    );
+  }
+
+  Future<Response> post(
+    String path, {
+    dynamic data,
+    Options? options,
+    CancelToken? cancelToken,
+  }) {
+    return _dio.post(
+      path,
+      data: data,
+      options: options,
+      cancelToken: cancelToken,
+    );
+  }
+
+  Future<Response> put(
+    String path, {
+    dynamic data,
+    Options? options,
+    CancelToken? cancelToken,
+  }) {
+    return _dio.put(
+      path,
+      data: data,
+      options: options,
+      cancelToken: cancelToken,
+    );
+  }
+
+  Future<Response> delete(
+    String path, {
+    dynamic data,
+    Options? options,
+    CancelToken? cancelToken,
+  }) {
+    return _dio.delete(
+      path,
+      data: data,
+      options: options,
+      cancelToken: cancelToken,
+    );
+  }
+
+  // Expose underlying Dio if needed
+  Dio get dio => _dio;
+}
 
 
 

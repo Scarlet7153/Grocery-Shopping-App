@@ -8,7 +8,26 @@ class AppConfig {
 
   //static const AppType currentApp = AppType.shipper;
 
+<<<<<<< HEAD
   // static const AppType currentApp = AppType.admin;
+=======
+  static const String app =
+    String.fromEnvironment('APP', defaultValue: 'admin');
+
+static AppType get currentApp {
+  switch (app) {
+    case 'customer':
+      return AppType.customer;
+    case 'store':
+      return AppType.store;
+    case 'shipper':
+      return AppType.shipper;
+    case 'admin':
+    default:
+      return AppType.admin;
+  }
+}
+>>>>>>> store-app
 
   static String get appName {
     switch (currentApp) {

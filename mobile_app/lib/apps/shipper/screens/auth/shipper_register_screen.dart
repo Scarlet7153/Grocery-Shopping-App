@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/shipper_theme.dart';
-import '../../../../shared/widgets/custom_text_field.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:grocery_shopping_app/core/theme/shipper_theme.dart';
+import 'package:grocery_shopping_app/shared/widgets/custom_text_field.dart';
+import 'package:grocery_shopping_app/apps/shipper/bloc/shipper_auth_bloc.dart';
 
 class ShipperRegisterScreen extends StatefulWidget {
   const ShipperRegisterScreen({super.key});
@@ -25,6 +28,14 @@ class _ShipperRegisterScreenState extends State<ShipperRegisterScreen> {
   bool _isLoading = false;
   bool _agreeToTerms = false;
   String _selectedVehicleType = 'Xe máy';
+
+  late ShipperAuthBloc _authBloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _authBloc = context.read<ShipperAuthBloc>();
+  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -327,60 +338,90 @@ class _ShipperRegisterScreenState extends State<ShipperRegisterScreen> {
     ],
   );
 
-  Widget _buildRegisterButton() => Container(
-    width: double.infinity,
-    height: 52,
-    decoration: BoxDecoration(
-      gradient: const LinearGradient(
-        colors: [
-          ShipperTheme.primaryColor,
-          ShipperTheme.secondaryColor,
-        ],
-      ),
-      borderRadius: BorderRadius.circular(12),
-      boxShadow: [
-        BoxShadow(
-          color: ShipperTheme.primaryColor.withValues(alpha: 0.3),
-          blurRadius: 8,
-          offset: const Offset(0, 4),
-        ),
-      ],
-    ),
-    child: ElevatedButton(
-      onPressed: (_isLoading || !_agreeToTerms) ? null : _handleRegister,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.transparent,
-        shadowColor: Colors.transparent,
-        foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-      child: _isLoading 
-        ? const SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: Colors.white,
+  Widget _buildRegisterButton() {
+    return BlocListener<ShipperAuthBloc, ShipperAuthState>(
+      listener: (context, state) {
+        if (state is ShipperAuthLoading) {
+          setState(() => _isLoading = true);
+        } else {
+          setState(() => _isLoading = false);
+        }
+
+        if (state is ShipperAuthAuthenticated) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Đăng ký thành công! Chào mừng bạn trở thành Shipper'),
+              backgroundColor: ShipperTheme.primaryColor,
             ),
-          )
-        : const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.how_to_reg, size: 20),
-              SizedBox(width: 8),
-              Text(
-                'Đăng ký làm Shipper',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+          );
+          Navigator.pop(context);
+        }
+
+        if (state is ShipperAuthError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Đăng ký thất bại: ${state.message}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      },
+      child: Container(
+        width: double.infinity,
+        height: 52,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [
+              ShipperTheme.primaryColor,
+              ShipperTheme.secondaryColor,
             ],
           ),
-    ),
-  );
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: ShipperTheme.primaryColor.withValues(alpha: 0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ElevatedButton(
+          onPressed: (_isLoading || !_agreeToTerms) ? null : _handleRegister,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: _isLoading 
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.how_to_reg, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'Đăng ký làm Shipper',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+        ),
+      ),
+    );
+  }
 
   Widget _buildLoginLink() => Row(
     mainAxisAlignment: MainAxisAlignment.center,
@@ -502,35 +543,20 @@ class _ShipperRegisterScreenState extends State<ShipperRegisterScreen> {
       return;
     }
 
-    setState(() => _isLoading = true);
+    // collect data
+    final info = {
+      'name': _nameController.text.trim(),
+      'phone': _phoneController.text.trim(),
+      'email': _emailController.text.trim(),
+      'address': _addressController.text.trim(),
+      'vehicleType': _selectedVehicleType,
+      'vehiclePlate': _vehiclePlateController.text.trim(),
+      'idNumber': _idNumberController.text.trim(),
+      'bankAccount': _bankAccountController.text.trim(),
+      'password': _passwordController.text,
+    };
 
-    try {
-      // Mock shipper registration API call
-      await Future.delayed(const Duration(seconds: 2));
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đăng ký thành công! Chào mừng bạn trở thành Shipper'),
-            backgroundColor: ShipperTheme.primaryColor,
-          ),
-        );
-        Navigator.pop(context); // Back to login
-      }
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Đăng ký thất bại: $error'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
+    _authBloc.add(ShipperRegisterRequested(registrationInfo: info));
   }
 
   @override

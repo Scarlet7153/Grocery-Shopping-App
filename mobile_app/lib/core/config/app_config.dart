@@ -6,8 +6,9 @@ class AppConfig {
 
   //static const AppType currentApp = AppType.store;
 
-  //static const AppType currentApp = AppType.shipper;
+  static const AppType currentApp = AppType.shipper;
 
+<<<<<<< HEAD
 <<<<<<< HEAD
   // static const AppType currentApp = AppType.admin;
 =======
@@ -28,6 +29,9 @@ static AppType get currentApp {
   }
 }
 >>>>>>> store-app
+=======
+  //static const AppType currentApp = AppType.admin;
+>>>>>>> shipper-app
 
   static String get appName {
     switch (currentApp) {

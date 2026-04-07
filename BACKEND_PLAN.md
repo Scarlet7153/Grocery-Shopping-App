@@ -173,33 +173,43 @@
   - [ ] PATCH /api/payments/{id}/status
   - [ ] POST /api/payments/{id}/refund (admin)
 
-### Module 7: Review & Rating ⏳
-- [ ] **Review Entity** (đã có base)
-  - [ ] Review relationships
-- [ ] **ReviewRepository**
-  - [ ] findByStoreId
-  - [ ] findByReviewerId
-  - [ ] findByOrderId
-  - [ ] calculateAverageRating (custom query)
-- [ ] **Review DTOs**
-  - [ ] CreateReviewRequest
-  - [ ] UpdateReviewRequest
-  - [ ] ReviewResponse
-  - [ ] ReviewListResponse
-- [ ] **ReviewService**
-  - [ ] createReview (customer only after order delivered)
-  - [ ] updateReview
-  - [ ] deleteReview
-  - [ ] getReviewsByStore
-  - [ ] getMyReviews
-  - [ ] getStoreAverageRating
-- [ ] **ReviewController**
-  - [ ] POST /api/reviews (create review)
-  - [ ] PUT /api/reviews/{id}
-  - [ ] DELETE /api/reviews/{id}
-  - [ ] GET /api/reviews/store/{storeId}
-  - [ ] GET /api/reviews/my-reviews
-  - [ ] GET /api/reviews/store/{storeId}/rating
+### Module 7: Review & Rating ✅ (COMPLETED)
+- [x] **Review Entity** (đã có base)
+  - [x] Review relationships
+- [x] **ReviewRepository**
+  - [x] findByStoreId
+  - [x] findByReviewerId
+  - [x] findByOrderId
+  - [x] existsByOrderId
+  - [x] calculateAverageRating (custom query)
+  - [x] countByStoreId
+- [x] **Review DTOs**
+  - [x] CreateReviewRequest
+  - [x] UpdateReviewRequest
+  - [x] ReviewResponse
+  - [x] StoreRatingResponse
+- [x] **ReviewService**
+  - [x] createReview (customer only after order delivered)
+  - [x] updateReview (only review owner)
+  - [x] deleteReview (review owner or admin)
+  - [x] getReviewById
+  - [x] getReviewsByStore
+  - [x] getMyReviews
+  - [x] getStoreRating (average + total count)
+- [x] **ReviewController** (7 endpoints)
+  - [x] POST /api/reviews (create review - CUSTOMER)
+  - [x] PUT /api/reviews/{id} (update - CUSTOMER owner)
+  - [x] DELETE /api/reviews/{id} (delete - CUSTOMER/ADMIN)
+  - [x] GET /api/reviews/{id} (get review - public)
+  - [x] GET /api/reviews/store/{storeId} (store reviews - public)
+  - [x] GET /api/reviews/my-reviews (my reviews - CUSTOMER)
+  - [x] GET /api/reviews/store/{storeId}/rating (store rating - public)
+- [x] **Business Rules Implemented**
+  - [x] Only DELIVERED orders can be reviewed
+  - [x] Only order owner can review
+  - [x] One review per order
+  - [x] Rating validation (1-5 stars)
+  - [x] Authorization checks for update/delete
 
 ---
 
@@ -283,8 +293,8 @@
 
 ### Week 3-4: Business Logic
 - [x] Order Module ✅ (5-6 days) - Completed with state machine
+- [x] Review Module ✅ (2 days) - Completed with full features
 - [ ] Payment Module (2-3 days)
-- [ ] Review Module (2-3 days)
 
 ### Week 5: Testing & Polish
 - [ ] Unit tests
@@ -313,20 +323,22 @@
    - ✅ Security: Store orders filtered by authenticated user
    - ✅ 8 REST endpoints with proper @PreAuthorize
 
-4. **Payment Module** - NEXT PRIORITY
+4. ~~**Review Module**~~ ✅ COMPLETED
+   - ✅ Only customers who completed orders can review
+   - ✅ Rating calculation for stores (average + count)
+   - ✅ ReviewRepository with all queries
+   - ✅ Review DTOs (Request + Response)
+   - ✅ ReviewService with full business logic
+   - ✅ ReviewController with 7 REST endpoints
+   - ✅ Authorization: Review owner or ADMIN can delete
+
+5. **Payment Module** - NEXT PRIORITY
    - Integrate với MoMo payment gateway
    - Create PaymentRepository với queries
    - Create Payment DTOs
    - Implement PaymentService
    - Implement PaymentController
    - Test payment flow
-
-5. **Review Module** - After Payment
-   - Only customers who completed orders can review
-   - Rating calculation for stores
-   - Create ReviewRepository
-   - Create Review DTOs
-   - Implement ReviewService & Controller
 
 ---
 
@@ -390,11 +402,13 @@
 - **Order APIs** ✅ - Frontend có thể code Shopping cart & checkout flow
   - 8 endpoints: Create order, My orders, Order detail, Store orders, Shipper flows
   - State machine: PENDING → CONFIRMED → PICKING_UP → DELIVERING → DELIVERED
+- **Review APIs** ✅ - Frontend có thể code Rating & Review screens
+  - 7 endpoints: Create, Update, Delete, Get by ID, My reviews, Store reviews, Store rating
+  - Business rules: Only DELIVERED orders, One review per order, 1-5 stars
 
 ### ⏳ APIs Cần Hoàn Thành Trước:
 - **Payment APIs** - Cần xong trước khi Frontend integrate MoMo/ZaloPay
 - **File Upload APIs** - Cần cho avatar, product images, POD photos
-- **Review APIs** - Cần cho rating & review sau khi hoàn thành order
 
 ### 🔔 Backend Cần Bổ Sung:
 - [ ] WebSocket configuration (cho real-time order tracking)
@@ -406,7 +420,7 @@
 ---
 
 **Last Updated**: 2026-02-13
-**Progress**: 5/7 modules completed (71%) 🎉
-**Completed**: Auth ✅ User ✅ Store ✅ Product ✅ Order ✅
-**Next Focus**: Payment Module → Review Module → Advanced Features
-**Frontend Status**: Core APIs ready! Can implement Shopping, Cart, Checkout flows
+**Progress**: 6/7 modules completed (86%) 🎉
+**Completed**: Auth ✅ User ✅ Store ✅ Product ✅ Order ✅ Review ✅
+**Next Focus**: Payment Module → Advanced Features (File Upload, Search, Caching, Real-time)
+**Frontend Status**: Core APIs ready! Shopping, Cart, Checkout, Reviews all functional!

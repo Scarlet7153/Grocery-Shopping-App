@@ -1,5 +1,7 @@
 name: grocery_shopping_app
 description: Grocery Shopping App - Flutter Frontend
+
+publish_to: 'none'
 version: 1.0.0+1
 
 environment:
@@ -39,8 +41,7 @@ dependencies:
   geocoding: ^2.1.1
   
   # Push Notifications
-  firebase_core: ^2.24.2
-  firebase_messaging: ^14.7.10
+ 
   
   # Date/Time handling
   intl: ^0.19.0
@@ -65,6 +66,7 @@ dev_dependencies:
   bloc_test: ^9.1.5
   hive_generator: ^2.0.1
   mocktail: ^1.0.0
+  mockito: ^5.4.4
 
 flutter:
   uses-material-design: true

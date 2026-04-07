@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/enums/user_role.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../shared/widgets/buttons/buttons.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
+import '../../../../core/config/app_config.dart';
+import '../../bloc/auth_bloc.dart';
+import '../../bloc/auth_event.dart';
+import '../../bloc/auth_state.dart';
 
 /// Login screen for different user roles
 /// Design adapted from Figma with role-specific theming
@@ -26,10 +31,10 @@ class _LoginScreenState extends State<LoginScreen>
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
-
+  
   bool _isLoading = false;
   bool _rememberMe = false;
-
+  
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -79,17 +84,36 @@ class _LoginScreenState extends State<LoginScreen>
       backgroundColor: _getBackgroundColor(),
       appBar: _buildAppBar(),
       body: SafeArea(
-        child: AnimatedBuilder(
-          animation: _animationController,
-          builder: (context, child) {
-            return FadeTransition(
-              opacity: _fadeAnimation,
-              child: SlideTransition(
-                position: _slideAnimation,
-                child: _buildBody(),
-              ),
-            );
+        child: BlocListener<AuthBloc, AuthState>(
+          listener: (context, state) {
+            // Xử lý trạng thái Loading
+            if (state is AuthLoading) {
+              setState(() => _isLoading = true);
+            } else {
+              setState(() => _isLoading = false);
+            }
+
+            // Xử lý trạng thái Thành công
+            if (state is AuthAuthenticated) {
+              _navigateToHome();
+            } 
+            // Xử lý trạng thái Lỗi
+            else if (state is AuthError) {
+              _showErrorSnackBar(state.message);
+            }
           },
+          child: AnimatedBuilder(
+            animation: _animationController,
+            builder: (context, child) {
+              return FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: _buildBody(),
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
@@ -159,7 +183,7 @@ class _LoginScreenState extends State<LoginScreen>
           ),
         ),
         const SizedBox(height: AppDimensions.spacing2Xl),
-
+        
         // Welcome Title
         Text(
           'Chào mừng trở lại!',
@@ -168,7 +192,7 @@ class _LoginScreenState extends State<LoginScreen>
           ),
         ),
         const SizedBox(height: AppDimensions.spacingS),
-
+        
         // Role-specific subtitle
         Text(
           'Đăng nhập vào tài khoản ${widget.userRole.displayName.toLowerCase()}',
@@ -177,7 +201,7 @@ class _LoginScreenState extends State<LoginScreen>
           ),
         ),
         const SizedBox(height: AppDimensions.spacingXs),
-
+        
         // Description
         Text(
           widget.userRole.description,
@@ -204,7 +228,7 @@ class _LoginScreenState extends State<LoginScreen>
           focusColor: widget.userRole.primaryColor,
         ),
         const SizedBox(height: AppDimensions.spacingL),
-
+        
         // Password Field
         CustomTextField(
           controller: _passwordController,
@@ -290,7 +314,7 @@ class _LoginScreenState extends State<LoginScreen>
           color: AppColors.divider,
         ),
         const SizedBox(height: AppDimensions.spacing2Xl),
-
+        
         // Register prompt
         RichText(
           text: TextSpan(
@@ -310,7 +334,7 @@ class _LoginScreenState extends State<LoginScreen>
           ),
         ),
         const SizedBox(height: AppDimensions.spacingL),
-
+        
         // Register Button
         SizedBox(
           width: double.infinity,
@@ -336,18 +360,18 @@ class _LoginScreenState extends State<LoginScreen>
     if (value == null || value.isEmpty) {
       return 'Vui lòng nhập số điện thoại';
     }
-
+    
     // Remove spaces and special characters
     final cleaned = value.replaceAll(RegExp(r'[^\d]'), '');
-
+    
     if (cleaned.length != 10) {
       return 'Số điện thoại phải có 10 chữ số';
     }
-
+    
     if (!cleaned.startsWith('0')) {
       return 'Số điện thoại phải bắt đầu bằng số 0';
     }
-
+    
     return null;
   }
 
@@ -355,37 +379,27 @@ class _LoginScreenState extends State<LoginScreen>
     if (value == null || value.isEmpty) {
       return 'Vui lòng nhập mật khẩu';
     }
-
+    
     if (value.length < 6) {
       return 'Mật khẩu phải có ít nhất 6 ký tự';
     }
-
+    
     return null;
   }
 
-  Future<void> _handleLogin() async {
+  void _handleLogin() {
     if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _isLoading = true);
     HapticFeedback.lightImpact();
 
-    try {
-      // TODOhehe: Implement actual login API call
-      await Future.delayed(const Duration(seconds: 2));
-
-      if (mounted) {
-        // Navigate to role-specific home screen
-        _navigateToHome();
-      }
-    } catch (error) {
-      if (mounted) {
-        _showErrorSnackBar('Đăng nhập thất bại: ${error.toString()}');
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
+    // Kích hoạt sự kiện LoginRequested vào AuthBloc
+    context.read<AuthBloc>().add(
+      LoginRequested(
+        identifier: _phoneController.text.trim(),
+        password: _passwordController.text,
+        appType: AppConfig.currentApp,
+        rememberMe: _rememberMe,
+      ),
+    );
   }
 
   void _handleForgotPassword() {

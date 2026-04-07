@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/admin_theme.dart';
-import 'admin_login_screen.dart';
+// Đã xóa dòng import 'admin_login_screen.dart' bị sai
 
 class AdminSplashScreen extends StatefulWidget {
   const AdminSplashScreen({super.key});
@@ -59,17 +59,9 @@ class _AdminSplashScreenState extends State<AdminSplashScreen>
   Future<void> _navigateToLogin() async {
     await Future.delayed(const Duration(seconds: 3));
     if (mounted) {
-      // ✅ Enable navigation to Admin Login (no register option)
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              const AdminLoginScreen(),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-          transitionDuration: const Duration(milliseconds: 800),
-        ),
-      );
+      // ✅ Fix: Sử dụng Route đã định nghĩa trong main_admin.dart
+      // Điều này giúp gọi đúng LoginScreen dùng chung với UserRole.admin
+      Navigator.pushReplacementNamed(context, '/login');
     }
   }
 
@@ -94,7 +86,7 @@ class _AdminSplashScreenState extends State<AdminSplashScreen>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Spacer(flex: 2),
-
+              
               // Animated Admin Logo & Branding
               AnimatedBuilder(
                 animation: _animationController,
@@ -111,9 +103,9 @@ class _AdminSplashScreenState extends State<AdminSplashScreen>
                   );
                 },
               ),
-
+              
               const Spacer(flex: 1),
-
+              
               // Animated tagline & features
               AnimatedBuilder(
                 animation: _animationController,
@@ -124,9 +116,9 @@ class _AdminSplashScreenState extends State<AdminSplashScreen>
                   );
                 },
               ),
-
+              
               const SizedBox(height: 40),
-
+              
               // Loading indicator
               AnimatedBuilder(
                 animation: _animationController,
@@ -153,7 +145,7 @@ class _AdminSplashScreenState extends State<AdminSplashScreen>
                   );
                 },
               ),
-
+              
               const Spacer(flex: 2),
             ],
           ),
@@ -163,246 +155,245 @@ class _AdminSplashScreenState extends State<AdminSplashScreen>
   }
 
   Widget _buildAdminBranding() => Column(
+    children: [
+      // Admin Crown Icon với Premium Design
+      Stack(
+        alignment: Alignment.center,
         children: [
-          // Admin Crown Icon với Premium Design
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              // Outer glow
-              Container(
-                width: 160,
-                height: 160,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(80),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AdminTheme.primaryColor.withValues(alpha: 0.3),
-                      blurRadius: 30,
-                      spreadRadius: 5,
-                    ),
-                  ],
-                ),
-              ),
-              // Main container
-              Container(
-                width: 140,
-                height: 140,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.white,
-                      AdminTheme.backgroundColor,
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(70),
-                  border: Border.all(
-                    color: AdminTheme.primaryColor.withValues(alpha: 0.2),
-                    width: 2,
-                  ),
-                ),
-                child: const Icon(
-                  Icons.admin_panel_settings,
-                  size: 70,
-                  color: AdminTheme.primaryColor,
-                ),
-              ),
-              // Crown overlay
-              Positioned(
-                top: 15,
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.amber,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.amber.withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.diamond,
-                    size: 16,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 32),
-
-          // App Name cho Admin
-          const Text(
-            'Đi Chợ Hộ',
-            style: TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-              color: AdminTheme.primaryColor,
-              letterSpacing: 1.2,
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          // Admin Subtitle với Premium Design
+          // Outer glow
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+            width: 160,
+            height: 160,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AdminTheme.primaryColor.withValues(alpha: 0.1),
-                  AdminTheme.secondaryColor.withValues(alpha: 0.1),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(
-                color: AdminTheme.primaryColor.withValues(alpha: 0.3),
-                width: 1,
-              ),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.security,
-                  size: 18,
-                  color: AdminTheme.primaryColor,
-                ),
-                SizedBox(width: 8),
-                Text(
-                  'ADMIN PANEL',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AdminTheme.primaryColor,
-                    letterSpacing: 2.5,
-                  ),
+              borderRadius: BorderRadius.circular(80),
+              boxShadow: [
+                BoxShadow(
+                  color: AdminTheme.primaryColor.withValues(alpha: 0.3),
+                  blurRadius: 30,
+                  spreadRadius: 5,
                 ),
               ],
             ),
           ),
-        ],
-      );
-
-  Widget _buildTagline() => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 28),
-        child: Column(
-          children: [
-            Text(
-              'Quản lý và điều hành hệ thống',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[700],
-                height: 1.3,
+          // Main container
+          Container(
+            width: 140,
+            height: 140,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white,
+                  AdminTheme.backgroundColor,
+                ],
+              ),
+              borderRadius: BorderRadius.circular(70),
+              border: Border.all(
+                color: AdminTheme.primaryColor.withValues(alpha: 0.2),
+                width: 2,
               ),
             ),
-            const SizedBox(height: 16),
-
-            // Admin feature highlights
-            _buildAdminFeatures(),
-
-            const SizedBox(height: 20),
+            child: const Icon(
+              Icons.admin_panel_settings,
+              size: 70,
+              color: AdminTheme.primaryColor,
+            ),
+          ),
+          // Crown overlay
+          Positioned(
+            top: 15,
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.amber,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.amber.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.diamond,
+                size: 16,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+      
+      const SizedBox(height: 32),
+      
+      // App Name cho Admin
+      const Text(
+        'Đi Chợ Hộ',
+        style: TextStyle(
+          fontSize: 36,
+          fontWeight: FontWeight.bold,
+          color: AdminTheme.primaryColor,
+          letterSpacing: 1.2,
+        ),
+      ),
+      
+      const SizedBox(height: 8),
+      
+      // Admin Subtitle với Premium Design
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              AdminTheme.primaryColor.withValues(alpha: 0.1),
+              AdminTheme.secondaryColor.withValues(alpha: 0.1),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(
+            color: AdminTheme.primaryColor.withValues(alpha: 0.3),
+            width: 1,
+          ),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.security,
+              size: 18,
+              color: AdminTheme.primaryColor,
+            ),
+            SizedBox(width: 8),
             Text(
-              'Trung tâm điều khiển toàn diện cho nền tảng Đi Chợ Hộ',
-              textAlign: TextAlign.center,
+              'ADMIN PANEL',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[600],
-                height: 1.4,
-                fontStyle: FontStyle.italic,
+                fontWeight: FontWeight.w700,
+                color: AdminTheme.primaryColor,
+                letterSpacing: 2.5,
               ),
             ),
           ],
         ),
-      );
+      ),
+    ],
+  );
+
+  Widget _buildTagline() => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 28),
+    child: Column(
+      children: [
+        Text(
+          'Quản lý và điều hành hệ thống',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[700],
+            height: 1.3,
+          ),
+        ),
+        const SizedBox(height: 16),
+        
+        // Admin feature highlights
+        _buildAdminFeatures(),
+        
+        const SizedBox(height: 20),
+        Text(
+          'Trung tâm điều khiển toàn diện cho nền tảng Đi Chợ Hộ',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey[600],
+            height: 1.4,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      ],
+    ),
+  );
 
   Widget _buildAdminFeatures() => Column(
+    children: [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildFeatureItem(
-                icon: Icons.dashboard,
-                text: 'Dashboard',
-                color: AdminTheme.primaryColor,
-              ),
-              _buildFeatureItem(
-                icon: Icons.analytics,
-                text: 'Analytics',
-                color: Colors.green,
-              ),
-              _buildFeatureItem(
-                icon: Icons.security,
-                text: 'Security',
-                color: Colors.orange,
-              ),
-            ],
+          _buildFeatureItem(
+            icon: Icons.dashboard,
+            text: 'Dashboard',
+            color: AdminTheme.primaryColor,
           ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildFeatureItem(
-                icon: Icons.people,
-                text: 'Users',
-                color: Colors.blue,
-              ),
-              _buildFeatureItem(
-                icon: Icons.store,
-                text: 'Stores',
-                color: Colors.teal,
-              ),
-              _buildFeatureItem(
-                icon: Icons.settings,
-                text: 'Settings',
-                color: Colors.grey[700]!,
-              ),
-            ],
+          _buildFeatureItem(
+            icon: Icons.analytics,
+            text: 'Analytics',
+            color: Colors.green,
+          ),
+          _buildFeatureItem(
+            icon: Icons.security,
+            text: 'Security',
+            color: Colors.orange,
           ),
         ],
-      );
+      ),
+      const SizedBox(height: 16),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildFeatureItem(
+            icon: Icons.people,
+            text: 'Users',
+            color: Colors.blue,
+          ),
+          _buildFeatureItem(
+            icon: Icons.store,
+            text: 'Stores',
+            color: Colors.teal,
+          ),
+          _buildFeatureItem(
+            icon: Icons.settings,
+            text: 'Settings',
+            color: Colors.grey[700]!,
+          ),
+        ],
+      ),
+    ],
+  );
 
   Widget _buildFeatureItem({
     required IconData icon,
     required String text,
     required Color color,
-  }) =>
-      Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: color.withValues(alpha: 0.3),
-                width: 1,
-              ),
-            ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 20,
-            ),
+  }) => Column(
+    children: [
+      Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: color.withValues(alpha: 0.3),
+            width: 1,
           ),
-          const SizedBox(height: 6),
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: Colors.grey[700],
-            ),
-          ),
-        ],
-      );
+        ),
+        child: Icon(
+          icon,
+          color: color,
+          size: 20,
+        ),
+      ),
+      const SizedBox(height: 6),
+      Text(
+        text,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+          color: Colors.grey[700],
+        ),
+      ),
+    ],
+  );
 
   @override
   void dispose() {

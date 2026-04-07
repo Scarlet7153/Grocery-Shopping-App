@@ -4,6 +4,7 @@ import '../../../../core/enums/user_role.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/location/province_api.dart';
 import '../../../../shared/widgets/buttons/buttons.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 
@@ -30,15 +31,24 @@ class _RegisterScreenState extends State<RegisterScreen>
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _addressController = TextEditingController();
-
+  
   // Store specific fields
   final _storeNameController = TextEditingController();
   final _storeAddressController = TextEditingController();
   final _businessLicenseController = TextEditingController();
 
+  final _provinceApi = ProvinceApi();
+  List<LocationItem> _provinces = [];
+  List<LocationItem> _districts = [];
+  List<LocationItem> _wards = [];
+  LocationItem? _selectedProvince;
+  LocationItem? _selectedDistrict;
+  LocationItem? _selectedWard;
+  bool _isLoadingLocation = false;
+  
   bool _isLoading = false;
   bool _agreeToTerms = false;
-
+  
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -47,6 +57,7 @@ class _RegisterScreenState extends State<RegisterScreen>
   void initState() {
     super.initState();
     _setupAnimations();
+    _loadProvinces();
   }
 
   void _setupAnimations() {
@@ -72,6 +83,59 @@ class _RegisterScreenState extends State<RegisterScreen>
     ));
 
     _animationController.forward();
+  }
+
+  Future<void> _loadProvinces() async {
+    setState(() => _isLoadingLocation = true);
+    try {
+      _provinces = await _provinceApi.getProvinces();
+    } finally {
+      if (mounted) setState(() => _isLoadingLocation = false);
+    }
+  }
+
+  Future<void> _onProvinceChanged(LocationItem? item) async {
+    setState(() {
+      _selectedProvince = item;
+      _selectedDistrict = null;
+      _selectedWard = null;
+      _districts = [];
+      _wards = [];
+    });
+    _updateAddressText();
+    if (item == null) return;
+    final districts = await _provinceApi.getDistricts(item.code);
+    if (mounted) {
+      setState(() => _districts = districts);
+    }
+  }
+
+  Future<void> _onDistrictChanged(LocationItem? item) async {
+    setState(() {
+      _selectedDistrict = item;
+      _selectedWard = null;
+      _wards = [];
+    });
+    _updateAddressText();
+    if (item == null) return;
+    final wards = await _provinceApi.getWards(item.code);
+    if (mounted) {
+      setState(() => _wards = wards);
+    }
+  }
+
+  void _onWardChanged(LocationItem? item) {
+    setState(() => _selectedWard = item);
+    _updateAddressText();
+  }
+
+  void _updateAddressText() {
+    final parts = [
+      _selectedWard?.name,
+      _selectedDistrict?.name,
+      _selectedProvince?.name,
+    ].where((e) => e != null && e!.isNotEmpty).map((e) => e!).toList();
+    _addressController.text = parts.join(', ');
   }
 
   @override
@@ -173,7 +237,7 @@ class _RegisterScreenState extends State<RegisterScreen>
           ),
         ),
         const SizedBox(height: AppDimensions.spacing2Xl),
-
+        
         // Registration Title
         Text(
           'Tạo tài khoản mới',
@@ -182,7 +246,7 @@ class _RegisterScreenState extends State<RegisterScreen>
           ),
         ),
         const SizedBox(height: AppDimensions.spacingS),
-
+        
         // Role-specific subtitle
         Text(
           'Đăng ký tài khoản ${widget.userRole.displayName.toLowerCase()}',
@@ -191,7 +255,7 @@ class _RegisterScreenState extends State<RegisterScreen>
           ),
         ),
         const SizedBox(height: AppDimensions.spacingXs),
-
+        
         // Description
         Text(
           _getRoleRegistrationDescription(),
@@ -210,9 +274,9 @@ class _RegisterScreenState extends State<RegisterScreen>
         // Personal Information Section
         _buildSectionTitle('Thông tin cá nhân'),
         const SizedBox(height: AppDimensions.spacingL),
-
+        
         _buildPersonalInfoFields(),
-
+        
         // Role-specific fields
         if (widget.userRole == UserRole.store) ...[
           const SizedBox(height: AppDimensions.spacing2Xl),
@@ -220,12 +284,12 @@ class _RegisterScreenState extends State<RegisterScreen>
           const SizedBox(height: AppDimensions.spacingL),
           _buildStoreInfoFields(),
         ],
-
+        
         // Security Section
         const SizedBox(height: AppDimensions.spacing2Xl),
         _buildSectionTitle('Thông tin bảo mật'),
         const SizedBox(height: AppDimensions.spacingL),
-
+        
         _buildSecurityFields(),
       ],
     );
@@ -257,6 +321,7 @@ class _RegisterScreenState extends State<RegisterScreen>
           isRequired: true,
         ),
         const SizedBox(height: AppDimensions.spacingL),
+        
         CustomTextField(
           controller: _phoneController,
           label: 'Số điện thoại',
@@ -268,6 +333,7 @@ class _RegisterScreenState extends State<RegisterScreen>
           isRequired: true,
         ),
         const SizedBox(height: AppDimensions.spacingL),
+        
         CustomTextField(
           controller: _emailController,
           label: 'Email',
@@ -278,15 +344,8 @@ class _RegisterScreenState extends State<RegisterScreen>
           focusColor: widget.userRole.primaryColor,
         ),
         const SizedBox(height: AppDimensions.spacingL),
-        CustomTextField(
-          controller: _addressController,
-          label: 'Địa chỉ',
-          hint: 'Nhập địa chỉ của bạn',
-          prefixIcon: Icons.location_on_outlined,
-          validator: _validateAddress,
-          focusColor: widget.userRole.primaryColor,
-          isRequired: true,
-        ),
+        
+        _buildLocationPicker(),
       ],
     );
   }
@@ -304,6 +363,7 @@ class _RegisterScreenState extends State<RegisterScreen>
           isRequired: true,
         ),
         const SizedBox(height: AppDimensions.spacingL),
+        
         CustomTextField(
           controller: _storeAddressController,
           label: 'Địa chỉ cửa hàng',
@@ -314,6 +374,7 @@ class _RegisterScreenState extends State<RegisterScreen>
           isRequired: true,
         ),
         const SizedBox(height: AppDimensions.spacingL),
+        
         CustomTextField(
           controller: _businessLicenseController,
           label: 'Giấy phép kinh doanh',
@@ -339,6 +400,7 @@ class _RegisterScreenState extends State<RegisterScreen>
           isRequired: true,
         ),
         const SizedBox(height: AppDimensions.spacingL),
+        
         CustomTextField(
           controller: _confirmPasswordController,
           label: 'Xác nhận mật khẩu',
@@ -350,6 +412,77 @@ class _RegisterScreenState extends State<RegisterScreen>
           isRequired: true,
         ),
       ],
+    );
+  }
+
+  Widget _buildLocationPicker() {
+    return Column(
+      children: [
+        _buildLocationDropdown(
+          label: 'Tỉnh/Thành phố',
+          value: _selectedProvince,
+          items: _provinces,
+          onChanged: _isLoadingLocation ? null : _onProvinceChanged,
+          prefixIcon: Icons.location_city_outlined,
+        ),
+        const SizedBox(height: AppDimensions.spacingL),
+        _buildLocationDropdown(
+          label: 'Quận/Huyện',
+          value: _selectedDistrict,
+          items: _districts,
+          onChanged: _selectedProvince == null ? null : _onDistrictChanged,
+          prefixIcon: Icons.map_outlined,
+        ),
+        const SizedBox(height: AppDimensions.spacingL),
+        _buildLocationDropdown(
+          label: 'Phường/Xã',
+          value: _selectedWard,
+          items: _wards,
+          onChanged: _selectedDistrict == null ? null : _onWardChanged,
+          prefixIcon: Icons.place_outlined,
+          validator: (value) {
+            if (value == null) {
+              return 'Vui lòng chọn địa chỉ';
+            }
+            return null;
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLocationDropdown({
+    required String label,
+    required List<LocationItem> items,
+    required IconData prefixIcon,
+    LocationItem? value,
+    FormFieldValidator<LocationItem>? validator,
+    ValueChanged<LocationItem?>? onChanged,
+  }) {
+    return DropdownButtonFormField<LocationItem>(
+      value: value,
+      items: items
+          .map((item) => DropdownMenuItem<LocationItem>(
+                value: item,
+                child: Text(item.name),
+              ))
+          .toList(),
+      onChanged: onChanged,
+      validator: validator,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(prefixIcon),
+        filled: true,
+        fillColor: AppColors.inputBackground,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+          borderSide: BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusM),
+          borderSide: BorderSide(color: AppColors.border),
+        ),
+      ),
     );
   }
 
@@ -373,8 +506,7 @@ class _RegisterScreenState extends State<RegisterScreen>
           ),
           child: Checkbox(
             value: _agreeToTerms,
-            onChanged: (value) =>
-                setState(() => _agreeToTerms = value ?? false),
+            onChanged: (value) => setState(() => _agreeToTerms = value ?? false),
           ),
         ),
         const SizedBox(width: AppDimensions.spacingS),
@@ -444,6 +576,7 @@ class _RegisterScreenState extends State<RegisterScreen>
           color: AppColors.divider,
         ),
         const SizedBox(height: AppDimensions.spacing2Xl),
+        
         RichText(
           text: TextSpan(
             text: 'Đã có tài khoản? ',
@@ -462,6 +595,7 @@ class _RegisterScreenState extends State<RegisterScreen>
           ),
         ),
         const SizedBox(height: AppDimensions.spacingL),
+        
         SizedBox(
           width: double.infinity,
           child: CustomButton(
@@ -511,17 +645,17 @@ class _RegisterScreenState extends State<RegisterScreen>
     if (value == null || value.isEmpty) {
       return 'Vui lòng nhập số điện thoại';
     }
-
+    
     final cleaned = value.replaceAll(RegExp(r'[^\d]'), '');
-
+    
     if (cleaned.length != 10) {
       return 'Số điện thoại phải có 10 chữ số';
     }
-
+    
     if (!cleaned.startsWith('0')) {
       return 'Số điện thoại phải bắt đầu bằng số 0';
     }
-
+    
     return null;
   }
 
@@ -529,12 +663,12 @@ class _RegisterScreenState extends State<RegisterScreen>
     if (value == null || value.trim().isEmpty) {
       return null; // Email is optional
     }
-
+    
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     if (!emailRegex.hasMatch(value.trim())) {
       return 'Vui lòng nhập email hợp lệ';
     }
-
+    
     return null;
   }
 
@@ -550,7 +684,7 @@ class _RegisterScreenState extends State<RegisterScreen>
 
   String? _validateStoreName(String? value) {
     if (widget.userRole != UserRole.store) return null;
-
+    
     if (value == null || value.trim().isEmpty) {
       return 'Vui lòng nhập tên cửa hàng';
     }
@@ -562,7 +696,7 @@ class _RegisterScreenState extends State<RegisterScreen>
 
   String? _validateStoreAddress(String? value) {
     if (widget.userRole != UserRole.store) return null;
-
+    
     if (value == null || value.trim().isEmpty) {
       return 'Vui lòng nhập địa chỉ cửa hàng';
     }
@@ -576,15 +710,15 @@ class _RegisterScreenState extends State<RegisterScreen>
     if (value == null || value.isEmpty) {
       return 'Vui lòng nhập mật khẩu';
     }
-
+    
     if (value.length < 8) {
       return 'Mật khẩu phải có ít nhất 8 ký tự';
     }
-
+    
     if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)').hasMatch(value)) {
       return 'Mật khẩu phải chứa chữ hoa, chữ thường và số';
     }
-
+    
     return null;
   }
 
@@ -592,11 +726,11 @@ class _RegisterScreenState extends State<RegisterScreen>
     if (value == null || value.isEmpty) {
       return 'Vui lòng xác nhận mật khẩu';
     }
-
+    
     if (value != _passwordController.text) {
       return 'Mật khẩu xác nhận không khớp';
     }
-
+    
     return null;
   }
 
@@ -612,7 +746,7 @@ class _RegisterScreenState extends State<RegisterScreen>
     try {
       // TODOhehe: Implement actual registration API call
       await Future.delayed(const Duration(seconds: 3));
-
+      
       if (mounted) {
         _showSuccessDialog();
       }

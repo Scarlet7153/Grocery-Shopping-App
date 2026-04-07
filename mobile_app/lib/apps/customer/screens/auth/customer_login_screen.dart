@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../../../core/theme/customer_theme.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
+
+import '../../bloc/customer_auth_bloc.dart';
+import '../home/customer_home_screen.dart';
 import 'customer_register_screen.dart';
 
 class CustomerLoginScreen extends StatefulWidget {
@@ -14,10 +19,40 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
+
   bool _isLoading = false;
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) {
+    return BlocListener<CustomerAuthBloc, CustomerAuthState>(
+      listener: (context, state) {
+        if (state is CustomerAuthLoading) {
+          setState(() => _isLoading = true);
+        }
+
+        if (state is CustomerAuthSuccess) {
+          setState(() => _isLoading = false);
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const CustomerHomeScreen(),
+            ),
+          );
+        }
+
+        if (state is CustomerAuthFailure) {
+          setState(() => _isLoading = false);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      },
+      child: Scaffold(
         backgroundColor: CustomerTheme.backgroundColor,
         body: SafeArea(
           child: SingleChildScrollView(
@@ -42,12 +77,13 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
             ),
           ),
         ),
-      );
+      ),
+    );
+  }
 
   Widget _buildHeader() => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Customer icon với background
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -71,11 +107,10 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Đăng nhập để bắt đầu mua sắm và đặt hàng dễ dàng.',
+            'Đăng nhập để bắt đầu mua sắm.',
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey[600],
-              height: 1.4,
             ),
           ),
         ],
@@ -85,7 +120,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
         children: [
           CustomTextField(
             label: 'Số điện thoại',
-            hint: 'Nhập số điện thoại của bạn',
+            hint: 'Nhập số điện thoại',
             controller: _phoneController,
             keyboardType: TextInputType.phone,
             prefixIcon: Icons.phone,
@@ -113,120 +148,71 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
           style: ElevatedButton.styleFrom(
             backgroundColor: CustomerTheme.primaryColor,
             foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
           ),
           child: _isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
+              ? const CircularProgressIndicator(
+                  color: Colors.white,
                 )
-              : const Text(
-                  'Đăng nhập',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+              : const Text("Đăng nhập"),
         ),
       );
 
   Widget _buildRegisterLink() => Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            'Chưa có tài khoản? ',
-            style: TextStyle(color: Colors.grey[600]),
-          ),
+          const Text("Chưa có tài khoản? "),
           GestureDetector(
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const CustomerRegisterScreen()),
-            ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const CustomerRegisterScreen(),
+                ),
+              );
+            },
             child: const Text(
-              'Đăng ký ngay',
+              "Đăng ký",
               style: TextStyle(
                 color: CustomerTheme.primaryColor,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),
         ],
       );
 
-  Widget _buildForgotPasswordLink() => Center(
-        child: GestureDetector(
-          onTap: () {
-            // TODOhehe: Navigate to forgot password
-          },
-          child: const Text(
-            'Quên mật khẩu?',
-            style: TextStyle(
-              color: CustomerTheme.primaryColor,
-              fontWeight: FontWeight.w500,
-            ),
+  Widget _buildForgotPasswordLink() => const Center(
+        child: Text(
+          "Quên mật khẩu?",
+          style: TextStyle(
+            color: CustomerTheme.primaryColor,
           ),
         ),
       );
 
   String? _validatePhone(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Vui lòng nhập số điện thoại';
-    }
-    if (value.length != 10 || !RegExp(r'^[0-9]+$').hasMatch(value)) {
-      return 'Số điện thoại không hợp lệ';
+      return "Nhập số điện thoại";
     }
     return null;
   }
 
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Vui lòng nhập mật khẩu';
-    }
-    if (value.length < 6) {
-      return 'Mật khẩu phải có ít nhất 6 ký tự';
+      return "Nhập mật khẩu";
     }
     return null;
   }
 
-  Future<void> _handleLogin() async {
+  void _handleLogin() {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
-
-    try {
-      // TODOhehe: Implement customer login API
-      await Future.delayed(const Duration(seconds: 2));
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đăng nhập thành công!'),
-            backgroundColor: CustomerTheme.primaryColor,
+    context.read<CustomerAuthBloc>().add(
+          CustomerLoginEvent(
+            _phoneController.text,
+            _passwordController.text,
           ),
         );
-        // TODOhehe: Navigate to customer home
-      }
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Đăng nhập thất bại: $error'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
   }
 
   @override

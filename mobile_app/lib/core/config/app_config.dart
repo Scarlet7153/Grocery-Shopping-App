@@ -16,7 +16,7 @@ class AppConfig {
         return 'Đi Chợ Hộ - Quản Trị Viên';
     }
   }
-  
+
   static String get appId {
     switch (currentApp) {
       case AppType.customer:

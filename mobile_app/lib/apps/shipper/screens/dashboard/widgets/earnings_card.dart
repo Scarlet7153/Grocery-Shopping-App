@@ -19,23 +19,35 @@ class EarningsCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Thu nhập hôm nay',
-                  style: TextStyle(
-                      fontSize: 16, color: ShipperTheme.textColor),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ) ??
+                      TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 Text(
                   '${amount.toStringAsFixed(0)}₫',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: ShipperTheme.primaryColor,
-                  ),
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            color: ShipperTheme.primaryColor,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 24,
+                          ) ??
+                      const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: ShipperTheme.primaryColor,
+                      ),
                 ),
               ],
             ),
-            const Icon(
+            Icon(
               Icons.attach_money,
               size: 48,
               color: ShipperTheme.primaryColor,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'buttons/custom_button.dart';  // Fixed import path
+import 'buttons/custom_button.dart'; // Fixed import path
 
 class CustomErrorWidget extends StatelessWidget {
   final String? title;
@@ -20,7 +20,8 @@ class CustomErrorWidget extends StatelessWidget {
   const CustomErrorWidget.network({
     super.key,
     this.title = 'Lỗi kết nối',
-    this.message = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối internet.',
+    this.message =
+        'Không thể kết nối đến server. Vui lòng kiểm tra kết nối internet.',
     this.buttonText = 'Thử lại',
     this.onRetry,
   }) : icon = const Icon(Icons.wifi_off, size: 64, color: Colors.red);
@@ -48,9 +49,9 @@ class CustomErrorWidget extends StatelessWidget {
             Text(
               title!,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFFD32F2F),
-              ),
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFFD32F2F),
+                  ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16.0),
@@ -58,16 +59,17 @@ class CustomErrorWidget extends StatelessWidget {
           Text(
             message,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: const Color(0xFF757575),
-            ),
+                  color: const Color(0xFF757575),
+                ),
             textAlign: TextAlign.center,
           ),
           if (onRetry != null && buttonText != null) ...[
             const SizedBox(height: 24.0),
-            CustomButton(  // Fixed - Now properly imports and uses CustomButton
+            CustomButton(
+              // Fixed - Now properly imports and uses CustomButton
               text: buttonText!,
               onPressed: onRetry,
-              type: ButtonType.primary,  // Use proper ButtonType enum
+              type: ButtonType.primary, // Use proper ButtonType enum
               customColor: const Color(0xFF4CAF50),
             ),
           ],

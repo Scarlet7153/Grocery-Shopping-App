@@ -49,6 +49,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
   bool _obscureText = true;
   late FocusNode _focusNode;
   bool _isFocused = false;
+  String? _validationError;
 
   @override
   void initState() {
@@ -70,15 +71,18 @@ class _CustomTextFieldState extends State<CustomTextField> {
     });
   }
 
+  String? get _displayError => widget.errorText ?? _validationError;
+
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (widget.label != null) _buildLabel(),
-        if (widget.label != null) const SizedBox(height: AppDimensions.spacingS),
+        if (widget.label != null)
+          const SizedBox(height: AppDimensions.spacingS),
         _buildTextField(),
-        if (widget.errorText != null) _buildErrorText(),
+        if (_displayError != null) _buildErrorText(),
       ],
     );
   }
@@ -110,8 +114,8 @@ class _CustomTextFieldState extends State<CustomTextField> {
       child: TextFormField(
         controller: widget.controller,
         focusNode: _focusNode,
-        validator: widget.validator,
-        onChanged: widget.onChanged,
+        validator: (_) => null,
+        onChanged: _onTextChanged,
         obscureText: widget.isPassword ? _obscureText : false,
         keyboardType: widget.keyboardType,
         maxLines: widget.maxLines,
@@ -121,6 +125,24 @@ class _CustomTextFieldState extends State<CustomTextField> {
         decoration: _buildInputDecoration(),
       ),
     );
+  }
+
+  void _onTextChanged(String value) {
+    final error = widget.validator?.call(value);
+    final newError = (error != null && error.isNotEmpty) ? error : null;
+    if (newError != _validationError) {
+      setState(() => _validationError = newError);
+    }
+    widget.onChanged?.call(value);
+  }
+
+  bool validate() {
+    final value = widget.controller?.text ?? '';
+    final error = widget.validator?.call(value);
+    setState(() {
+      _validationError = (error != null && error.isNotEmpty) ? error : null;
+    });
+    return _validationError == null;
   }
 
   Widget _buildErrorText() {
@@ -140,7 +162,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
           const SizedBox(width: AppDimensions.spacingXs),
           Expanded(
             child: Text(
-              widget.errorText!,
+              _displayError!,
               style: AppTextStyles.inputError,
             ),
           ),
@@ -156,9 +178,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
         color: _getBorderColor(),
         width: _isFocused ? 2.0 : 1.0,
       ),
-      color: widget.enabled 
-          ? AppColors.surface 
-          : AppColors.surfaceVariant,
+      color: widget.enabled ? AppColors.surface : AppColors.surfaceVariant,
     );
   }
 
@@ -176,14 +196,16 @@ class _CustomTextFieldState extends State<CustomTextField> {
       suffixIcon: _buildSuffixIcon(),
       border: InputBorder.none,
       contentPadding: EdgeInsets.symmetric(
-        horizontal: widget.prefixIcon != null 
-            ? AppDimensions.spacingM 
+        horizontal: widget.prefixIcon != null
+            ? AppDimensions.spacingM
             : AppDimensions.spacingL,
-        vertical: widget.maxLines == 1 
-            ? AppDimensions.spacingM 
+        vertical: widget.maxLines == 1
+            ? AppDimensions.spacingM
             : AppDimensions.spacingL,
       ),
       isDense: true,
+      errorText: null,
+      errorStyle: const TextStyle(height: 0, fontSize: 0),
     );
   }
 
@@ -191,7 +213,9 @@ class _CustomTextFieldState extends State<CustomTextField> {
     if (widget.isPassword) {
       return IconButton(
         icon: Icon(
-          _obscureText ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+          _obscureText
+              ? Icons.visibility_outlined
+              : Icons.visibility_off_outlined,
           color: _getSuffixIconColor(),
           size: AppDimensions.iconM,
         ),
@@ -202,49 +226,39 @@ class _CustomTextFieldState extends State<CustomTextField> {
     return widget.suffixWidget;
   }
 
-  // Helper methods for colors and styling
-
   Color _getBorderColor() {
-    if (widget.errorText != null) {
+    if (_displayError != null) {
       return AppColors.error;
     }
-    
     if (_isFocused) {
       return widget.focusColor ?? AppColors.storePrimary;
     }
-    
     if (!widget.enabled) {
       return AppColors.textHint.withValues(alpha: 0.5);
     }
-    
     return AppColors.border;
   }
 
   Color _getLabelColor() {
-    if (widget.errorText != null) {
+    if (_displayError != null) {
       return AppColors.error;
     }
-    
     if (_isFocused) {
       return widget.focusColor ?? AppColors.storePrimary;
     }
-    
     return AppColors.textSecondary;
   }
 
   Color _getPrefixIconColor() {
-    if (widget.errorText != null) {
+    if (_displayError != null) {
       return AppColors.error;
     }
-    
     if (_isFocused) {
       return widget.focusColor ?? AppColors.storePrimary;
     }
-    
     if (!widget.enabled) {
       return AppColors.textHint;
     }
-    
     return AppColors.textSecondary;
   }
 
@@ -252,7 +266,6 @@ class _CustomTextFieldState extends State<CustomTextField> {
     if (_isFocused) {
       return widget.focusColor ?? AppColors.storePrimary;
     }
-    
     return AppColors.textSecondary;
   }
 }

@@ -3,10 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:grocery_shopping_app/core/constants/app_constants.dart';
 import 'package:grocery_shopping_app/core/network/network_config.dart';
 import 'package:grocery_shopping_app/apps/shipper/models/shipper_order.dart';
+import 'package:grocery_shopping_app/apps/shipper/models/order_filter.dart';
 
-/// Real repository which calls the API defined in the provided Postman collection.
-///
-/// It uses [dio] for HTTP requests and stores tokens in [SharedPreferences].
 class ShipperRepository {
   final Dio _dio;
 
@@ -15,8 +13,8 @@ class ShipperRepository {
   static Dio _createDio() {
     final dio = NetworkConfig.createDio();
 
-    // add auth interceptor to attach token from storage
-    dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) async {
+    dio.interceptors
+        .add(InterceptorsWrapper(onRequest: (options, handler) async {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString(AppConstants.accessTokenKey);
       if (token != null && token.isNotEmpty) {
@@ -25,10 +23,30 @@ class ShipperRepository {
       return handler.next(options);
     }));
 
+    dio.interceptors.add(InterceptorsWrapper(onError: (error, handler) {
+      final message = _extractErrorMessage(error);
+      throw ShipperApiException(message);
+    }));
+
     return dio;
   }
 
-  /// Send login request. Returns true if success and token was saved.
+  static String _extractErrorMessage(DioException e) {
+    if (e.response?.data != null) {
+      final data = e.response!.data;
+      if (data is Map<String, dynamic>) {
+        return data['message'] ??
+            data['error'] ??
+            AppConstants.serverErrorMessage;
+      }
+    }
+    if (e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.receiveTimeout) {
+      return AppConstants.networkErrorMessage;
+    }
+    return AppConstants.serverErrorMessage;
+  }
+
   Future<bool> login({required String phone, required String password}) async {
     final response = await _dio.post(AppConstants.loginEndpoint, data: {
       'phoneNumber': phone,
@@ -49,45 +67,56 @@ class ShipperRepository {
     return false;
   }
 
-  /// Register a new shipper/user with given [info] map. Returns true if server
-  /// responded with success flag.
-  Future<bool> register(Map<String, dynamic> info) async {
-    final response = await _dio.post(AppConstants.registerEndpoint, data: info);
+  Future<bool> register({
+    required String phoneNumber,
+    required String password,
+    required String fullName,
+    String? address,
+  }) async {
+    final response = await _dio.post(AppConstants.registerEndpoint, data: {
+      'phoneNumber': phoneNumber,
+      'password': password,
+      'fullName': fullName,
+      'role': 'SHIPPER',
+      if (address != null && address.isNotEmpty) 'address': address,
+    });
     if (response.statusCode == 201) {
       final data = response.data as Map<String, dynamic>;
-      return data['success'] == true;
+      if (data['success'] == true && data['data'] != null) {
+        final token = data['data']['token'] as String?;
+        if (token != null) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(AppConstants.accessTokenKey, token);
+        }
+        return true;
+      }
     }
     return false;
   }
 
-  /// Fetch dashboard data for the shipper role.
-  ///
-  /// Returns a map containing both available orders and my deliveries.
   Future<Map<String, dynamic>> fetchDashboardData() async {
-    final result = <String, dynamic>{};
-
     final availableOrders = await getAvailableOrders();
     final deliveries = await getMyDeliveries();
 
-    // Basic stats
-    final deliveredCount = deliveries.where((o) => o.status == OrderStatus.DELIVERED).length;
+    final deliveredCount =
+        deliveries.where((o) => o.status == OrderStatus.DELIVERED).length;
     final totalOrders = deliveries.length;
-    final acceptanceRate = totalOrders == 0 ? 0.0 : (deliveredCount / totalOrders) * 100;
+    final acceptanceRate =
+        totalOrders == 0 ? 0.0 : (deliveredCount / totalOrders) * 100;
     final earnings = deliveries
         .where((o) => o.status == OrderStatus.DELIVERED)
         .fold<double>(0.0, (prev, e) => prev + e.grandTotal);
 
-    result['availableOrders'] = availableOrders;
-    result['deliveries'] = deliveries;
-    result['isOnline'] = true;
-    result['earnings'] = earnings;
-    result['completedCount'] = deliveredCount;
-    result['acceptanceRate'] = acceptanceRate;
-
-    return result;
+    return {
+      'availableOrders': availableOrders,
+      'deliveries': deliveries,
+      'isOnline': true,
+      'earnings': earnings,
+      'completedCount': deliveredCount,
+      'acceptanceRate': acceptanceRate,
+    };
   }
 
-  /// Fetch orders that are available for the shipper to accept.
   Future<List<ShipperOrder>> getAvailableOrders() async {
     final response = await _dio.get(AppConstants.availableOrdersEndpoint);
     if (response.statusCode == 200) {
@@ -102,7 +131,6 @@ class ShipperRepository {
     return [];
   }
 
-  /// Fetch the list of deliveries assigned to the current shipper.
   Future<List<ShipperOrder>> getMyDeliveries() async {
     final response = await _dio.get(AppConstants.myDeliveriesEndpoint);
     if (response.statusCode == 200) {
@@ -117,46 +145,150 @@ class ShipperRepository {
     return [];
   }
 
-  String _formatEndpoint(String template, int id) {
-    return template.replaceAll(':id', id.toString());
+  /// Lọc đơn hàng theo filter
+  ///
+  /// Các thông số filter:
+  /// - maxDistance: khoảng cách tối đa (km)
+  /// - minEarning: thu nhập tối thiểu (VNĐ)
+  /// - avoidPickup: chỉ lấy những đơn đã sẵn (không cần pickup)
+  /// - maxItems: tối đa sản phẩm trong đơn
+  ///
+  /// Trả về danh sách đơn hàng đã lọc
+  List<ShipperOrder> filterOrders(
+    List<ShipperOrder> orders,
+    OrderFilter filter,
+  ) {
+    return orders.where((order) {
+      // Lọc theo khoảng cách
+      if (filter.maxDistance != null &&
+          (order.distanceKm ?? 0) > filter.maxDistance!) {
+        return false;
+      }
+
+      // Lọc theo thu nhập tối thiểu
+      if (filter.minEarning != null && order.grandTotal < filter.minEarning!) {
+        return false;
+      }
+
+      // Lọc theo tránh pickup (nếu bật)
+      if (filter.avoidPickup == true && order.status == OrderStatus.PENDING) {
+        // Nếu đơn còn PENDING (chưa confirm), nghĩa là chưa pickup
+        return false;
+      }
+
+      // Lọc theo số lượng sản phẩm
+      if (filter.maxItems != null &&
+          order.items.isNotEmpty &&
+          order.items.length > filter.maxItems!) {
+        return false;
+      }
+
+      // Order pass all filters
+      return true;
+    }).toList();
   }
 
-  /// Assigns the current shipper to the order.
+  Future<ShipperOrder?> getOrderById(int orderId) async {
+    final uri =
+        AppConstants.orderByIdEndpoint.replaceAll('{id}', orderId.toString());
+    final response = await _dio.get(uri);
+    if (response.statusCode == 200) {
+      final data = response.data;
+      final payload =
+          (data is Map && data['data'] != null) ? data['data'] : data;
+      return ShipperOrder.fromJson(payload as Map<String, dynamic>);
+    }
+    return null;
+  }
+
   Future<ShipperOrder?> assignOrder(int orderId) async {
-    final uri = _formatEndpoint(AppConstants.assignShipperEndpoint, orderId);
+    final uri = AppConstants.assignShipperEndpoint
+        .replaceAll('{id}', orderId.toString());
     final response = await _dio.post(uri);
     if (response.statusCode == 200) {
       final data = response.data;
-      final payload = (data is Map && data['data'] != null) ? data['data'] : data;
+      final payload =
+          (data is Map && data['data'] != null) ? data['data'] : data;
       return ShipperOrder.fromJson(payload as Map<String, dynamic>);
     }
     return null;
   }
 
-  /// Updates order status (DELIVERED, DELIVERING, etc.).
   Future<ShipperOrder?> updateOrderStatus(int orderId, String newStatus,
-      {String? podImageUrl}) async {
-    final body = {'newStatus': newStatus};
+      {String? podImageUrl, String? cancelReason}) async {
+    final uri =
+        AppConstants.orderStatusEndpoint.replaceAll('{id}', orderId.toString());
+    final body = <String, dynamic>{'newStatus': newStatus};
     if (podImageUrl != null) {
       body['podImageUrl'] = podImageUrl;
     }
-    final uri = _formatEndpoint(AppConstants.orderStatusEndpoint, orderId);
+    if (cancelReason != null) {
+      body['cancelReason'] = cancelReason;
+    }
     final response = await _dio.patch(uri, data: body);
     if (response.statusCode == 200) {
       final data = response.data;
-      final payload = (data is Map && data['data'] != null) ? data['data'] : data;
+      final payload =
+          (data is Map && data['data'] != null) ? data['data'] : data;
       return ShipperOrder.fromJson(payload as Map<String, dynamic>);
     }
     return null;
   }
 
-  /// Clear saved token (logout)
+  Future<Map<String, dynamic>?> getCurrentUser() async {
+    final response = await _dio.get(AppConstants.getCurrentUserEndpoint);
+    if (response.statusCode == 200) {
+      final data = response.data as Map<String, dynamic>;
+      if (data['success'] == true && data['data'] != null) {
+        return data['data'] as Map<String, dynamic>;
+      }
+    }
+    return null;
+  }
+
+  Future<bool> isLoggedIn() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString(AppConstants.accessTokenKey);
+    return token != null && token.isNotEmpty;
+  }
+
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(AppConstants.accessTokenKey);
-    // optionally notify server
     try {
       await _dio.post(AppConstants.logoutEndpoint);
     } catch (_) {}
   }
+
+  Future<bool> changePassword({
+    required String oldPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    final response = await _dio.post('/users/change-password', data: {
+      'oldPassword': oldPassword,
+      'newPassword': newPassword,
+      'confirmPassword': confirmPassword,
+    });
+    return response.statusCode == 200;
+  }
+
+  Future<bool> updateProfile({
+    required String fullName,
+    String? address,
+  }) async {
+    final response = await _dio.put('/users/profile', data: {
+      'fullName': fullName,
+      if (address != null) 'address': address,
+    });
+    return response.statusCode == 200;
+  }
+}
+
+class ShipperApiException implements Exception {
+  final String message;
+  ShipperApiException(this.message);
+
+  @override
+  String toString() => message;
 }

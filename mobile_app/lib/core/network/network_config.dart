@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import '../constants/app_constants.dart';
 
 /// Network configuration and Dio setup
@@ -8,8 +7,10 @@ class NetworkConfig {
     final dio = Dio(
       BaseOptions(
         baseUrl: AppConstants.baseUrl,
-        connectTimeout: const Duration(milliseconds: AppConstants.connectionTimeoutMs),
-        receiveTimeout: const Duration(milliseconds: AppConstants.receiveTimeoutMs),
+        connectTimeout:
+            const Duration(milliseconds: AppConstants.connectionTimeoutMs),
+        receiveTimeout:
+            const Duration(milliseconds: AppConstants.receiveTimeoutMs),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -17,14 +18,16 @@ class NetworkConfig {
       ),
     );
 
-    // Add pretty logger for debug mode
-    dio.interceptors.add(
-      PrettyDioLogger(
-        requestHeader: true,
-        requestBody: true,
-        responseBody: true,
-      ),
-    );
+    // Logger disabled in production
+    // To enable, uncomment below:
+    // dio.interceptors.add(
+    //   PrettyDioLogger(
+    //     requestHeader: true,
+    //     requestBody: false,
+    //     responseBody: false,
+    //     error: true,
+    //   ),
+    // );
 
     return dio;
   }

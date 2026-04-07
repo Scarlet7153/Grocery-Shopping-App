@@ -473,7 +473,7 @@ class _RegisterScreenState extends State<RegisterScreen>
         labelText: label,
         prefixIcon: Icon(prefixIcon),
         filled: true,
-        fillColor: AppColors.inputBackground,
+        fillColor: AppColors.surfaceVariant,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusM),
           borderSide: BorderSide(color: AppColors.border),

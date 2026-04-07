@@ -1,6 +1,6 @@
 // import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart';
 // import 'package:mockito/annotations.dart';
 
 // Mock classes - tạm thời không import từ files khác

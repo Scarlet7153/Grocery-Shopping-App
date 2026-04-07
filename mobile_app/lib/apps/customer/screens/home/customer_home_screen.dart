@@ -10,7 +10,9 @@ import '../../bloc/customer_home_bloc.dart';
 import '../cart/customer_cart_screen.dart';
 import '../orders/customer_orders_screen.dart';
 import '../profile/customer_profile_screen.dart';
+import '../profile/recipient_info_screen.dart';
 import 'home_app_bar.dart';
+import 'product_search_screen.dart';
 import 'product_detail_screen.dart';
 import 'widgets/home_header.dart';
 
@@ -54,7 +56,19 @@ class _HomeShellState extends State<_HomeShell> {
           (AuthSession.address == null || AuthSession.address!.isEmpty)
               ? 'Ch\u01b0a c\u00f3 \u0111\u1ecba ch\u1ec9'
               : AuthSession.address!;
-      appBar = CustomerHomeHeader(name: name, location: location);
+      appBar = CustomerHomeHeader(
+        name: name,
+        location: location,
+        onTap: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const RecipientInfoScreen(),
+            ),
+          );
+          if (mounted) setState(() {});
+        },
+      );
     } else if (_currentIndex == 1) {
       body = const CustomerCartScreen();
       appBar = AppBar(title: const Text('Gi\u1ecf h\u00e0ng'));
@@ -121,6 +135,7 @@ class _HomeViewState extends State<_HomeView> {
                     padding: const EdgeInsets.all(12),
                     child: TextField(
                       controller: _searchController,
+                      textInputAction: TextInputAction.search,
                       onChanged: (value) {
                         _debounce?.cancel();
                         _debounce =
@@ -130,9 +145,37 @@ class _HomeViewState extends State<_HomeView> {
                               );
                         });
                       },
+                      onSubmitted: (value) {
+                        final keyword = value.trim();
+                        if (keyword.isEmpty) return;
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ProductSearchScreen(
+                              query: keyword,
+                              products: state.products,
+                            ),
+                          ),
+                        );
+                      },
                       decoration: InputDecoration(
                         hintText: 'T\u00ecm s\u1ea3n ph\u1ea9m... ',
-                        prefixIcon: const Icon(Icons.search),
+                        prefixIcon: IconButton(
+                          icon: const Icon(Icons.search),
+                          onPressed: () {
+                            final keyword = _searchController.text.trim();
+                            if (keyword.isEmpty) return;
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ProductSearchScreen(
+                                  query: keyword,
+                                  products: state.products,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                         filled: true,
                         fillColor: Colors.white,
                         contentPadding: const EdgeInsets.symmetric(
@@ -183,9 +226,15 @@ class _HomeViewState extends State<_HomeView> {
                                     offset: _searchController.text.length,
                                   ),
                                 );
-                                context.read<CustomerHomeBloc>().add(
-                                      SearchProductsEvent(product.name),
-                                    );
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => ProductSearchScreen(
+                                      query: product.name,
+                                      products: state.products,
+                                    ),
+                                  ),
+                                );
                               },
                             );
                           },

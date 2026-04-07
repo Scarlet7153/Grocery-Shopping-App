@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/location/province_api.dart';
 import '../../../../core/theme/customer_theme.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../../bloc/customer_auth_bloc.dart';
@@ -20,6 +21,74 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _agreeToTerms = false;
+
+  final _provinceApi = ProvinceApi();
+  List<LocationItem> _provinces = [];
+  List<LocationItem> _districts = [];
+  List<LocationItem> _wards = [];
+  LocationItem? _selectedProvince;
+  LocationItem? _selectedDistrict;
+  LocationItem? _selectedWard;
+  bool _isLoadingLocation = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProvinces();
+  }
+
+  Future<void> _loadProvinces() async {
+    setState(() => _isLoadingLocation = true);
+    try {
+      _provinces = await _provinceApi.getProvinces();
+    } finally {
+      if (mounted) setState(() => _isLoadingLocation = false);
+    }
+  }
+
+  Future<void> _onProvinceChanged(LocationItem? item) async {
+    setState(() {
+      _selectedProvince = item;
+      _selectedDistrict = null;
+      _selectedWard = null;
+      _districts = [];
+      _wards = [];
+    });
+    _updateAddressText();
+    if (item == null) return;
+    final districts = await _provinceApi.getDistricts(item.code);
+    if (mounted) {
+      setState(() => _districts = districts);
+    }
+  }
+
+  Future<void> _onDistrictChanged(LocationItem? item) async {
+    setState(() {
+      _selectedDistrict = item;
+      _selectedWard = null;
+      _wards = [];
+    });
+    _updateAddressText();
+    if (item == null) return;
+    final wards = await _provinceApi.getWards(item.code);
+    if (mounted) {
+      setState(() => _wards = wards);
+    }
+  }
+
+  void _onWardChanged(LocationItem? item) {
+    setState(() => _selectedWard = item);
+    _updateAddressText();
+  }
+
+  void _updateAddressText() {
+    final parts = [
+      _selectedWard?.name,
+      _selectedDistrict?.name,
+      _selectedProvince?.name,
+    ].where((e) => e != null && e!.isNotEmpty).map((e) => e!).toList();
+    _addressController.text = parts.join(', ');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -172,14 +241,34 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          CustomTextField(
-            label: 'Địa chỉ giao hàng *',
-            hint: 'Nhập địa chỉ nhận hàng',
-            controller: _addressController,
-            prefixIcon: Icons.location_on,
-            validator: _validateAddress,
-            focusColor: CustomerTheme.primaryColor,
-            maxLines: 2,
+          _buildLocationDropdown(
+            label: 'Tỉnh/Thành phố *',
+            value: _selectedProvince,
+            items: _provinces,
+            onChanged: _isLoadingLocation ? null : _onProvinceChanged,
+            prefixIcon: Icons.location_city_outlined,
+          ),
+          const SizedBox(height: 16),
+          _buildLocationDropdown(
+            label: 'Quận/Huyện *',
+            value: _selectedDistrict,
+            items: _districts,
+            onChanged: _selectedProvince == null ? null : _onDistrictChanged,
+            prefixIcon: Icons.map_outlined,
+          ),
+          const SizedBox(height: 16),
+          _buildLocationDropdown(
+            label: 'Phường/Xã *',
+            value: _selectedWard,
+            items: _wards,
+            onChanged: _selectedDistrict == null ? null : _onWardChanged,
+            prefixIcon: Icons.place_outlined,
+            validator: (value) {
+              if (value == null) {
+                return 'Vui lòng chọn địa chỉ';
+              }
+              return null;
+            },
           ),
         ],
       );
@@ -326,11 +415,10 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
   }
 
   String? _validateAddress(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Vui lòng nhập địa chỉ giao hàng';
-    }
-    if (value.trim().length < 5) {
-      return 'Địa chỉ phải có ít nhất 5 ký tự';
+    if (_selectedProvince == null ||
+        _selectedDistrict == null ||
+        _selectedWard == null) {
+      return 'Vui lòng chọn đầy đủ địa chỉ';
     }
     return null;
   }
@@ -373,5 +461,40 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
     _addressController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Widget _buildLocationDropdown({
+    required String label,
+    required List<LocationItem> items,
+    required IconData prefixIcon,
+    LocationItem? value,
+    FormFieldValidator<LocationItem>? validator,
+    ValueChanged<LocationItem?>? onChanged,
+  }) {
+    return DropdownButtonFormField<LocationItem>(
+      value: value,
+      items: items
+          .map((item) => DropdownMenuItem<LocationItem>(
+                value: item,
+                child: Text(item.name),
+              ))
+          .toList(),
+      onChanged: onChanged,
+      validator: validator ?? (_) => _validateAddress(null),
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(prefixIcon),
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+      ),
+    );
   }
 }

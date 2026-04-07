@@ -101,7 +101,7 @@ class HomeApi {
         description: 'Thịt ba rọi tươi ngon',
         imageUrl:
             'assets/images/thit_ba_roi.png',
-        storeName: 'Tap hoa Co Ba',
+        storeName: 'Sieu thi Mini B',
         categoryName: 'Thit',
         status: 'AVAILABLE',
         units: [
@@ -137,7 +137,7 @@ class HomeApi {
         description: 'Cam ngọt nhập khẩu',
         imageUrl:
             'assets/images/cam_tuoi.png',
-        storeName: 'Cua hang Thuc pham Xanh',
+        storeName: 'Tap hoa Co Ba',
         categoryName: 'Trai cay',
         status: 'AVAILABLE',
         units: [

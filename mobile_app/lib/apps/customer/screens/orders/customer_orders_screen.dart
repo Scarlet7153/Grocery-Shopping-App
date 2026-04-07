@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/format/formatters.dart';
+import '../../../../core/auth/auth_session.dart';
 import '../../../../core/network/api_client.dart';
 
 class CustomerOrdersScreen extends StatefulWidget {
@@ -37,7 +38,11 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
       }
     } catch (e) {
       _error = 'Kh\u00f4ng th\u1ec3 t\u1ea3i \u0111\u01a1n h\u00e0ng';
+      _orders = AuthSession.localOrders;
     } finally {
+      if (_orders.isEmpty && AuthSession.localOrders.isNotEmpty) {
+        _orders = AuthSession.localOrders;
+      }
       if (mounted) {
         setState(() => _loading = false);
       }

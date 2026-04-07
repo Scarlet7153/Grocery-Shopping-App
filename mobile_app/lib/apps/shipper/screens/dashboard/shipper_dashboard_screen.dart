@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:grocery_shopping_app/core/theme/shipper_theme.dart';
 import 'package:grocery_shopping_app/apps/shipper/bloc/shipper_dashboard_bloc.dart';
 import 'package:grocery_shopping_app/apps/shipper/bloc/order_filter_bloc.dart';
@@ -13,6 +14,7 @@ import 'package:grocery_shopping_app/apps/shipper/screens/dashboard/widgets/onli
 import 'package:grocery_shopping_app/apps/shipper/screens/orders/filter_button_widget.dart';
 import 'package:grocery_shopping_app/apps/shipper/screens/profile/shipper_profile_screen.dart';
 import 'package:grocery_shopping_app/apps/shipper/screens/delivery/delivery_flow_screen.dart';
+import 'package:grocery_shopping_app/apps/shipper/screens/delivery/order_map_screen.dart';
 import 'package:grocery_shopping_app/apps/shipper/screens/order_detail/order_detail_screen.dart';
 
 /// A tiny fake repository that returns sample data immediately. Used by the
@@ -133,6 +135,41 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
       (_) => _refreshData(),
     );
     _loadUserProfile();
+    _requestLocationPermission();
+  }
+
+  Future<void> _requestLocationPermission() async {
+    if (widget.preview) return;
+
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        debugPrint('Location services are disabled');
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          debugPrint('Location permissions are denied');
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        debugPrint('Location permissions are permanently denied');
+        return;
+      }
+
+      // Pre-fetch location to warm up
+      await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      debugPrint('Location permission granted and position fetched');
+    } catch (e) {
+      debugPrint('Error requesting location permission: $e');
+    }
   }
 
   Future<void> _loadUserProfile() async {
@@ -365,14 +402,26 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                       return AvailableOrdersList(
                         orders: displayOrders,
                         onAccept: (order) async {
-                          return context
+                          // Accept order via API
+                          final updatedOrder = await context
                               .read<ShipperDashboardBloc>()
                               .acceptOrder(order.id);
-                        },
-                        onComplete: (order) async {
-                          return context
-                              .read<ShipperDashboardBloc>()
-                              .completeOrder(order.id);
+
+                          // Navigate to map immediately after accepting
+                          if (updatedOrder != null && context.mounted) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => OrderMapScreen(
+                                  order: updatedOrder,
+                                  showDeliveryRoute:
+                                      false, // Show route to store first
+                                ),
+                              ),
+                            );
+                          }
+
+                          return updatedOrder;
                         },
                       );
                     },

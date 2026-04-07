@@ -1,13 +1,17 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../bloc/shipper_dashboard_bloc.dart';
 import '../../models/shipper_order.dart';
+import '../../repository/shipper_repository.dart';
 import '../../services/routing_service.dart';
 import '../../../../core/theme/shipper_theme.dart';
 import 'delivery_confirmation_screen.dart';
+import '../order_detail/order_detail_screen.dart';
 
 class OrderMapScreen extends StatefulWidget {
   final ShipperOrder order;
@@ -27,20 +31,30 @@ class OrderMapScreen extends StatefulWidget {
   State<OrderMapScreen> createState() => _OrderMapScreenState();
 }
 
-class _OrderMapScreenState extends State<OrderMapScreen> {
+class _OrderMapScreenState extends State<OrderMapScreen>
+    with TickerProviderStateMixin {
   final MapController _mapController = MapController();
+  late ShipperOrder _order;
   LatLng? _currentPosition;
   late LatLng _destination = const LatLng(10.762622, 106.660172);
   final List<LatLng> _storeLocations = [];
   final List<LatLng> _routePoints = [];
   bool _isLoading = true;
   bool _isLoadingRoute = false;
+  bool _isUpdatingStatus = false;
   bool _isDelivering = false; // Track delivery status
+  bool _isNavigating = false; // Navigation mode - map rotates with heading
+  double _heading = 0; // Current heading/direction
   String? _error;
   MultiStopRouteResult? _routeResult;
   StreamSubscription<Position>? _positionStream;
   final GraphHopperRoutingService _routingService;
   bool _showDirections = false;
+
+  // Animation controllers for navigation transition
+  AnimationController? _navAnimationController;
+  Animation<double>? _zoomAnimation;
+  Animation<double>? _rotationAnimation;
 
   _OrderMapScreenState()
       : _routingService = GraphHopperRoutingService(
@@ -49,13 +63,37 @@ class _OrderMapScreenState extends State<OrderMapScreen> {
   @override
   void initState() {
     super.initState();
+    _order = widget.order;
+    // Nếu order đã ở trạng thái DELIVERING hoặc DELIVERED, tự động bật chế độ giao hàng
+    _isDelivering = _order.status == OrderStatus.DELIVERING ||
+        _order.status == OrderStatus.DELIVERED;
+    // Load lại trạng thái order mới nhất từ server
+    _refreshOrderStatus();
     _initLocations();
     _startLocationTracking();
+  }
+
+  Future<void> _refreshOrderStatus() async {
+    try {
+      final repository = context.read<ShipperRepository>();
+      final freshOrder = await repository.getOrderById(_order.id);
+      if (freshOrder != null && mounted) {
+        setState(() {
+          _order = freshOrder;
+          // Cập nhật lại _isDelivering dựa trên status mới
+          _isDelivering = _order.status == OrderStatus.DELIVERING ||
+              _order.status == OrderStatus.DELIVERED;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error refreshing order status: $e');
+    }
   }
 
   @override
   void dispose() {
     _positionStream?.cancel();
+    _navAnimationController?.dispose();
     _mapController.dispose();
     super.dispose();
   }
@@ -78,7 +116,8 @@ class _OrderMapScreenState extends State<OrderMapScreen> {
         _currentPosition = LatLng(position.latitude, position.longitude);
       });
 
-      _setupMarkers();
+      await _setupMarkersAsync();
+      setState(() {});
       await _fetchMultiStopRoute();
 
       setState(() => _isLoading = false);
@@ -96,16 +135,24 @@ class _OrderMapScreenState extends State<OrderMapScreen> {
     setState(() => _isLoadingRoute = true);
 
     try {
-      final waypoints = <LatLng>[
-        _currentPosition!,
-        ..._storeLocations,
-        _destination
-      ];
-      final labels = <String>['Vị trí hiện tại', ..._storeLabels, 'Khách hàng'];
+      // Nếu đang ở PICKING_UP và chưa ấn "Bắt đầu giao hàng",
+      // chỉ hiển thị route đến store (không đến khách hàng)
+      final isGoingToStoreOnly = _order.status == OrderStatus.PICKING_UP &&
+          !_isDelivering &&
+          !widget.showDeliveryRoute;
+
+      final waypoints = isGoingToStoreOnly
+          ? <LatLng>[_currentPosition!, ..._storeLocations]
+          : <LatLng>[_currentPosition!, ..._storeLocations, _destination];
+
+      final labels = isGoingToStoreOnly
+          ? <String>['Vị trí hiện tại', ..._storeLabels]
+          : <String>['Vị trí hiện tại', ..._storeLabels, 'Khách hàng'];
 
       final result = await _routingService.getMultiStopRoute(
         waypoints: waypoints,
         labels: labels,
+        profile: 'car',
       );
 
       _routePoints.clear();
@@ -130,16 +177,50 @@ class _OrderMapScreenState extends State<OrderMapScreen> {
     _positionStream = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.high,
-        distanceFilter: 50,
+        distanceFilter: 10, // Update more frequently for navigation
       ),
     ).listen((Position position) {
       if (mounted) {
         setState(() {
           _currentPosition = LatLng(position.latitude, position.longitude);
+          _heading = position.heading; // Get heading direction
         });
         _updateCurrentMarker();
+
+        // Auto-rotate map when in navigation mode
+        if (_isNavigating && _currentPosition != null) {
+          _updateNavigationCamera();
+        }
       }
     });
+  }
+
+  void _updateNavigationCamera() {
+    if (_currentPosition == null) return;
+
+    // Rotate map to match heading (subtract 90 or adjust based on your marker orientation)
+    // Heading 0 = North, 90 = East, 180 = South, 270 = West
+    // We want the map to rotate so the top is always the direction of travel
+    final rotation =
+        360 - _heading; // Invert because flutter_map rotates counter-clockwise
+
+    _mapController.move(_currentPosition!, _mapController.camera.zoom);
+    _mapController.rotate(rotation);
+  }
+
+  void _toggleNavigationMode() {
+    setState(() {
+      _isNavigating = !_isNavigating;
+    });
+
+    if (_isNavigating && _currentPosition != null) {
+      // Enter navigation mode - center on current position and start rotating
+      _mapController.move(_currentPosition!, 18); // Zoom in closer
+      _updateNavigationCamera();
+    } else {
+      // Exit navigation mode - reset rotation
+      _mapController.rotate(0);
+    }
   }
 
   Future<bool> _checkLocationPermission() async {
@@ -160,12 +241,57 @@ class _OrderMapScreenState extends State<OrderMapScreen> {
     final order = widget.order;
     if (order.stores.isNotEmpty) {
       for (final store in order.stores) {
-        _storeLocations.add(_geocodeAddress(store.address));
+        _storeLocations.add(_parseAddress(store.address));
       }
     } else {
-      _storeLocations.add(_geocodeAddress(order.storeAddress));
+      _storeLocations.add(_parseAddress(order.storeAddress));
     }
-    _destination = _geocodeAddress(order.deliveryAddress);
+    _destination = _parseAddress(order.deliveryAddress);
+  }
+
+  Future<void> _setupMarkersAsync() async {
+    _storeLocations.clear();
+    final order = widget.order;
+    bool hasGeocodingError = false;
+
+    if (order.stores.isNotEmpty) {
+      for (final store in order.stores) {
+        try {
+          final location = await _geocodeAddressAsync(store.address);
+          _storeLocations.add(location);
+        } catch (e) {
+          debugPrint('Geocoding failed for store ${store.name}: $e');
+          hasGeocodingError = true;
+          _storeLocations.add(_parseAddress(store.address));
+        }
+      }
+    } else {
+      try {
+        final location = await _geocodeAddressAsync(order.storeAddress);
+        _storeLocations.add(location);
+      } catch (e) {
+        debugPrint('Geocoding failed for store address: $e');
+        hasGeocodingError = true;
+        _storeLocations.add(_parseAddress(order.storeAddress));
+      }
+    }
+    try {
+      _destination = await _geocodeAddressAsync(order.deliveryAddress);
+    } catch (e) {
+      debugPrint('Geocoding failed for delivery address: $e');
+      hasGeocodingError = true;
+      _destination = _parseAddress(order.deliveryAddress);
+    }
+
+    if (hasGeocodingError && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content:
+              Text('Một số địa chỉ không geocode được, dùng vị trí ước lượng'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   void _updateCurrentMarker() {
@@ -173,7 +299,23 @@ class _OrderMapScreenState extends State<OrderMapScreen> {
     setState(() {});
   }
 
-  LatLng _geocodeAddress(String address) {
+  Future<LatLng> _geocodeAddressAsync(String address) async {
+    if (address.isEmpty) {
+      throw Exception('Address cannot be empty');
+    }
+    try {
+      final location = await _routingService.geocodeAddress(address);
+      if (location == null) {
+        throw Exception('Location not found for: $address');
+      }
+      return location;
+    } catch (e) {
+      debugPrint('Geocoding failed for $address: $e');
+      throw Exception('Geocoding failed for: $address - $e');
+    }
+  }
+
+  LatLng _parseAddress(String address) {
     final hash = address.hashCode.abs();
     return LatLng(
       10.762622 + (hash % 100) * 0.001,
@@ -242,8 +384,8 @@ class _OrderMapScreenState extends State<OrderMapScreen> {
                             polylines: [
                               Polyline(
                                 points: _routePoints,
-                                color: Colors.blue,
-                                strokeWidth: 4,
+                                color: const Color(0xFF4285F4),
+                                strokeWidth: 5,
                               ),
                             ],
                           ),
@@ -252,6 +394,25 @@ class _OrderMapScreenState extends State<OrderMapScreen> {
                     ),
                     if (_showDirections) _buildDirectionsPanel(),
                     _buildLocationInfoPanel(),
+
+                    // Navigation mode toggle button
+                    if (_isDelivering)
+                      Positioned(
+                        right: 16,
+                        bottom: 320, // Above the location info panel
+                        child: FloatingActionButton.small(
+                          heroTag: 'navigation_toggle',
+                          onPressed: _toggleNavigationMode,
+                          backgroundColor: _isNavigating
+                              ? ShipperTheme.primaryColor
+                              : Colors.white,
+                          foregroundColor:
+                              _isNavigating ? Colors.white : Colors.black87,
+                          child: Icon(_isNavigating
+                              ? Icons.navigation
+                              : Icons.navigation_outlined),
+                        ),
+                      ),
                   ],
                 ),
     );
@@ -293,20 +454,23 @@ class _OrderMapScreenState extends State<OrderMapScreen> {
   }
 
   Widget _buildCurrentLocationMarker() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.blue,
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 3),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.blue.withValues(alpha: 0.3),
-            blurRadius: 10,
-            spreadRadius: 5,
-          ),
-        ],
+    return Transform.rotate(
+      angle: _isNavigating ? (_heading * 3.14159 / 180) : 0,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.blue,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 3),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.blue.withValues(alpha: 0.3),
+              blurRadius: 10,
+              spreadRadius: 5,
+            ),
+          ],
+        ),
+        child: const Icon(Icons.navigation, color: Colors.white, size: 20),
       ),
-      child: const Icon(Icons.person, color: Colors.white, size: 20),
     );
   }
 
@@ -337,7 +501,7 @@ class _OrderMapScreenState extends State<OrderMapScreen> {
           Text(
             _error!,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            style: const TextStyle(fontSize: 16, color: Colors.black87),
           ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
@@ -392,31 +556,81 @@ class _OrderMapScreenState extends State<OrderMapScreen> {
                   distance: null,
                   duration: null,
                 ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
-              // Start delivery button (56px, full width)
+              // Action buttons row
               if (_routeResult != null && _routeResult!.totalDistanceKm > 0)
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton.icon(
-                    onPressed: _startDelivery,
-                    icon: const Icon(Icons.play_arrow, size: 22),
-                    label: Text(
-                      'Bắt đầu giao hàng • ${_routeResult!.totalDistanceKm.toStringAsFixed(1)} km',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                Row(
+                  children: [
+                    // Chi tiết đơn hàng button (secondary)
+                    Expanded(
+                      flex: 2,
+                      child: SizedBox(
+                        height: 48,
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    OrderDetailScreen(order: _order),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.receipt_long, size: 20),
+                          label: const Text(
+                            'Chi tiết đơn',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: ShipperTheme.primaryColor,
+                            side: BorderSide(color: ShipperTheme.primaryColor),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ShipperTheme.primaryColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                    const SizedBox(width: 12),
+                    // Start delivery button (primary)
+                    Expanded(
+                      flex: 3,
+                      child: SizedBox(
+                        height: 48,
+                        child: ElevatedButton.icon(
+                          onPressed: _isUpdatingStatus ? null : _startDelivery,
+                          icon: _isUpdatingStatus
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.play_arrow, size: 20),
+                          label: Text(
+                            _isUpdatingStatus ? 'Đang cập nhật...' : 'Bắt đầu',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: ShipperTheme.primaryColor,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
             ] else ...[
               // ===== DURING DELIVERY - Customer info + Actions =====
@@ -425,25 +639,35 @@ class _OrderMapScreenState extends State<OrderMapScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.1),
+                  color: _order.status == OrderStatus.PICKING_UP
+                      ? Colors.orange.withValues(alpha: 0.1)
+                      : Colors.green.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const SizedBox(
+                    SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          _order.status == OrderStatus.PICKING_UP
+                              ? Colors.orange
+                              : Colors.green,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Đang giao hàng',
+                      _order.status == OrderStatus.PICKING_UP
+                          ? 'Xác nhận nhận hàng'
+                          : 'Đang giao hàng',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Colors.green,
+                            color: _order.status == OrderStatus.PICKING_UP
+                                ? Colors.orange
+                                : Colors.green,
                           ),
                     ),
                   ],
@@ -562,71 +786,102 @@ class _OrderMapScreenState extends State<OrderMapScreen> {
                   ),
                   const SizedBox(width: 12),
 
-                  // POD Proof button (44px, secondary)
-                  SizedBox(
-                    height: 48,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => DeliveryConfirmationScreen(
-                              order: widget.order,
-                              onConfirm: () {
-                                // TODO: Update order status to DELIVERED
-                              },
-                            ),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.photo_camera, size: 20),
-                      label: const Text(
-                        'Ảnh',
-                        style: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w600),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.green,
-                        side: const BorderSide(color: Colors.green, width: 2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-
-                  // Confirm delivery button (56px, PRIMARY - spans remaining space)
-                  Expanded(
-                    child: SizedBox(
-                      height: 56,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => DeliveryConfirmationScreen(
-                                order: widget.order,
-                                onConfirm: () {
-                                  // TODO: Update order status to DELIVERED
-                                },
-                              ),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.check_circle, size: 22),
+                  // Nút Chi tiết đơn (chỉ hiện khi PICKING_UP) hoặc không hiện
+                  if (_order.status == OrderStatus.PICKING_UP)
+                    SizedBox(
+                      height: 48,
+                      child: OutlinedButton.icon(
+                        onPressed: _showOrderDetailsDialog,
+                        icon: const Icon(Icons.receipt_long, size: 20),
                         label: const Text(
-                          'Xác nhận',
+                          'Chi tiết',
                           style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.w700),
+                              fontSize: 14, fontWeight: FontWeight.w600),
                         ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: ShipperTheme.successColor,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.orange,
+                          side:
+                              const BorderSide(color: Colors.orange, width: 2),
+                        ),
+                      ),
+                    )
+                  else
+                    const SizedBox(width: 0),
+                  if (_order.status == OrderStatus.PICKING_UP)
+                    const SizedBox(width: 12),
+
+                  // Confirm button based on status
+                  if (_order.status == OrderStatus.PICKING_UP)
+                    // Nút xác nhận đã nhận hàng từ cửa hàng
+                    Expanded(
+                      child: SizedBox(
+                        height: 56,
+                        child: ElevatedButton.icon(
+                          onPressed: _isUpdatingStatus
+                              ? null
+                              : _confirmReceivedFromStore,
+                          icon: _isUpdatingStatus
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.check_circle, size: 22),
+                          label: Text(
+                            _isUpdatingStatus
+                                ? 'Đang xác nhận...'
+                                : 'Xác nhận đã nhận hàng',
+                            style: const TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w700),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    // Nút xác nhận giao hàng thành công
+                    Expanded(
+                      child: SizedBox(
+                        height: 56,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => DeliveryConfirmationScreen(
+                                  order: widget.order,
+                                  onConfirm: () {
+                                    // TODO: Update order status to DELIVERED
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.check_circle, size: 22),
+                          label: const Text(
+                            'Xác nhận',
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w700),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: ShipperTheme.successColor,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ],
@@ -696,9 +951,9 @@ class _OrderMapScreenState extends State<OrderMapScreen> {
               const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 12,
-                  color: Colors.grey[600],
+                  color: Colors.black87,
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -725,13 +980,296 @@ class _OrderMapScreenState extends State<OrderMapScreen> {
     _mapController.move(location, 16);
   }
 
-  void _startDelivery() {
-    setState(() => _isDelivering = true);
-    // Stay on map - no pop!
-    // Update order status in backend via callback if provided
+  Future<void> _startDelivery() async {
+    // Chỉ đổi UI, KHÔNG gọi API đổi status
+    setState(() {
+      _isDelivering = true;
+      _isNavigating = true;
+    });
+
+    // Re-calculate route to customer (now include destination)
+    await _fetchMultiStopRoute();
+
+    // Animation transition
+    if (_currentPosition != null) {
+      _animateToNavigationMode();
+    }
+
+    // Callback cho parent widget nếu có
     if (widget.onStartDelivery != null) {
       widget.onStartDelivery!();
     }
+  }
+
+  Future<void> _confirmReceivedFromStore() async {
+    // Gọi API để đổi status từ PICKING_UP sang DELIVERING
+    setState(() => _isUpdatingStatus = true);
+
+    try {
+      final repository = context.read<ShipperRepository>();
+      final updated =
+          await repository.updateOrderStatus(_order.id, 'DELIVERING');
+
+      if (updated != null) {
+        setState(() {
+          _order = updated;
+        });
+
+        // Refresh dashboard data
+        if (mounted) {
+          context.read<ShipperDashboardBloc>().add(RefreshDashboardData());
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đã xác nhận nhận hàng từ cửa hàng')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUpdatingStatus = false);
+      }
+    }
+  }
+
+  void _animateToNavigationMode() {
+    if (_currentPosition == null) return;
+
+    // Get current camera state
+    final currentZoom = _mapController.camera.zoom;
+    final currentRotation = _mapController.camera.rotation;
+    final targetZoom = 18.0;
+
+    // Calculate shortest rotation angle (avoid spinning multiple circles)
+    var targetRotation =
+        -_heading; // Negative because flutter_map rotates counter-clockwise
+    var rotationDiff = targetRotation - currentRotation;
+
+    // Normalize to -180 to 180 range (shortest path)
+    while (rotationDiff > 180) rotationDiff -= 360;
+    while (rotationDiff < -180) rotationDiff += 360;
+
+    final endRotation = currentRotation + rotationDiff;
+
+    // Create animation controller
+    _navAnimationController?.dispose();
+    _navAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+
+    // Zoom animation (ease in out)
+    _zoomAnimation = Tween<double>(
+      begin: currentZoom,
+      end: targetZoom,
+    ).animate(CurvedAnimation(
+      parent: _navAnimationController!,
+      curve: Curves.easeInOutCubic,
+    ));
+
+    // Rotation animation (ease in out) - shortest path
+    _rotationAnimation = Tween<double>(
+      begin: currentRotation,
+      end: endRotation,
+    ).animate(CurvedAnimation(
+      parent: _navAnimationController!,
+      curve: Curves.easeInOutCubic,
+    ));
+
+    // Listen to animation and update map
+    _navAnimationController!.addListener(() {
+      if (!mounted || _currentPosition == null) return;
+
+      final zoom = _zoomAnimation!.value;
+      final rotation = _rotationAnimation!.value;
+
+      _mapController.move(_currentPosition!, zoom);
+      _mapController.rotate(rotation);
+    });
+
+    // Start animation
+    _navAnimationController!.forward();
+  }
+
+  void _showOrderDetailsDialog() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        maxChildSize: 0.9,
+        minChildSize: 0.4,
+        expand: false,
+        builder: (context, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: ShipperTheme.primaryColor.withValues(alpha: 0.1),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(20)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.receipt_long,
+                        color: ShipperTheme.primaryColor),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Chi tiết đơn hàng #${_order.id}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              // Content
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    // Store info
+                    _buildDialogSection(
+                      'Cửa hàng',
+                      [
+                        _buildDialogItem(Icons.store, _order.storeName),
+                        _buildDialogItem(
+                            Icons.location_on, _order.storeAddress),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // Customer info
+                    _buildDialogSection(
+                      'Khách hàng',
+                      [
+                        _buildDialogItem(Icons.person, _order.customerName),
+                        _buildDialogItem(Icons.phone, _order.customerPhone),
+                        _buildDialogItem(
+                            Icons.location_on, _order.deliveryAddress),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // Items (nếu có)
+                    if (_order.items.isNotEmpty)
+                      _buildDialogSection(
+                        'Sản phẩm (${_order.items.length})',
+                        _order.items
+                            .map((item) => _buildDialogItem(
+                                  Icons.shopping_bag,
+                                  '${item.productName} x${item.quantity}',
+                                  trailing:
+                                      '${item.subtotal.toStringAsFixed(0)}₫',
+                                ))
+                            .toList(),
+                      ),
+                    const SizedBox(height: 16),
+                    // Total
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Tổng cộng',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            '${_order.grandTotal.toStringAsFixed(0)}₫',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: ShipperTheme.primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDialogSection(String title, List<Widget> children) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[600],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.grey[50],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(children: children),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDialogItem(IconData icon, String text, {String? trailing}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: Colors.grey[600]),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
+          if (trailing != null)
+            Text(
+              trailing,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   List<Widget> _buildStoreSteps() {
@@ -892,7 +1430,7 @@ class _OrderMapScreenState extends State<OrderMapScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          Icon(icon, size: 20, color: Colors.grey[600]),
+          Icon(icon, size: 20, color: Colors.black54),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -902,9 +1440,9 @@ class _OrderMapScreenState extends State<OrderMapScreen> {
           ),
           Text(
             distanceText,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 12,
-              color: Colors.grey[600],
+              color: Colors.black87,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -940,7 +1478,7 @@ class _OrderMapScreenState extends State<OrderMapScreen> {
             ),
           ),
           const SizedBox(width: 12),
-          Icon(Icons.directions, size: 20, color: Colors.grey[600]),
+          Icon(Icons.directions, size: 20, color: Colors.black54),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -956,16 +1494,16 @@ class _OrderMapScreenState extends State<OrderMapScreen> {
                 if (!isLast)
                   Text(
                     '→ ${segments[index + 1].label}',
-                    style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                    style: const TextStyle(fontSize: 11, color: Colors.black54),
                   ),
               ],
             ),
           ),
           Text(
             distanceText,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 12,
-              color: Colors.grey[600],
+              color: Colors.black87,
               fontWeight: FontWeight.w500,
             ),
           ),

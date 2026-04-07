@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:flutter/foundation.dart';
 
 class GraphHopperRoutingService {
   final Dio _dio;
@@ -7,6 +8,9 @@ class GraphHopperRoutingService {
 
   static const String _baseUrl = 'https://graphhopper.com/api/1/route';
   static const String _vrpBaseUrl = 'https://graphhopper.com/api/1/vrp';
+  static const String _trackAsiaGeocodeUrl =
+      'https://maps.track-asia.com/api/v2/place/textsearch/json';
+  static const String _trackAsiaApiKey = '0f3c3158d0682da17755746463e57bbe0c';
 
   GraphHopperRoutingService({
     required String apiKey,
@@ -102,6 +106,92 @@ class GraphHopperRoutingService {
     }
   }
 
+  /// Geocode address string to LatLng using TrackAsia Geocoding API
+  /// Returns null if no results found
+  Future<LatLng?> geocodeAddress(String address) async {
+    if (address.isEmpty) {
+      throw Exception('Address cannot be empty');
+    }
+
+    final addressVariants = _generateAddressVariants(address);
+
+    for (final variant in addressVariants) {
+      try {
+        final response = await _dio.get(
+          _trackAsiaGeocodeUrl,
+          queryParameters: {
+            'query': variant,
+            'key': _trackAsiaApiKey,
+            'language': 'vi',
+          },
+        );
+
+        if (response.statusCode == 200) {
+          final data = response.data as Map<String, dynamic>;
+          final results = data['results'] as List<dynamic>?;
+
+          if (results != null && results.isNotEmpty) {
+            final firstResult = results.first as Map<String, dynamic>;
+            final geometry = firstResult['geometry'] as Map<String, dynamic>?;
+            final location = geometry?['location'] as Map<String, dynamic>?;
+
+            if (location != null) {
+              final lat = (location['lat'] as num?)?.toDouble();
+              final lng = (location['lng'] as num?)?.toDouble();
+              if (lat != null && lng != null) {
+                debugPrint('TrackAsia geocoded "$variant" to ($lat, $lng)');
+                return LatLng(lat, lng);
+              }
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('TrackAsia geocode failed for "$variant": $e');
+      }
+    }
+
+    throw Exception('TrackAsia geocoding: no results for $address');
+  }
+
+  List<String> _generateAddressVariants(String address) {
+    final variants = <String>[];
+
+    String normalized = address;
+    normalized = normalized.replaceAll('Q1', 'Quận 1');
+    normalized = normalized.replaceAll('Q2', 'Quận 2');
+    normalized = normalized.replaceAll('Q3', 'Quận 3');
+    normalized = normalized.replaceAll('Q4', 'Quận 4');
+    normalized = normalized.replaceAll('Q5', 'Quận 5');
+    normalized = normalized.replaceAll('Q6', 'Quận 6');
+    normalized = normalized.replaceAll('Q7', 'Quận 7');
+    normalized = normalized.replaceAll('Q8', 'Quận 8');
+    normalized = normalized.replaceAll('Q9', 'Quận 9');
+    normalized = normalized.replaceAll('Q10', 'Quận 10');
+    normalized = normalized.replaceAll('Q11', 'Quận 11');
+    normalized = normalized.replaceAll('Q12', 'Quận 12');
+    normalized = normalized.replaceAll('TP.HCM', 'Hồ Chí Minh');
+    normalized = normalized.replaceAll('TPHCM', 'Hồ Chí Minh');
+    normalized = normalized.replaceAll('HCM', 'Hồ Chí Minh');
+
+    variants.add(normalized);
+    variants.add('$normalized, Vietnam');
+    variants.add(normalized.replaceAll('Đường', '').replaceAll('đường', ''));
+    variants.add(
+        normalized.replaceAll('Phường', '').replaceAll('Quận', 'District'));
+    variants.add('$normalized, Ho Chi Minh City, Vietnam');
+
+    final parts = normalized.split(',').map((p) => p.trim()).toList();
+    if (parts.isNotEmpty) {
+      variants.add(parts.first);
+      variants.add('${parts.first}, Vietnam');
+    }
+
+    variants.add(address);
+    variants.add('$address, Vietnam');
+
+    return variants.toSet().toList();
+  }
+
   Future<RouteInfo> getRouteWithInfo({
     required LatLng origin,
     required LatLng destination,
@@ -170,7 +260,7 @@ class GraphHopperRoutingService {
   Future<MultiStopRouteResult> getMultiStopRoute({
     required List<LatLng> waypoints,
     List<String>? labels,
-    String profile = 'foot',
+    String profile = 'car',
   }) async {
     if (waypoints.length < 2) {
       throw Exception('Need at least 2 waypoints');

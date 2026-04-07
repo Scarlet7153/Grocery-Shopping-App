@@ -1,11 +1,14 @@
+import 'package:flutter/foundation.dart';
 import 'package:geocoding/geocoding.dart' as geo;
+import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
+import 'dart:convert';
 
 /// Service để geocode địa chỉ text → lat/lng
-/// Sử dụng native geocoding (Google Maps Android/Apple Maps iOS)
+/// Ưu tiên dùng native geocoding, fallback sang OpenStreetMap Nominatim
 class GeocodingService {
   /// Chuyển địa chỉ text thành coordinates
-  /// Dùng native APIs (mạnh, nhanh, không cần key)
+  /// Dùng native APIs trước, fallback sang Nominatim nếu thất bại
   static Future<LatLng?> geocodeAddress(String address) async {
     if (address.isEmpty) {
       throw Exception('Address cannot be empty');
@@ -14,15 +17,89 @@ class GeocodingService {
     try {
       final placemarks = await geo.locationFromAddress(address);
 
-      if (placemarks.isEmpty) {
-        throw Exception('Address not found: $address');
+      if (placemarks.isNotEmpty) {
+        final place = placemarks.first;
+        return LatLng(place.latitude, place.longitude);
       }
-
-      final place = placemarks.first;
-      return LatLng(place.latitude, place.longitude);
     } catch (e) {
-      throw Exception('Geocoding error: $e');
+      debugPrint('Native geocoding failed: $e, trying Nominatim...');
     }
+
+    return await _geocodeWithNominatim(address);
+  }
+
+  /// Fallback geocoding dùng OpenStreetMap Nominatim (không cần API key)
+  static Future<LatLng?> _geocodeWithNominatim(String address) async {
+    final addressVariants = _generateAddressVariants(address);
+
+    for (final variant in addressVariants) {
+      try {
+        final encodedAddress = Uri.encodeComponent(variant);
+        final url = 'https://nominatim.openstreetmap.org/search'
+            '?q=$encodedAddress'
+            '&format=json'
+            '&limit=1'
+            '&countrycodes=vn';
+
+        final response = await http.get(
+          Uri.parse(url),
+          headers: {'User-Agent': 'GroceryShoppingApp/1.0'},
+        ).timeout(const Duration(seconds: 10));
+
+        if (response.statusCode == 200) {
+          final List<dynamic> data = json.decode(response.body);
+          if (data.isNotEmpty) {
+            final lat = double.tryParse(data[0]['lat'].toString());
+            final lon = double.tryParse(data[0]['lon'].toString());
+            if (lat != null && lon != null) {
+              debugPrint('Geocoded "$variant" to ($lat, $lon)');
+              return LatLng(lat, lon);
+            }
+          }
+        }
+      } catch (e) {
+        debugPrint('Nominatim variant "$variant" failed: $e');
+      }
+    }
+
+    throw Exception('Nominatim: no results for any address variant');
+  }
+
+  /// Generate multiple address variants to try with Nominatim
+  static List<String> _generateAddressVariants(String address) {
+    final variants = <String>[];
+
+    String normalized = address;
+    normalized = normalized.replaceAll('Q1', 'Quận 1');
+    normalized = normalized.replaceAll('Q2', 'Quận 2');
+    normalized = normalized.replaceAll('Q3', 'Quận 3');
+    normalized = normalized.replaceAll('Q4', 'Quận 4');
+    normalized = normalized.replaceAll('Q5', 'Quận 5');
+    normalized = normalized.replaceAll('Q6', 'Quận 6');
+    normalized = normalized.replaceAll('Q7', 'Quận 7');
+    normalized = normalized.replaceAll('Q8', 'Quận 8');
+    normalized = normalized.replaceAll('Q9', 'Quận 9');
+    normalized = normalized.replaceAll('Q10', 'Quận 10');
+    normalized = normalized.replaceAll('Q11', 'Quận 11');
+    normalized = normalized.replaceAll('Q12', 'Quận 12');
+    normalized = normalized.replaceAll('TP.HCM', 'Hồ Chí Minh');
+    normalized = normalized.replaceAll('TPHCM', 'Hồ Chí Minh');
+    normalized = normalized.replaceAll('HCM', 'Hồ Chí Minh');
+
+    variants.add(normalized);
+    variants.add('$normalized, Vietnam');
+    variants.add(normalized.replaceAll('Đường', '').replaceAll('đường', ''));
+    variants.add(
+        normalized.replaceAll('Phường', '').replaceAll('Quận', 'District'));
+    variants.add('$normalized, Ho Chi Minh City, Vietnam');
+
+    final parts = normalized.split(',').map((p) => p.trim()).toList();
+    if (parts.isNotEmpty) {
+      variants.add(parts.first);
+      variants.add('${parts.first}, Vietnam');
+    }
+
+    return variants.toSet().toList();
   }
 
   /// Chuyển coordinate thành địa chỉ text (reverse geocoding)
@@ -34,7 +111,7 @@ class GeocodingService {
       );
 
       if (placemarks.isEmpty) {
-        return null;
+        return await _reverseGeocodeWithNominatim(location);
       }
 
       final place = placemarks.first;
@@ -48,8 +125,32 @@ class GeocodingService {
 
       return parts.join(', ');
     } catch (e) {
-      throw Exception('Reverse geocoding error: $e');
+      try {
+        return await _reverseGeocodeWithNominatim(location);
+      } catch (_) {
+        return null;
+      }
     }
+  }
+
+  static Future<String?> _reverseGeocodeWithNominatim(LatLng location) async {
+    try {
+      final url = 'https://nominatim.openstreetmap.org/reverse'
+          '?lat=${location.latitude}'
+          '&lon=${location.longitude}'
+          '&format=json';
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'User-Agent': 'GroceryShoppingApp/1.0'},
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['display_name'] as String?;
+      }
+    } catch (_) {}
+    return null;
   }
 
   /// Geocode multiple addresses

@@ -51,25 +51,25 @@ Map<String, dynamic> _$LoginRequestModelToJson(LoginRequestModel instance) =>
     };
 
 RegisterRequestModel _$RegisterRequestModelFromJson(
-        Map<String, dynamic> json) =>
-    RegisterRequestModel(
-      phoneNumber: json['phoneNumber'] as String,
-      password: json['password'] as String,
-      fullName: json['fullName'] as String,
-      role: json['role'] as String,
-      address: json['address'] as String?,
-      storeName: json['storeName'] as String?,
-      storeAddress: json['storeAddress'] as String?,
-    );
+  Map<String, dynamic> json,
+) => RegisterRequestModel(
+  phoneNumber: json['phoneNumber'] as String,
+  password: json['password'] as String,
+  fullName: json['fullName'] as String,
+  role: json['role'] as String,
+  address: json['address'] as String?,
+  storeName: json['storeName'] as String?,
+  storeAddress: json['storeAddress'] as String?,
+);
 
 Map<String, dynamic> _$RegisterRequestModelToJson(
-        RegisterRequestModel instance) =>
-    <String, dynamic>{
-      'phoneNumber': instance.phoneNumber,
-      'password': instance.password,
-      'fullName': instance.fullName,
-      'role': instance.role,
-      'address': instance.address,
-      'storeName': instance.storeName,
-      'storeAddress': instance.storeAddress,
-    };
+  RegisterRequestModel instance,
+) => <String, dynamic>{
+  'phoneNumber': instance.phoneNumber,
+  'password': instance.password,
+  'fullName': instance.fullName,
+  'role': instance.role,
+  'address': instance.address,
+  'storeName': instance.storeName,
+  'storeAddress': instance.storeAddress,
+};

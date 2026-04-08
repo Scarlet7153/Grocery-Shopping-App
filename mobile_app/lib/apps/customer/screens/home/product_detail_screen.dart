@@ -6,10 +6,7 @@ import '../../../../features/customer/home/data/product_model.dart';
 class ProductDetailScreen extends StatefulWidget {
   final ProductModel product;
 
-  const ProductDetailScreen({
-    super.key,
-    required this.product,
-  });
+  const ProductDetailScreen({super.key, required this.product});
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
@@ -23,8 +20,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   ProductUnitModel? get _selectedUnit {
     if (_product.units.isEmpty) return null;
-    if (_selectedUnitIndex < 0 ||
-        _selectedUnitIndex >= _product.units.length) {
+    if (_selectedUnitIndex < 0 || _selectedUnitIndex >= _product.units.length) {
       return _product.units.first;
     }
     return _product.units[_selectedUnitIndex];
@@ -40,9 +36,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       quantity: _quantity,
       unitPrice: _unitPrice,
     );
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Đã thêm vào giỏ hàng')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Đã thêm vào giỏ hàng')));
   }
 
   void _buyNow() {
@@ -54,9 +50,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final totalPrice = _unitPrice * _quantity;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_product.name),
-      ),
+      appBar: AppBar(title: Text(_product.name)),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -72,20 +66,17 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         child: const Icon(Icons.image, size: 48),
                       )
                     : (_product.imageUrl.startsWith('assets/'))
-                        ? Image.asset(
-                            _product.imageUrl,
-                            fit: BoxFit.cover,
-                          )
-                        : Image.network(
-                            _product.imageUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stack) {
-                              return Container(
-                                color: Colors.grey[300],
-                                child: const Icon(Icons.image, size: 48),
-                              );
-                            },
-                          ),
+                    ? Image.asset(_product.imageUrl, fit: BoxFit.cover)
+                    : Image.network(
+                        _product.imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stack) {
+                          return Container(
+                            color: Colors.grey[300],
+                            child: const Icon(Icons.image, size: 48),
+                          );
+                        },
+                      ),
               ),
             ),
             const SizedBox(height: 16),
@@ -102,8 +93,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ),
                 if (_product.categoryName.isNotEmpty)
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFE8F5E9),
                       borderRadius: BorderRadius.circular(12),
@@ -132,10 +125,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             if (_stockLeft > 0)
               Text(
                 'C\u00f2n l\u1ea1i: $_stockLeft',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
             if (_product.storeName.isNotEmpty)
               Text(
@@ -152,10 +142,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             const SizedBox(height: 16),
             const Text(
               'Ch\u1ecdn ph\u00e2n lo\u1ea1i',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             if (_product.units.isEmpty)
@@ -179,20 +166,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       });
                     },
                     labelStyle: TextStyle(
-                      fontWeight:
-                          selected ? FontWeight.w600 : FontWeight.normal,
+                      fontWeight: selected
+                          ? FontWeight.w600
+                          : FontWeight.normal,
                     ),
-                    selectedColor: const Color(0xFF2F80ED).withValues(alpha: 0.2),
+                    selectedColor: const Color(
+                      0xFF2F80ED,
+                    ).withValues(alpha: 0.2),
                   );
                 }),
               ),
             const SizedBox(height: 16),
             const Text(
               'S\u1ed1 l\u01b0\u1ee3ng',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             Row(
@@ -281,9 +268,7 @@ class _QtyButton extends StatelessWidget {
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           padding: EdgeInsets.zero,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
         child: Icon(icon, size: 16),
       ),

@@ -1,6 +1,5 @@
 import '../models/auth_response_model.dart';
 import '../models/user_model.dart';
-import '../../../core/config/app_config.dart';
 import '../../../core/enums/app_type.dart';
 
 /// Abstract repository for authentication operations
@@ -23,9 +22,7 @@ abstract class AuthRepository {
   Future<void> logout();
 
   /// Refresh authentication token
-  Future<AuthResponseModel> refreshToken({
-    required String refreshToken,
-  });
+  Future<AuthResponseModel> refreshToken({required String refreshToken});
 
   /// Check if user is currently authenticated
   Future<bool> isAuthenticated();
@@ -71,5 +68,7 @@ abstract class AuthRepository {
   Future<void> updateFcmToken({required String fcmToken});
 
   /// Get app-specific user permissions
-  Future<List<String>> getUserPermissions({required AppType appType}); // Bây giờ AppType đã được import
+  Future<List<String>> getUserPermissions({
+    required AppType appType,
+  }); // Bây giờ AppType đã được import
 }

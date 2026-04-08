@@ -21,9 +21,7 @@ class ShipperApp extends StatelessWidget {
       value: repository,
       child: MultiBlocProvider(
         providers: [
-          BlocProvider(
-            create: (_) => ShipperAuthBloc(repository: repository),
-          ),
+          BlocProvider(create: (_) => ShipperAuthBloc(repository: repository)),
           BlocProvider(
             create: (_) => ShipperDashboardBloc(repository: repository),
           ),

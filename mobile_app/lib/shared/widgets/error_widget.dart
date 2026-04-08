@@ -41,26 +41,23 @@ class CustomErrorWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          if (icon != null) ...[
-            icon!,
-            const SizedBox(height: 24.0),
-          ],
+          if (icon != null) ...[icon!, const SizedBox(height: 24.0)],
           if (title != null) ...[
             Text(
               title!,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFFD32F2F),
-                  ),
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFFD32F2F),
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16.0),
           ],
           Text(
             message,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: const Color(0xFF757575),
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: const Color(0xFF757575)),
             textAlign: TextAlign.center,
           ),
           if (onRetry != null && buttonText != null) ...[

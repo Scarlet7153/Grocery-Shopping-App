@@ -37,11 +37,13 @@ class CartSession {
   static final ValueNotifier<List<CartItem>> items =
       ValueNotifier<List<CartItem>>(<CartItem>[]);
 
-  static void addProduct(ProductModel product,
-      {int quantity = 1, num? unitPrice}) {
+  static void addProduct(
+    ProductModel product, {
+    int quantity = 1,
+    num? unitPrice,
+  }) {
     final current = List<CartItem>.from(items.value);
-    final index =
-        current.indexWhere((item) => item.productId == product.id);
+    final index = current.indexWhere((item) => item.productId == product.id);
     if (index >= 0) {
       final existing = current[index];
       current[index] = existing.copyWith(

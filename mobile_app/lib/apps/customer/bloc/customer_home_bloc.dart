@@ -1,4 +1,4 @@
-﻿import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../features/customer/home/data/category_model.dart';
 import '../../../features/customer/home/data/home_api.dart';
@@ -10,7 +10,9 @@ import '../../../features/customer/home/data/store_model.dart';
 abstract class CustomerHomeEvent {}
 
 class LoadHomeEvent extends CustomerHomeEvent {}
+
 class RefreshHomeEvent extends CustomerHomeEvent {}
+
 class SearchProductsEvent extends CustomerHomeEvent {
   final String keyword;
 

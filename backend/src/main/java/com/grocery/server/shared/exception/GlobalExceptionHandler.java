@@ -72,7 +72,7 @@ public class GlobalExceptionHandler {
         
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
-                .body(ApiResponse.error("Số điện thoại hoặc mật khẩu không đúng"));
+                .body(ApiResponse.error(ex.getMessage()));
     }
     
     /**

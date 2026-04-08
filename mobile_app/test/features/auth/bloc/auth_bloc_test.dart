@@ -12,20 +12,20 @@ class AuthState {
 
 class AuthInitial extends AuthState {
   const AuthInitial();
-  
+
   @override
   bool operator ==(Object other) => other is AuthInitial;
-  
+
   @override
   int get hashCode => 0;
 }
 
 class AuthLoading extends AuthState {
   const AuthLoading();
-  
+
   @override
   bool operator ==(Object other) => other is AuthLoading;
-  
+
   @override
   int get hashCode => 1;
 }
@@ -33,15 +33,13 @@ class AuthLoading extends AuthState {
 class AuthAuthenticated extends AuthState {
   final String token;
   final Map<String, dynamic> user;
-  
+
   const AuthAuthenticated({required this.token, required this.user});
-  
+
   @override
-  bool operator ==(Object other) => 
-    other is AuthAuthenticated && 
-    other.token == token && 
-    other.user == user;
-  
+  bool operator ==(Object other) =>
+      other is AuthAuthenticated && other.token == token && other.user == user;
+
   @override
   int get hashCode => token.hashCode ^ user.hashCode;
 }
@@ -49,15 +47,15 @@ class AuthAuthenticated extends AuthState {
 class AuthError extends AuthState {
   final String message;
   final String? errorCode;
-  
+
   const AuthError({required this.message, this.errorCode});
-  
+
   @override
-  bool operator ==(Object other) => 
-    other is AuthError && 
-    other.message == message && 
-    other.errorCode == errorCode;
-  
+  bool operator ==(Object other) =>
+      other is AuthError &&
+      other.message == message &&
+      other.errorCode == errorCode;
+
   @override
   int get hashCode => message.hashCode ^ errorCode.hashCode;
 }
@@ -70,9 +68,9 @@ class LoginRequested extends AuthEvent {
   final String identifier;
   final String password;
   final bool rememberMe;
-  
+
   const LoginRequested({
-    required this.identifier, 
+    required this.identifier,
     required this.password,
     this.rememberMe = false,
   });
@@ -86,11 +84,11 @@ class LogoutRequested extends AuthEvent {
 class AuthBloc {
   AuthState _state = const AuthInitial();
   final MockAuthRepository repository;
-  
+
   AuthBloc({required this.repository});
-  
+
   AuthState get state => _state;
-  
+
   void add(AuthEvent event) {
     if (event is LoginRequested) {
       _handleLogin(event);
@@ -98,26 +96,30 @@ class AuthBloc {
       _handleLogout();
     }
   }
-  
+
   void _handleLogin(LoginRequested event) {
     _state = const AuthLoading();
     // Simulate async login
     Future.delayed(Duration.zero, () {
-      if (event.identifier == 'test@example.com' && event.password == 'password123') {
+      if (event.identifier == 'test@example.com' &&
+          event.password == 'password123') {
         _state = const AuthAuthenticated(
           token: 'test-token',
           user: {'id': '1', 'email': 'test@example.com'},
         );
       } else {
-        _state = const AuthError(message: 'Invalid credentials', errorCode: 'login_failed');
+        _state = const AuthError(
+          message: 'Invalid credentials',
+          errorCode: 'login_failed',
+        );
       }
     });
   }
-  
+
   void _handleLogout() {
     _state = const AuthInitial();
   }
-  
+
   void close() {
     // Cleanup if needed
   }
@@ -142,32 +144,39 @@ void main() {
     });
 
     group('LoginRequested', () {
-      test('should emit AuthLoading then AuthAuthenticated on successful login', () async {
-        // Act
-        authBloc.add(const LoginRequested(
-          identifier: 'test@example.com',
-          password: 'password123',
-        ));
+      test(
+        'should emit AuthLoading then AuthAuthenticated on successful login',
+        () async {
+          // Act
+          authBloc.add(
+            const LoginRequested(
+              identifier: 'test@example.com',
+              password: 'password123',
+            ),
+          );
 
-        // Assert initial loading state
-        expect(authBloc.state, equals(const AuthLoading()));
+          // Assert initial loading state
+          expect(authBloc.state, equals(const AuthLoading()));
 
-        // Wait for async operation
-        await Future.delayed(const Duration(milliseconds: 10));
+          // Wait for async operation
+          await Future.delayed(const Duration(milliseconds: 10));
 
-        // Assert final authenticated state
-        expect(authBloc.state, isA<AuthAuthenticated>());
-        final authenticatedState = authBloc.state as AuthAuthenticated;
-        expect(authenticatedState.token, equals('test-token'));
-        expect(authenticatedState.user['email'], equals('test@example.com'));
-      });
+          // Assert final authenticated state
+          expect(authBloc.state, isA<AuthAuthenticated>());
+          final authenticatedState = authBloc.state as AuthAuthenticated;
+          expect(authenticatedState.token, equals('test-token'));
+          expect(authenticatedState.user['email'], equals('test@example.com'));
+        },
+      );
 
       test('should emit AuthLoading then AuthError on failed login', () async {
         // Act
-        authBloc.add(const LoginRequested(
-          identifier: 'wrong@example.com',
-          password: 'wrongpassword',
-        ));
+        authBloc.add(
+          const LoginRequested(
+            identifier: 'wrong@example.com',
+            password: 'wrongpassword',
+          ),
+        );
 
         // Assert initial loading state
         expect(authBloc.state, equals(const AuthLoading()));
@@ -186,10 +195,12 @@ void main() {
     group('LogoutRequested', () {
       test('should emit AuthInitial on logout', () {
         // Arrange - set authenticated state first
-        authBloc.add(const LoginRequested(
-          identifier: 'test@example.com',
-          password: 'password123',
-        ));
+        authBloc.add(
+          const LoginRequested(
+            identifier: 'test@example.com',
+            password: 'password123',
+          ),
+        );
 
         // Act
         authBloc.add(const LogoutRequested());
@@ -213,14 +224,8 @@ void main() {
       });
 
       test('AuthAuthenticated states with same data should be equal', () {
-        const state1 = AuthAuthenticated(
-          token: 'token1',
-          user: {'id': '1'},
-        );
-        const state2 = AuthAuthenticated(
-          token: 'token1',
-          user: {'id': '1'},
-        );
+        const state1 = AuthAuthenticated(token: 'token1', user: {'id': '1'});
+        const state2 = AuthAuthenticated(token: 'token1', user: {'id': '1'});
         expect(state1, equals(state2));
       });
 
@@ -233,10 +238,7 @@ void main() {
 
     group('Edge Cases', () {
       test('should handle empty credentials', () async {
-        authBloc.add(const LoginRequested(
-          identifier: '',
-          password: '',
-        ));
+        authBloc.add(const LoginRequested(identifier: '', password: ''));
 
         expect(authBloc.state, equals(const AuthLoading()));
 
@@ -246,10 +248,9 @@ void main() {
       });
 
       test('should handle null-like values', () async {
-        authBloc.add(const LoginRequested(
-          identifier: 'null',
-          password: 'null',
-        ));
+        authBloc.add(
+          const LoginRequested(identifier: 'null', password: 'null'),
+        );
 
         expect(authBloc.state, equals(const AuthLoading()));
 
@@ -265,10 +266,12 @@ void main() {
         expect(authBloc.state, equals(const AuthInitial()));
 
         // Login
-        authBloc.add(const LoginRequested(
-          identifier: 'test@example.com',
-          password: 'password123',
-        ));
+        authBloc.add(
+          const LoginRequested(
+            identifier: 'test@example.com',
+            password: 'password123',
+          ),
+        );
 
         expect(authBloc.state, equals(const AuthLoading()));
 
@@ -284,20 +287,24 @@ void main() {
 
       test('multiple failed login attempts', () async {
         // First failed attempt
-        authBloc.add(const LoginRequested(
-          identifier: 'wrong1@example.com',
-          password: 'wrong1',
-        ));
+        authBloc.add(
+          const LoginRequested(
+            identifier: 'wrong1@example.com',
+            password: 'wrong1',
+          ),
+        );
 
         await Future.delayed(const Duration(milliseconds: 10));
 
         expect(authBloc.state, isA<AuthError>());
 
         // Second failed attempt
-        authBloc.add(const LoginRequested(
-          identifier: 'wrong2@example.com',
-          password: 'wrong2',
-        ));
+        authBloc.add(
+          const LoginRequested(
+            identifier: 'wrong2@example.com',
+            password: 'wrong2',
+          ),
+        );
 
         expect(authBloc.state, equals(const AuthLoading()));
 

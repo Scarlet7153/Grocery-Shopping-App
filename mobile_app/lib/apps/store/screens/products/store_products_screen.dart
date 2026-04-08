@@ -17,13 +17,16 @@ const Color _kSurface = Color(0xFFF5F6FA);
 const Color _kCardShadow = Color(0x0A000000);
 const double _kImageWidth = 300;
 const double _kImageHeight = 140;
+
 /// Decode size for Flutter Web (max ~600px), giảm memory
 const int _kCacheWidth = 600;
 const int _kCacheHeight = 280;
+
 /// Stock badge: >20 Còn hàng (green), 10–20 Sắp hết (orange), 0 Hết hàng (red). 1–9 cũng Sắp hết (orange).
-const int _kStockHighThreshold = 20;  // above = Còn hàng
-const int _kStockLowThreshold = 10;   // 10–20 = Sắp hết; 1–9 = Sắp hết; 0 = Hết hàng
-const int _kLowStockThreshold = 5;    // filter chip
+const int _kStockHighThreshold = 20; // above = Còn hàng
+const int _kStockLowThreshold =
+    10; // 10–20 = Sắp hết; 1–9 = Sắp hết; 0 = Hết hàng
+const int _kLowStockThreshold = 5; // filter chip
 const int _kHighStockThreshold = 20; // filter chip
 const int _kSearchDebounceMs = 300;
 
@@ -59,7 +62,8 @@ const Map<String, String> productImages = {
 String productImageAsset(String name) {
   if (productImages.containsKey(name)) return productImages[name]!;
   for (final entry in productImages.entries) {
-    if (name.startsWith(entry.key) || name.contains(entry.key)) return entry.value;
+    if (name.startsWith(entry.key) || name.contains(entry.key))
+      return entry.value;
   }
   return kDefaultProductImage;
 }
@@ -88,8 +92,11 @@ class _StoreProduct {
   });
 
   /// Badge text: "Còn hàng" | "Sắp hết" | "Hết hàng" theo số lượng.
-  String get stockStatusLabel => stock == 0 ? 'Hết hàng' : (stock > _kStockHighThreshold ? 'Còn hàng' : 'Sắp hết');
+  String get stockStatusLabel => stock == 0
+      ? 'Hết hàng'
+      : (stock > _kStockHighThreshold ? 'Còn hàng' : 'Sắp hết');
   String get stockLabel => stock > 0 ? 'Còn $stock' : 'Hết hàng';
+
   /// Đường dẫn asset ảnh sản phẩm; dùng imageUrlOverride nếu có, không thì map theo tên, fallback default.
   String get imageAssetPath => imageUrlOverride ?? productImageAsset(name);
   bool get isLowStock => stock > 0 && stock < _kHighStockThreshold;
@@ -106,7 +113,8 @@ _StoreProduct _fromProductModel(ProductModel m) {
   ProductStatus status = ProductStatus.active;
   if (m.isActive == false) {
     status = ProductStatus.hidden;
-  } else if (stock == 0) status = ProductStatus.outOfStock;
+  } else if (stock == 0)
+    status = ProductStatus.outOfStock;
   return _StoreProduct(
     name: m.name ?? '',
     description: m.description ?? '',
@@ -135,10 +143,22 @@ List<ProductModel> _applyProductFilter(
   var result = list;
   switch (stockFilter) {
     case _StockFilter.inStock:
-      result = result.where((p) => (p.isActive ?? true) && (p.stock ?? 0) >= _kHighStockThreshold).toList();
+      result = result
+          .where(
+            (p) =>
+                (p.isActive ?? true) && (p.stock ?? 0) >= _kHighStockThreshold,
+          )
+          .toList();
       break;
     case _StockFilter.lowStock:
-      result = result.where((p) => (p.isActive ?? true) && (p.stock ?? 0) >= _kLowStockThreshold && (p.stock ?? 0) < _kHighStockThreshold).toList();
+      result = result
+          .where(
+            (p) =>
+                (p.isActive ?? true) &&
+                (p.stock ?? 0) >= _kLowStockThreshold &&
+                (p.stock ?? 0) < _kHighStockThreshold,
+          )
+          .toList();
       break;
     case _StockFilter.outOfStock:
       result = result.where((p) => (p.stock ?? 0) == 0).toList();
@@ -152,9 +172,13 @@ List<ProductModel> _applyProductFilter(
   final q = searchQuery.trim();
   if (q.isEmpty) return result;
   final qLower = q.toLowerCase();
-  return result.where((p) =>
-      (p.name ?? '').toLowerCase().contains(qLower) ||
-      (p.description ?? '').toLowerCase().contains(qLower)).toList();
+  return result
+      .where(
+        (p) =>
+            (p.name ?? '').toLowerCase().contains(qLower) ||
+            (p.description ?? '').toLowerCase().contains(qLower),
+      )
+      .toList();
 }
 
 class _StoreProductsScreenState extends State<StoreProductsScreen> {
@@ -173,9 +197,12 @@ class _StoreProductsScreenState extends State<StoreProductsScreen> {
   void _onSearchChanged() {
     final text = _searchController.text;
     _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: _kSearchDebounceMs), () {
-      if (mounted) setState(() => _debouncedQuery = text);
-    });
+    _debounceTimer = Timer(
+      const Duration(milliseconds: _kSearchDebounceMs),
+      () {
+        if (mounted) setState(() => _debouncedQuery = text);
+      },
+    );
   }
 
   @override
@@ -251,7 +278,9 @@ class _StoreProductsScreenState extends State<StoreProductsScreen> {
         onSave: null,
         onSaveToApi: (request) {
           if (productModel.id == null || productModel.id!.isEmpty) return;
-          context.read<StoreProductsBloc>().add(UpdateStoreProduct(productModel.id!, request));
+          context.read<StoreProductsBloc>().add(
+            UpdateStoreProduct(productModel.id!, request),
+          );
           Navigator.pop(ctx);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -304,7 +333,12 @@ class _StoreProductsScreenState extends State<StoreProductsScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(kPaddingLarge, kPaddingMedium, kPaddingLarge, kCardPadding),
+                  padding: const EdgeInsets.fromLTRB(
+                    kPaddingLarge,
+                    kPaddingMedium,
+                    kPaddingLarge,
+                    kCardPadding,
+                  ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -313,14 +347,22 @@ class _StoreProductsScreenState extends State<StoreProductsScreen> {
                           controller: _searchController,
                           decoration: InputDecoration(
                             hintText: 'Tìm sản phẩm...',
-                            prefixIcon: const Icon(Icons.search_rounded, color: _kPrimary),
+                            prefixIcon: const Icon(
+                              Icons.search_rounded,
+                              color: _kPrimary,
+                            ),
                             filled: true,
                             fillColor: Colors.white,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide(color: Colors.grey.shade300),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
                             ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
                           ),
                         ),
                       ),
@@ -333,31 +375,41 @@ class _StoreProductsScreenState extends State<StoreProductsScreen> {
                             _FilterChip(
                               label: 'Tất cả',
                               selected: _stockFilter == _StockFilter.all,
-                              onTap: () => setState(() => _stockFilter = _StockFilter.all),
+                              onTap: () => setState(
+                                () => _stockFilter = _StockFilter.all,
+                              ),
                             ),
                             const SizedBox(width: 8),
                             _FilterChip(
                               label: 'Còn hàng',
                               selected: _stockFilter == _StockFilter.inStock,
-                              onTap: () => setState(() => _stockFilter = _StockFilter.inStock),
+                              onTap: () => setState(
+                                () => _stockFilter = _StockFilter.inStock,
+                              ),
                             ),
                             const SizedBox(width: 8),
                             _FilterChip(
                               label: 'Sắp hết',
                               selected: _stockFilter == _StockFilter.lowStock,
-                              onTap: () => setState(() => _stockFilter = _StockFilter.lowStock),
+                              onTap: () => setState(
+                                () => _stockFilter = _StockFilter.lowStock,
+                              ),
                             ),
                             const SizedBox(width: 8),
                             _FilterChip(
                               label: 'Hết hàng',
                               selected: _stockFilter == _StockFilter.outOfStock,
-                              onTap: () => setState(() => _stockFilter = _StockFilter.outOfStock),
+                              onTap: () => setState(
+                                () => _stockFilter = _StockFilter.outOfStock,
+                              ),
                             ),
                             const SizedBox(width: 8),
                             _FilterChip(
                               label: 'Ẩn',
                               selected: _stockFilter == _StockFilter.hidden,
-                              onTap: () => setState(() => _stockFilter = _StockFilter.hidden),
+                              onTap: () => setState(
+                                () => _stockFilter = _StockFilter.hidden,
+                              ),
                             ),
                           ],
                         ),
@@ -371,50 +423,74 @@ class _StoreProductsScreenState extends State<StoreProductsScreen> {
                       final isLoading = state is StoreProductsLoading;
                       if (isLoading) {
                         return GridView.builder(
-                          padding: const EdgeInsets.fromLTRB(kPaddingLarge, 0, kPaddingLarge, 100),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            mainAxisSpacing: kCardPadding,
-                            crossAxisSpacing: kCardPadding,
-                            childAspectRatio: 0.8,
+                          padding: const EdgeInsets.fromLTRB(
+                            kPaddingLarge,
+                            0,
+                            kPaddingLarge,
+                            100,
                           ),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                mainAxisSpacing: kCardPadding,
+                                crossAxisSpacing: kCardPadding,
+                                childAspectRatio: 0.8,
+                              ),
                           itemCount: 12,
-                          itemBuilder: (context, index) => const _ProductCardSkeleton(),
+                          itemBuilder: (context, index) =>
+                              const _ProductCardSkeleton(),
                         );
                       }
                       if (state is! StoreProductsLoaded) {
                         return const Center(child: Text('Chưa có dữ liệu'));
                       }
-                      final filteredModels = _applyProductFilter(state.products, _stockFilter, _debouncedQuery);
-                      final filteredDisplay = filteredModels.map(_fromProductModel).toList();
+                      final filteredModels = _applyProductFilter(
+                        state.products,
+                        _stockFilter,
+                        _debouncedQuery,
+                      );
+                      final filteredDisplay = filteredModels
+                          .map(_fromProductModel)
+                          .toList();
                       return GridView.builder(
-                        padding: const EdgeInsets.fromLTRB(kPaddingLarge, 0, kPaddingLarge, 100),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          mainAxisSpacing: kCardPadding,
-                          crossAxisSpacing: kCardPadding,
-                          childAspectRatio: 0.8,
+                        padding: const EdgeInsets.fromLTRB(
+                          kPaddingLarge,
+                          0,
+                          kPaddingLarge,
+                          100,
                         ),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              mainAxisSpacing: kCardPadding,
+                              crossAxisSpacing: kCardPadding,
+                              childAspectRatio: 0.8,
+                            ),
                         itemCount: filteredDisplay.length,
                         itemBuilder: (context, index) {
                           final productModel = filteredModels[index];
                           final p = filteredDisplay[index];
                           return _ProductCard(
                             product: p,
-                            onTap: () => _showEditProduct(context, productModel),
+                            onTap: () =>
+                                _showEditProduct(context, productModel),
                             onHide: () {
                               if (productModel.id == null) return;
-                              context.read<StoreProductsBloc>().add(UpdateStoreProduct(
-                                    productModel.id!,
-                                    const UpdateProductRequest(isActive: false),
-                                  ));
+                              context.read<StoreProductsBloc>().add(
+                                UpdateStoreProduct(
+                                  productModel.id!,
+                                  const UpdateProductRequest(isActive: false),
+                                ),
+                              );
                             },
                             onMarkOutOfStock: () {
                               if (productModel.id == null) return;
-                              context.read<StoreProductsBloc>().add(UpdateStoreProduct(
-                                    productModel.id!,
-                                    const UpdateProductRequest(stock: 0),
-                                  ));
+                              context.read<StoreProductsBloc>().add(
+                                UpdateStoreProduct(
+                                  productModel.id!,
+                                  const UpdateProductRequest(stock: 0),
+                                ),
+                              );
                             },
                           );
                         },
@@ -426,35 +502,35 @@ class _StoreProductsScreenState extends State<StoreProductsScreen> {
             ),
           ),
         ),
-      floatingActionButton: Material(
-        elevation: 2,
-        shadowColor: _kPrimary.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(16),
-        color: _kPrimary,
-        child: InkWell(
-          onTap: () => _showAddProductModal(context),
+        floatingActionButton: Material(
+          elevation: 2,
+          shadowColor: _kPrimary.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(16),
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.add_rounded, size: 24, color: Colors.white),
-                SizedBox(width: 10),
-                Text(
-                  'Thêm sản phẩm',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                    color: Colors.white,
+          color: _kPrimary,
+          child: InkWell(
+            onTap: () => _showAddProductModal(context),
+            borderRadius: BorderRadius.circular(16),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.add_rounded, size: 24, color: Colors.white),
+                  SizedBox(width: 10),
+                  Text(
+                    'Thêm sản phẩm',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
       ),
-    ),
     );
   }
 }
@@ -471,7 +547,10 @@ class _ProductCardSkeleton extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(kRadiusLarge),
-        border: Border.all(color: Colors.grey.shade200.withValues(alpha: 0.6), width: 1),
+        border: Border.all(
+          color: Colors.grey.shade200.withValues(alpha: 0.6),
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -481,7 +560,9 @@ class _ProductCardSkeleton extends StatelessWidget {
             child: Container(
               decoration: const BoxDecoration(
                 color: _kSkeletonColor,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(kRadiusLarge)),
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(kRadiusLarge),
+                ),
               ),
             ),
           ),
@@ -542,7 +623,12 @@ class _ProductCard extends StatefulWidget {
   final VoidCallback? onHide;
   final VoidCallback? onMarkOutOfStock;
 
-  const _ProductCard({required this.product, this.onTap, this.onHide, this.onMarkOutOfStock});
+  const _ProductCard({
+    required this.product,
+    this.onTap,
+    this.onHide,
+    this.onMarkOutOfStock,
+  });
 
   @override
   State<_ProductCard> createState() => _ProductCardState();
@@ -564,13 +650,19 @@ class _ProductCardState extends State<_ProductCard> {
     final badgeColor = _stockBadgeColor(p);
     Widget card = AnimatedContainer(
       duration: const Duration(milliseconds: 180),
-      transform: Matrix4.diagonal3Values(_hover ? 1.015 : 1.0, _hover ? 1.015 : 1.0, 1.0),
+      transform: Matrix4.diagonal3Values(
+        _hover ? 1.015 : 1.0,
+        _hover ? 1.015 : 1.0,
+        1.0,
+      ),
       transformAlignment: Alignment.center,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(kRadiusLarge),
         border: Border.all(
-          color: _hover ? _kPrimary.withValues(alpha: 0.25) : Colors.grey.shade200.withValues(alpha: 0.6),
+          color: _hover
+              ? _kPrimary.withValues(alpha: 0.25)
+              : Colors.grey.shade200.withValues(alpha: 0.6),
           width: 1,
         ),
         boxShadow: [
@@ -590,164 +682,205 @@ class _ProductCardState extends State<_ProductCard> {
             height: _kImageHeight,
             width: double.infinity,
             child: GestureDetector(
-              onLongPress: kIsWeb ? null : () => setState(() => _longPressActive = true),
+              onLongPress: kIsWeb
+                  ? null
+                  : () => setState(() => _longPressActive = true),
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(kRadiusLarge)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(kRadiusLarge),
+                ),
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
                     AnimatedScale(
                       scale: _hover ? 1.04 : 1.0,
-                    duration: const Duration(milliseconds: 180),
-                    alignment: Alignment.center,
-                    child: Image.asset(
-                      p.imageAssetPath,
-                      width: _kImageWidth,
-                      height: _kImageHeight,
-                      fit: BoxFit.cover,
-                      cacheWidth: _kCacheWidth,
-                      cacheHeight: _kCacheHeight,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: _kPrimaryLight,
-                        child: const Icon(Icons.inventory_2_rounded, size: 40, color: _kPrimary),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 6,
-                    left: 6,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: badgeColor.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(kRadiusSmall),
-                            border: Border.all(color: badgeColor.withValues(alpha: 0.5), width: 1),
-                          ),
-                          child: Text(
-                            p.stockStatusLabel,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: badgeColor,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Positioned(
-                    top: 6,
-                    right: 6,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.95),
-                        borderRadius: BorderRadius.circular(kRadiusSmall),
-                      ),
-                      child: Text(
-                        _statusLabel(p.status),
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey.shade700,
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (_showQuickActions && (widget.onTap != null || widget.onHide != null))
-                    Positioned.fill(
-                      child: GestureDetector(
-                        onTap: _hideQuickActions,
-                        behavior: HitTestBehavior.opaque,
-                        child: AnimatedOpacity(
-                          duration: const Duration(milliseconds: 150),
-                          opacity: _showQuickActions ? 1 : 0,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.35),
-                              borderRadius: const BorderRadius.vertical(top: Radius.circular(kRadiusLarge)),
-                            ),
-                            child: Center(
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                if (widget.onTap != null)
-                                  _QuickActionButton(
-                                    icon: Icons.edit_rounded,
-                                    tooltip: 'Sửa',
-                                    color: _kPrimary,
-                                    onTap: () {
-                                      _hideQuickActions();
-                                      widget.onTap!();
-                                    },
-                                  ),
-                                if (widget.onTap != null && widget.onHide != null) const SizedBox(width: 8),
-                                if (widget.onTap != null)
-                                  _QuickActionButton(
-                                    icon: Icons.info_outline_rounded,
-                                    tooltip: 'Xem chi tiết',
-                                    color: const Color(0xFF1976D2),
-                                    onTap: () {
-                                      _hideQuickActions();
-                                      widget.onTap!();
-                                    },
-                                  ),
-                                if (widget.onHide != null) const SizedBox(width: 8),
-                                if (widget.onHide != null && p.status != ProductStatus.hidden)
-                                  _QuickActionButton(
-                                    icon: Icons.visibility_off_rounded,
-                                    tooltip: 'Ẩn',
-                                    color: Colors.grey.shade700,
-                                    onTap: () {
-                                      _hideQuickActions();
-                                      widget.onHide!();
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
+                      duration: const Duration(milliseconds: 180),
+                      alignment: Alignment.center,
+                      child: Image.asset(
+                        p.imageAssetPath,
+                        width: _kImageWidth,
+                        height: _kImageHeight,
+                        fit: BoxFit.cover,
+                        cacheWidth: _kCacheWidth,
+                        cacheHeight: _kCacheHeight,
+                        errorBuilder: (_, __, ___) => Container(
+                          color: _kPrimaryLight,
+                          child: const Icon(
+                            Icons.inventory_2_rounded,
+                            size: 40,
+                            color: _kPrimary,
                           ),
                         ),
                       ),
                     ),
-                  if (widget.onMarkOutOfStock != null && p.status == ProductStatus.active && p.stock > 0 && _showQuickActions)
                     Positioned(
-                      bottom: 6,
+                      top: 6,
                       left: 6,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: badgeColor.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(kRadiusSmall),
+                              border: Border.all(
+                                color: badgeColor.withValues(alpha: 0.5),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              p.stockStatusLabel,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: badgeColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Positioned(
+                      top: 6,
                       right: 6,
-                      child: Center(
-                        child: Material(
-                          color: const Color(0xFFD32F2F),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.95),
                           borderRadius: BorderRadius.circular(kRadiusSmall),
-                          child: InkWell(
-                            onTap: () {
-                              _hideQuickActions();
-                              widget.onMarkOutOfStock!();
-                            },
-                            borderRadius: BorderRadius.circular(kRadiusSmall),
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.remove_circle_outline_rounded, size: 14, color: Colors.white),
-                                  SizedBox(width: 4),
-                                  Text('Hết hàng', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)),
-                                ],
+                        ),
+                        child: Text(
+                          _statusLabel(p.status),
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (_showQuickActions &&
+                        (widget.onTap != null || widget.onHide != null))
+                      Positioned.fill(
+                        child: GestureDetector(
+                          onTap: _hideQuickActions,
+                          behavior: HitTestBehavior.opaque,
+                          child: AnimatedOpacity(
+                            duration: const Duration(milliseconds: 150),
+                            opacity: _showQuickActions ? 1 : 0,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.35),
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(kRadiusLarge),
+                                ),
+                              ),
+                              child: Center(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (widget.onTap != null)
+                                      _QuickActionButton(
+                                        icon: Icons.edit_rounded,
+                                        tooltip: 'Sửa',
+                                        color: _kPrimary,
+                                        onTap: () {
+                                          _hideQuickActions();
+                                          widget.onTap!();
+                                        },
+                                      ),
+                                    if (widget.onTap != null &&
+                                        widget.onHide != null)
+                                      const SizedBox(width: 8),
+                                    if (widget.onTap != null)
+                                      _QuickActionButton(
+                                        icon: Icons.info_outline_rounded,
+                                        tooltip: 'Xem chi tiết',
+                                        color: const Color(0xFF1976D2),
+                                        onTap: () {
+                                          _hideQuickActions();
+                                          widget.onTap!();
+                                        },
+                                      ),
+                                    if (widget.onHide != null)
+                                      const SizedBox(width: 8),
+                                    if (widget.onHide != null &&
+                                        p.status != ProductStatus.hidden)
+                                      _QuickActionButton(
+                                        icon: Icons.visibility_off_rounded,
+                                        tooltip: 'Ẩn',
+                                        color: Colors.grey.shade700,
+                                        onTap: () {
+                                          _hideQuickActions();
+                                          widget.onHide!();
+                                        },
+                                      ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                ],
+                    if (widget.onMarkOutOfStock != null &&
+                        p.status == ProductStatus.active &&
+                        p.stock > 0 &&
+                        _showQuickActions)
+                      Positioned(
+                        bottom: 6,
+                        left: 6,
+                        right: 6,
+                        child: Center(
+                          child: Material(
+                            color: const Color(0xFFD32F2F),
+                            borderRadius: BorderRadius.circular(kRadiusSmall),
+                            child: InkWell(
+                              onTap: () {
+                                _hideQuickActions();
+                                widget.onMarkOutOfStock!();
+                              },
+                              borderRadius: BorderRadius.circular(kRadiusSmall),
+                              child: const Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.remove_circle_outline_rounded,
+                                      size: 14,
+                                      color: Colors.white,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Hết hàng',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
-          ),
           ),
           Padding(
             padding: const EdgeInsets.all(kCardPadding),
@@ -778,7 +911,11 @@ class _ProductCardState extends State<_ProductCard> {
                   const SizedBox(height: 2),
                   Text(
                     'Đã bán: ${p.soldCount}',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.grey.shade600),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey.shade600,
+                    ),
                   ),
                 ],
                 const SizedBox(height: 4),
@@ -806,10 +943,7 @@ class _ProductCardState extends State<_ProductCard> {
       );
     }
 
-    return ScaleOnTap(
-      onTap: widget.onTap,
-      child: card,
-    );
+    return ScaleOnTap(onTap: widget.onTap, child: card);
   }
 }
 
@@ -854,7 +988,11 @@ class _FilterChip extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  const _FilterChip({required this.label, required this.selected, required this.onTap});
+  const _FilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -872,7 +1010,15 @@ class _FilterChip extends StatelessWidget {
               color: selected ? _kPrimary : Colors.grey.shade300,
               width: 1,
             ),
-            boxShadow: selected ? null : [const BoxShadow(color: _kCardShadow, blurRadius: 8, offset: Offset(0, 2))],
+            boxShadow: selected
+                ? null
+                : [
+                    const BoxShadow(
+                      color: _kCardShadow,
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
           ),
           child: Text(
             label,
@@ -895,7 +1041,12 @@ class _StatusChip extends StatelessWidget {
   final ProductStatus current;
   final VoidCallback onTap;
 
-  const _StatusChip({required this.label, required this.value, required this.current, required this.onTap});
+  const _StatusChip({
+    required this.label,
+    required this.value,
+    required this.current,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -936,7 +1087,14 @@ class _AddProductSheet extends StatefulWidget {
   final TextEditingController priceController;
   final TextEditingController qtyController;
   final void Function(_StoreProduct product)? onSave;
-  final void Function(String name, String description, double price, int stock, ProductStatus status)? onSaveToApi;
+  final void Function(
+    String name,
+    String description,
+    double price,
+    int stock,
+    ProductStatus status,
+  )?
+  onSaveToApi;
   final VoidCallback onCancel;
 
   const _AddProductSheet({
@@ -961,15 +1119,24 @@ class _AddProductSheetState extends State<_AddProductSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(kRadiusLarge + 4)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(kRadiusLarge + 4),
+          ),
         ),
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(kPaddingLarge, kPaddingMedium, kPaddingLarge, kPaddingLarge + 8),
+            padding: const EdgeInsets.fromLTRB(
+              kPaddingLarge,
+              kPaddingMedium,
+              kPaddingLarge,
+              kPaddingLarge + 8,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -987,7 +1154,11 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                 ),
                 Text(
                   'Thêm sản phẩm',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey.shade900),
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey.shade900,
+                  ),
                 ),
                 const SizedBox(height: kSectionSpacing),
                 GestureDetector(
@@ -998,20 +1169,28 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                     decoration: BoxDecoration(
                       color: _kPrimaryLight,
                       borderRadius: BorderRadius.circular(kRadiusMedium),
-                      border: Border.all(color: _kPrimary.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: _kPrimary.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          _imagePicked ? Icons.check_circle_rounded : Icons.add_photo_alternate_rounded,
+                          _imagePicked
+                              ? Icons.check_circle_rounded
+                              : Icons.add_photo_alternate_rounded,
                           size: 48,
                           color: _kPrimary,
                         ),
                         const SizedBox(height: 8),
                         Text(
                           _imagePicked ? 'Đã chọn ảnh (demo)' : 'Tải ảnh lên',
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kPrimary),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: _kPrimary,
+                          ),
                         ),
                       ],
                     ),
@@ -1022,9 +1201,17 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                   controller: widget.nameController,
                   decoration: InputDecoration(
                     labelText: 'Tên sản phẩm',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(kRadiusSmall)),
-                    prefixIcon: const Icon(Icons.shopping_bag_rounded, size: 20),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(kRadiusSmall),
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.shopping_bag_rounded,
+                      size: 20,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                   ),
                 ),
                 const SizedBox(height: kCardPadding),
@@ -1035,8 +1222,13 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                   decoration: InputDecoration(
                     labelText: 'Mô tả',
                     alignLabelWithHint: true,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(kRadiusSmall)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(kRadiusSmall),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                   ),
                 ),
                 const SizedBox(height: kCardPadding),
@@ -1044,9 +1236,17 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                   controller: widget.priceController,
                   decoration: InputDecoration(
                     labelText: 'Giá (VNĐ)',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(kRadiusSmall)),
-                    prefixIcon: const Icon(Icons.attach_money_rounded, size: 20),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(kRadiusSmall),
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.attach_money_rounded,
+                      size: 20,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                   ),
                   keyboardType: TextInputType.text,
                 ),
@@ -1055,16 +1255,25 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                   controller: widget.qtyController,
                   decoration: InputDecoration(
                     labelText: 'Số lượng',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(kRadiusSmall)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(kRadiusSmall),
+                    ),
                     prefixIcon: const Icon(Icons.inventory_rounded, size: 20),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                   ),
                   keyboardType: TextInputType.number,
                 ),
                 const SizedBox(height: kSectionSpacing),
                 Text(
                   'Trạng thái',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade700),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade700,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -1073,21 +1282,27 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                       label: 'Đang bán',
                       value: ProductStatus.active,
                       current: _selectedStatus,
-                      onTap: () => setState(() => _selectedStatus = ProductStatus.active),
+                      onTap: () => setState(
+                        () => _selectedStatus = ProductStatus.active,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     _StatusChip(
                       label: 'Hết hàng',
                       value: ProductStatus.outOfStock,
                       current: _selectedStatus,
-                      onTap: () => setState(() => _selectedStatus = ProductStatus.outOfStock),
+                      onTap: () => setState(
+                        () => _selectedStatus = ProductStatus.outOfStock,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     _StatusChip(
                       label: 'Ẩn',
                       value: ProductStatus.hidden,
                       current: _selectedStatus,
-                      onTap: () => setState(() => _selectedStatus = ProductStatus.hidden),
+                      onTap: () => setState(
+                        () => _selectedStatus = ProductStatus.hidden,
+                      ),
                     ),
                   ],
                 ),
@@ -1100,7 +1315,9 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           side: BorderSide(color: Colors.grey.shade400),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusMedium)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(kRadiusMedium),
+                          ),
                         ),
                         child: const Text('Hủy'),
                       ),
@@ -1113,7 +1330,9 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                           backgroundColor: _kPrimary,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusMedium)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(kRadiusMedium),
+                          ),
                         ),
                         onPressed: _saving
                             ? null
@@ -1122,7 +1341,9 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                                 if (name.isEmpty) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content: Text('Vui lòng nhập tên sản phẩm'),
+                                      content: Text(
+                                        'Vui lòng nhập tên sản phẩm',
+                                      ),
                                       backgroundColor: Colors.orange,
                                       behavior: SnackBarBehavior.floating,
                                     ),
@@ -1132,29 +1353,60 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                                 setState(() => _saving = true);
                                 try {
                                   if (widget.onSaveToApi != null) {
-                                    final price = _StoreProductsScreenState._parsePrice(widget.priceController.text);
-                                    final stock = (int.tryParse(widget.qtyController.text) ?? 0).clamp(0, 9999);
-                                    widget.onSaveToApi!(name, widget.descController.text.trim(), price, stock, _selectedStatus);
+                                    final price =
+                                        _StoreProductsScreenState._parsePrice(
+                                          widget.priceController.text,
+                                        );
+                                    final stock =
+                                        (int.tryParse(
+                                                  widget.qtyController.text,
+                                                ) ??
+                                                0)
+                                            .clamp(0, 9999);
+                                    widget.onSaveToApi!(
+                                      name,
+                                      widget.descController.text.trim(),
+                                      price,
+                                      stock,
+                                      _selectedStatus,
+                                    );
                                     if (mounted) Navigator.pop(context);
                                   } else if (widget.onSave != null) {
-                                    await Future.delayed(const Duration(milliseconds: 500));
+                                    await Future.delayed(
+                                      const Duration(milliseconds: 500),
+                                    );
                                     if (!mounted) return;
-                                    widget.onSave!(_StoreProduct(
-                                      name: name,
-                                      description: widget.descController.text.trim(),
-                                      price: widget.priceController.text.trim().isEmpty ? '0đ' : widget.priceController.text,
-                                      stock: (int.tryParse(widget.qtyController.text) ?? 0).clamp(0, 9999),
-                                      soldCount: 0,
-                                      status: _selectedStatus,
-                                      imageUrlOverride: null,
-                                    ));
+                                    widget.onSave!(
+                                      _StoreProduct(
+                                        name: name,
+                                        description: widget.descController.text
+                                            .trim(),
+                                        price:
+                                            widget.priceController.text
+                                                .trim()
+                                                .isEmpty
+                                            ? '0đ'
+                                            : widget.priceController.text,
+                                        stock:
+                                            (int.tryParse(
+                                                      widget.qtyController.text,
+                                                    ) ??
+                                                    0)
+                                                .clamp(0, 9999),
+                                        soldCount: 0,
+                                        status: _selectedStatus,
+                                        imageUrlOverride: null,
+                                      ),
+                                    );
                                   }
                                 } catch (_) {
                                   if (mounted) {
                                     setState(() => _saving = false);
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
-                                        content: Text('Không thể thêm sản phẩm. Vui lòng thử lại.'),
+                                        content: Text(
+                                          'Không thể thêm sản phẩm. Vui lòng thử lại.',
+                                        ),
                                         backgroundColor: Color(0xFFD32F2F),
                                         behavior: SnackBarBehavior.floating,
                                       ),
@@ -1166,7 +1418,10 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
                               )
                             : const Icon(Icons.add_rounded, size: 18),
                         label: const Text('Thêm sản phẩm'),
@@ -1227,15 +1482,24 @@ class _EditProductSheetState extends State<_EditProductSheet> {
   Widget build(BuildContext context) {
     final p = widget.product;
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Container(
         decoration: const BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(kRadiusLarge + 4)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(kRadiusLarge + 4),
+          ),
         ),
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(kPaddingLarge, kPaddingMedium, kPaddingLarge, kPaddingLarge + 8),
+            padding: const EdgeInsets.fromLTRB(
+              kPaddingLarge,
+              kPaddingMedium,
+              kPaddingLarge,
+              kPaddingLarge + 8,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1253,7 +1517,11 @@ class _EditProductSheetState extends State<_EditProductSheet> {
                 ),
                 Text(
                   'Chỉnh sửa sản phẩm',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey.shade900),
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey.shade900,
+                  ),
                 ),
                 const SizedBox(height: kSectionSpacing),
                 ClipRRect(
@@ -1271,7 +1539,11 @@ class _EditProductSheetState extends State<_EditProductSheet> {
                           cacheHeight: 320,
                           errorBuilder: (_, __, ___) => Container(
                             color: _kPrimaryLight,
-                            child: const Icon(Icons.image_rounded, size: 48, color: _kPrimary),
+                            child: const Icon(
+                              Icons.image_rounded,
+                              size: 48,
+                              color: _kPrimary,
+                            ),
                           ),
                         ),
                       ),
@@ -1291,13 +1563,27 @@ class _EditProductSheetState extends State<_EditProductSheet> {
                             },
                             borderRadius: BorderRadius.circular(kRadiusSmall),
                             child: const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.photo_camera_rounded, size: 18, color: _kPrimary),
+                                  Icon(
+                                    Icons.photo_camera_rounded,
+                                    size: 18,
+                                    color: _kPrimary,
+                                  ),
                                   SizedBox(width: 6),
-                                  Text('Đổi ảnh', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: _kPrimary)),
+                                  Text(
+                                    'Đổi ảnh',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: _kPrimary,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -1312,9 +1598,17 @@ class _EditProductSheetState extends State<_EditProductSheet> {
                   controller: widget.nameController,
                   decoration: InputDecoration(
                     labelText: 'Tên sản phẩm',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(kRadiusSmall)),
-                    prefixIcon: const Icon(Icons.shopping_bag_rounded, size: 20),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(kRadiusSmall),
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.shopping_bag_rounded,
+                      size: 20,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                   ),
                 ),
                 const SizedBox(height: kCardPadding),
@@ -1325,8 +1619,13 @@ class _EditProductSheetState extends State<_EditProductSheet> {
                   decoration: InputDecoration(
                     labelText: 'Mô tả',
                     alignLabelWithHint: true,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(kRadiusSmall)),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(kRadiusSmall),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                   ),
                 ),
                 const SizedBox(height: kCardPadding),
@@ -1334,9 +1633,17 @@ class _EditProductSheetState extends State<_EditProductSheet> {
                   controller: widget.priceController,
                   decoration: InputDecoration(
                     labelText: 'Giá (VNĐ)',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(kRadiusSmall)),
-                    prefixIcon: const Icon(Icons.attach_money_rounded, size: 20),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(kRadiusSmall),
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.attach_money_rounded,
+                      size: 20,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                   ),
                   keyboardType: TextInputType.text,
                 ),
@@ -1345,16 +1652,25 @@ class _EditProductSheetState extends State<_EditProductSheet> {
                   controller: widget.stockController,
                   decoration: InputDecoration(
                     labelText: 'Số lượng',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(kRadiusSmall)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(kRadiusSmall),
+                    ),
                     prefixIcon: const Icon(Icons.inventory_rounded, size: 20),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                   ),
                   keyboardType: TextInputType.number,
                 ),
                 const SizedBox(height: kSectionSpacing),
                 Text(
                   'Trạng thái',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade700),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade700,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -1363,21 +1679,27 @@ class _EditProductSheetState extends State<_EditProductSheet> {
                       label: 'Đang bán',
                       value: ProductStatus.active,
                       current: _selectedStatus,
-                      onTap: () => setState(() => _selectedStatus = ProductStatus.active),
+                      onTap: () => setState(
+                        () => _selectedStatus = ProductStatus.active,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     _StatusChip(
                       label: 'Hết hàng',
                       value: ProductStatus.outOfStock,
                       current: _selectedStatus,
-                      onTap: () => setState(() => _selectedStatus = ProductStatus.outOfStock),
+                      onTap: () => setState(
+                        () => _selectedStatus = ProductStatus.outOfStock,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     _StatusChip(
                       label: 'Ẩn',
                       value: ProductStatus.hidden,
                       current: _selectedStatus,
-                      onTap: () => setState(() => _selectedStatus = ProductStatus.hidden),
+                      onTap: () => setState(
+                        () => _selectedStatus = ProductStatus.hidden,
+                      ),
                     ),
                   ],
                 ),
@@ -1390,7 +1712,9 @@ class _EditProductSheetState extends State<_EditProductSheet> {
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           side: BorderSide(color: Colors.grey.shade400),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusMedium)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(kRadiusMedium),
+                          ),
                         ),
                         child: const Text('Hủy'),
                       ),
@@ -1403,54 +1727,89 @@ class _EditProductSheetState extends State<_EditProductSheet> {
                           backgroundColor: _kPrimary,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusMedium)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(kRadiusMedium),
+                          ),
                         ),
                         onPressed: _saving
                             ? null
                             : () async {
                                 setState(() => _saving = true);
                                 try {
-                                  if (widget.onSaveToApi != null && widget.productId != null) {
-                                    final name = widget.nameController.text.trim().isEmpty
+                                  if (widget.onSaveToApi != null &&
+                                      widget.productId != null) {
+                                    final name =
+                                        widget.nameController.text
+                                            .trim()
+                                            .isEmpty
                                         ? p.name
                                         : widget.nameController.text.trim();
-                                    final priceStr = widget.priceController.text.trim();
-                                    final price = priceStr.isEmpty ? null : _StoreProductsScreenState._parsePrice(priceStr);
-                                    final stock = int.tryParse(widget.stockController.text);
-                                    widget.onSaveToApi!(UpdateProductRequest(
-                                      name: name,
-                                      description: widget.descController.text.trim(),
-                                      price: price,
-                                      stock: stock?.clamp(0, 9999),
-                                      isActive: _selectedStatus != ProductStatus.hidden,
-                                    ));
+                                    final priceStr = widget.priceController.text
+                                        .trim();
+                                    final price = priceStr.isEmpty
+                                        ? null
+                                        : _StoreProductsScreenState._parsePrice(
+                                            priceStr,
+                                          );
+                                    final stock = int.tryParse(
+                                      widget.stockController.text,
+                                    );
+                                    widget.onSaveToApi!(
+                                      UpdateProductRequest(
+                                        name: name,
+                                        description: widget.descController.text
+                                            .trim(),
+                                        price: price,
+                                        stock: stock?.clamp(0, 9999),
+                                        isActive:
+                                            _selectedStatus !=
+                                            ProductStatus.hidden,
+                                      ),
+                                    );
                                     if (mounted) Navigator.pop(context);
                                   } else if (widget.onSave != null) {
-                                    await Future.delayed(const Duration(milliseconds: 500));
+                                    await Future.delayed(
+                                      const Duration(milliseconds: 500),
+                                    );
                                     if (!mounted) return;
-                                    final name = widget.nameController.text.trim().isEmpty
+                                    final name =
+                                        widget.nameController.text
+                                            .trim()
+                                            .isEmpty
                                         ? p.name
                                         : widget.nameController.text.trim();
-                                    final price = widget.priceController.text.trim().isEmpty
+                                    final price =
+                                        widget.priceController.text
+                                            .trim()
+                                            .isEmpty
                                         ? p.price
                                         : widget.priceController.text;
-                                    final stock = int.tryParse(widget.stockController.text) ?? p.stock;
-                                    widget.onSave!(_StoreProduct(
-                                      name: name,
-                                      description: widget.descController.text.trim(),
-                                      price: price,
-                                      stock: stock.clamp(0, 9999),
-                                      soldCount: widget.product.soldCount,
-                                      status: _selectedStatus,
-                                      imageUrlOverride: _imageUrlOverride,
-                                    ));
+                                    final stock =
+                                        int.tryParse(
+                                          widget.stockController.text,
+                                        ) ??
+                                        p.stock;
+                                    widget.onSave!(
+                                      _StoreProduct(
+                                        name: name,
+                                        description: widget.descController.text
+                                            .trim(),
+                                        price: price,
+                                        stock: stock.clamp(0, 9999),
+                                        soldCount: widget.product.soldCount,
+                                        status: _selectedStatus,
+                                        imageUrlOverride: _imageUrlOverride,
+                                      ),
+                                    );
                                   }
                                 } catch (_) {
                                   if (mounted) {
                                     setState(() => _saving = false);
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
-                                        content: Text('Không thể cập nhật sản phẩm. Vui lòng thử lại.'),
+                                        content: Text(
+                                          'Không thể cập nhật sản phẩm. Vui lòng thử lại.',
+                                        ),
                                         backgroundColor: Color(0xFFD32F2F),
                                         behavior: SnackBarBehavior.floating,
                                       ),
@@ -1462,7 +1821,10 @@ class _EditProductSheetState extends State<_EditProductSheet> {
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
                               )
                             : const Icon(Icons.save_rounded, size: 18),
                         label: const Text('Lưu thay đổi'),

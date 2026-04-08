@@ -54,9 +54,10 @@ class _ShipperProfileScreenState extends State<ShipperProfileScreen> {
       appBar: AppBar(
         title: Text(
           'Cá nhân',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: Colors.white,
-                  ) ??
+          style:
+              Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(color: Colors.white) ??
               const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -71,8 +72,8 @@ class _ShipperProfileScreenState extends State<ShipperProfileScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? _buildErrorState()
-              : _buildProfileContent(),
+          ? _buildErrorState()
+          : _buildProfileContent(),
     );
   }
 
@@ -121,7 +122,11 @@ class _ShipperProfileScreenState extends State<ShipperProfileScreen> {
   }
 
   Widget _buildProfileHeader(
-      String name, String phone, String? avatarUrl, String role) {
+    String name,
+    String phone,
+    String? avatarUrl,
+    String role,
+  ) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       elevation: 2,
@@ -146,24 +151,20 @@ class _ShipperProfileScreenState extends State<ShipperProfileScreen> {
             const SizedBox(height: 20),
             Text(
               name,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ) ??
-                  const TextStyle(
-                    fontSize: 20,
+              style:
+                  Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w700,
-                  ),
+                  ) ??
+                  const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
             Text(
               phone,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Colors.grey[600],
-                      ) ??
-                  TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                  ),
+              style:
+                  Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(color: Colors.grey[600]) ??
+                  TextStyle(fontSize: 16, color: Colors.grey[600]),
             ),
             const SizedBox(height: 12),
             Container(
@@ -177,10 +178,11 @@ class _ShipperProfileScreenState extends State<ShipperProfileScreen> {
               ),
               child: Text(
                 role,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: ShipperTheme.primaryColor,
-                          fontWeight: FontWeight.w700,
-                        ) ??
+                style:
+                    Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: ShipperTheme.primaryColor,
+                      fontWeight: FontWeight.w700,
+                    ) ??
                     const TextStyle(
                       color: ShipperTheme.primaryColor,
                       fontWeight: FontWeight.w700,
@@ -205,17 +207,18 @@ class _ShipperProfileScreenState extends State<ShipperProfileScreen> {
           children: [
             Text(
               'Thông tin cá nhân',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ) ??
-                  const TextStyle(
-                    fontSize: 18,
+              style:
+                  Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w700,
-                  ),
+                  ) ??
+                  const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 18),
             _buildInfoRow(
-                Icons.phone, 'Số điện thoại', _userData?['phoneNumber'] ?? ''),
+              Icons.phone,
+              'Số điện thoại',
+              _userData?['phoneNumber'] ?? '',
+            ),
             const SizedBox(height: 16),
             _buildInfoRow(
               Icons.location_on,
@@ -260,13 +263,11 @@ class _ShipperProfileScreenState extends State<ShipperProfileScreen> {
       leading: Icon(icon, color: ShipperTheme.primaryColor, size: 24),
       title: Text(
         title,
-        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ) ??
-            const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
+        style:
+            Theme.of(
+              context,
+            ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500) ??
+            const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
       ),
       trailing: Icon(Icons.chevron_right, color: Colors.grey[400], size: 24),
       onTap: onTap,
@@ -282,10 +283,11 @@ class _ShipperProfileScreenState extends State<ShipperProfileScreen> {
         icon: const Icon(Icons.logout, size: 22),
         label: Text(
           'Đăng xuất',
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ) ??
+          style:
+              Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ) ??
               const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
@@ -318,10 +320,11 @@ class _ShipperProfileScreenState extends State<ShipperProfileScreen> {
             children: [
               Text(
                 label,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: Colors.grey[600],
-                          fontWeight: FontWeight.w500,
-                        ) ??
+                style:
+                    Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ) ??
                     TextStyle(
                       fontSize: 12,
                       color: Colors.grey[600],
@@ -331,13 +334,11 @@ class _ShipperProfileScreenState extends State<ShipperProfileScreen> {
               const SizedBox(height: 4),
               Text(
                 value,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ) ??
-                    const TextStyle(
-                      fontSize: 16,
+                style:
+                    Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w600,
-                    ),
+                    ) ??
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -349,10 +350,7 @@ class _ShipperProfileScreenState extends State<ShipperProfileScreen> {
   }
 
   void _showChangePasswordDialog() {
-    showDialog(
-      context: context,
-      builder: (_) => const _ChangePasswordDialog(),
-    );
+    showDialog(context: context, builder: (_) => const _ChangePasswordDialog());
   }
 
   void _showEditProfileDialog() {
@@ -444,8 +442,10 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
             ),
             if (_error != null) ...[
               const SizedBox(height: 8),
-              Text(_error!,
-                  style: const TextStyle(color: Colors.red, fontSize: 12)),
+              Text(
+                _error!,
+                style: const TextStyle(color: Colors.red, fontSize: 12),
+              ),
             ],
           ],
         ),
@@ -494,10 +494,10 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
 
     try {
       final success = await context.read<ShipperRepository>().changePassword(
-            oldPassword: oldPassword,
-            newPassword: newPassword,
-            confirmPassword: confirmPassword,
-          );
+        oldPassword: oldPassword,
+        newPassword: newPassword,
+        confirmPassword: confirmPassword,
+      );
 
       if (mounted) {
         if (success) {
@@ -548,10 +548,12 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
   @override
   void initState() {
     super.initState();
-    _nameController =
-        TextEditingController(text: widget.userData?['fullName'] ?? '');
-    _addressController =
-        TextEditingController(text: widget.userData?['address'] ?? '');
+    _nameController = TextEditingController(
+      text: widget.userData?['fullName'] ?? '',
+    );
+    _addressController = TextEditingController(
+      text: widget.userData?['address'] ?? '',
+    );
   }
 
   @override
@@ -580,8 +582,10 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
             ),
             if (_error != null) ...[
               const SizedBox(height: 8),
-              Text(_error!,
-                  style: const TextStyle(color: Colors.red, fontSize: 12)),
+              Text(
+                _error!,
+                style: const TextStyle(color: Colors.red, fontSize: 12),
+              ),
             ],
           ],
         ),
@@ -620,11 +624,9 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
     });
 
     try {
-      final updatedProfile =
-          await context.read<ShipperRepository>().updateProfile(
-                fullName: name,
-                address: address,
-              );
+      final updatedProfile = await context
+          .read<ShipperRepository>()
+          .updateProfile(fullName: name, address: address);
 
       if (mounted) {
         if (updatedProfile != null) {

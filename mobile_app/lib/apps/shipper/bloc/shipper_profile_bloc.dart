@@ -10,8 +10,8 @@ class ShipperProfileBloc
   final ShipperRepository _repository;
 
   ShipperProfileBloc({required ShipperRepository repository})
-      : _repository = repository,
-        super(const ShipperProfileState()) {
+    : _repository = repository,
+      super(const ShipperProfileState()) {
     on<LoadUserProfile>(_handleLoadProfile);
     on<UpdateUserProfile>(_handleUpdateProfile);
     on<ChangePassword>(_handleChangePassword);
@@ -27,22 +27,25 @@ class ShipperProfileBloc
       final userJson = await _repository.getCurrentUser();
       if (userJson != null) {
         final userProfile = UserProfile.fromJson(userJson);
-        emit(state.copyWith(
-          status: ProfileStatus.loaded,
-          userProfile: userProfile,
-          errorMessage: null,
-        ));
+        emit(
+          state.copyWith(
+            status: ProfileStatus.loaded,
+            userProfile: userProfile,
+            errorMessage: null,
+          ),
+        );
       } else {
-        emit(state.copyWith(
-          status: ProfileStatus.error,
-          errorMessage: 'Không thể lấy thông tin hồ sơ',
-        ));
+        emit(
+          state.copyWith(
+            status: ProfileStatus.error,
+            errorMessage: 'Không thể lấy thông tin hồ sơ',
+          ),
+        );
       }
     } catch (e) {
-      emit(state.copyWith(
-        status: ProfileStatus.error,
-        errorMessage: e.toString(),
-      ));
+      emit(
+        state.copyWith(status: ProfileStatus.error, errorMessage: e.toString()),
+      );
     }
   }
 
@@ -61,28 +64,33 @@ class ShipperProfileBloc
         final userJson = await _repository.getCurrentUser();
         if (userJson != null) {
           final userProfile = UserProfile.fromJson(userJson);
-          emit(state.copyWith(
-            status: ProfileStatus.success,
-            userProfile: userProfile,
-            errorMessage: null,
-          ));
+          emit(
+            state.copyWith(
+              status: ProfileStatus.success,
+              userProfile: userProfile,
+              errorMessage: null,
+            ),
+          );
         } else {
-          emit(state.copyWith(
-            status: ProfileStatus.error,
-            errorMessage: 'Không thể lấy thông tin hồ sơ sau khi cập nhật',
-          ));
+          emit(
+            state.copyWith(
+              status: ProfileStatus.error,
+              errorMessage: 'Không thể lấy thông tin hồ sơ sau khi cập nhật',
+            ),
+          );
         }
       } else {
-        emit(state.copyWith(
-          status: ProfileStatus.error,
-          errorMessage: 'Cập nhật hồ sơ thất bại',
-        ));
+        emit(
+          state.copyWith(
+            status: ProfileStatus.error,
+            errorMessage: 'Cập nhật hồ sơ thất bại',
+          ),
+        );
       }
     } catch (e) {
-      emit(state.copyWith(
-        status: ProfileStatus.error,
-        errorMessage: e.toString(),
-      ));
+      emit(
+        state.copyWith(status: ProfileStatus.error, errorMessage: e.toString()),
+      );
     }
   }
 
@@ -98,22 +106,25 @@ class ShipperProfileBloc
         confirmPassword: event.confirmPassword,
       );
       if (success) {
-        emit(state.copyWith(
-          status: ProfileStatus.success,
-          isPasswordChanged: true,
-          errorMessage: null,
-        ));
+        emit(
+          state.copyWith(
+            status: ProfileStatus.success,
+            isPasswordChanged: true,
+            errorMessage: null,
+          ),
+        );
       } else {
-        emit(state.copyWith(
-          status: ProfileStatus.error,
-          errorMessage: 'Đổi mật khẩu thất bại',
-        ));
+        emit(
+          state.copyWith(
+            status: ProfileStatus.error,
+            errorMessage: 'Đổi mật khẩu thất bại',
+          ),
+        );
       }
     } catch (e) {
-      emit(state.copyWith(
-        status: ProfileStatus.error,
-        errorMessage: e.toString(),
-      ));
+      emit(
+        state.copyWith(status: ProfileStatus.error, errorMessage: e.toString()),
+      );
     }
   }
 

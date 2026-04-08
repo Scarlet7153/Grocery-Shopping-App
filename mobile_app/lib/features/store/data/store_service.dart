@@ -20,7 +20,11 @@ class StoreService {
       final raw = response.data;
       if (raw == null) return null;
       final data = (raw['data'] ?? raw);
-      return StoreModel.fromJson(data is Map<String, dynamic> ? data : Map<String, dynamic>.from(data as Map));
+      return StoreModel.fromJson(
+        data is Map<String, dynamic>
+            ? data
+            : Map<String, dynamic>.from(data as Map),
+      );
     } on DioException catch (e) {
       debugPrint('getStoreInfo failed: $e');
       return null;
@@ -31,7 +35,9 @@ class StoreService {
   }
 
   /// Update store profile (requires auth).
-  Future<StoreModel?> updateStoreProfile(UpdateStoreProfileRequest request) async {
+  Future<StoreModel?> updateStoreProfile(
+    UpdateStoreProfileRequest request,
+  ) async {
     try {
       final response = await _client.put<Map<String, dynamic>>(
         ApiRoutes.updateStoreProfile,
@@ -40,7 +46,11 @@ class StoreService {
       final raw = response.data;
       if (raw == null) return null;
       final data = (raw['data'] ?? raw);
-      return StoreModel.fromJson(data is Map<String, dynamic> ? data : Map<String, dynamic>.from(data as Map));
+      return StoreModel.fromJson(
+        data is Map<String, dynamic>
+            ? data
+            : Map<String, dynamic>.from(data as Map),
+      );
     } on DioException catch (e) {
       debugPrint('updateStoreProfile failed: $e');
       return null;

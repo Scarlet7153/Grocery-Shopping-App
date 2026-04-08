@@ -9,7 +9,7 @@ class OrderOptimizationService {
   final GraphHopperRoutingService _routingService;
 
   OrderOptimizationService({required GraphHopperRoutingService routingService})
-      : _routingService = routingService;
+    : _routingService = routingService;
 
   /// Optimize sequence của multiple orders
   /// Input: list orders + current shipper location
@@ -28,8 +28,9 @@ class OrderOptimizationService {
       final geocodedLocations = <int, LatLng>{};
       for (final order in orders) {
         try {
-          final lat =
-              await GeocodingService.geocodeAddress(order.deliveryAddress);
+          final lat = await GeocodingService.geocodeAddress(
+            order.deliveryAddress,
+          );
           if (lat != null) {
             geocodedLocations[order.id] = lat;
           }
@@ -61,13 +62,15 @@ class OrderOptimizationService {
         // Pickup at store (or shipper location if no store)
         final pickupLoc = storeLocation ?? shipperLocation;
 
-        stops.add(DeliveryStop(
-          orderId: order.id,
-          pickupLocation: pickupLoc,
-          deliveryLocation: deliveryLat,
-          pickupServiceTime: 600, // 10 minutes
-          deliveryServiceTime: 300, // 5 minutes
-        ));
+        stops.add(
+          DeliveryStop(
+            orderId: order.id,
+            pickupLocation: pickupLoc,
+            deliveryLocation: deliveryLat,
+            pickupServiceTime: 600, // 10 minutes
+            deliveryServiceTime: 300, // 5 minutes
+          ),
+        );
       }
 
       if (stops.isEmpty) {

@@ -23,18 +23,10 @@ class StoreApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(
-          create: (_) => StoreAuthBloc(StoreRepository()),
-        ),
-        BlocProvider(
-          create: (_) => StoreDashboardBloc(StoreRepository()),
-        ),
-        BlocProvider(
-          create: (_) => StoreProductsBloc(ProductService()),
-        ),
-        BlocProvider(
-          create: (_) => StoreOrdersBloc(OrderService()),
-        ),
+        BlocProvider(create: (_) => StoreAuthBloc(StoreRepository())),
+        BlocProvider(create: (_) => StoreDashboardBloc(StoreRepository())),
+        BlocProvider(create: (_) => StoreProductsBloc(ProductService())),
+        BlocProvider(create: (_) => StoreOrdersBloc(OrderService())),
       ],
       child: MaterialApp(
         title: 'Đi Chợ Hộ - Chủ Cửa Hàng',

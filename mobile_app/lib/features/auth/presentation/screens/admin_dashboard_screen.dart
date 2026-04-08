@@ -20,7 +20,7 @@ class AdminDashboardScreen extends StatelessWidget {
               context.read<AuthBloc>().add(const LogoutRequested());
               Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
             },
-          )
+          ),
         ],
       ),
       body: BlocBuilder<AuthBloc, AuthState>(
@@ -32,7 +32,10 @@ class AdminDashboardScreen extends StatelessWidget {
               children: [
                 Text(
                   'Xin chào, ${user.fullName}',
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -40,22 +43,45 @@ class AdminDashboardScreen extends StatelessWidget {
                   style: const TextStyle(color: Colors.grey),
                 ),
                 const SizedBox(height: 24),
-                
-                const Text('Chức năng hệ thống', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+
+                const Text(
+                  'Chức năng hệ thống',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 12),
 
                 // QUẢN LÝ QUYỀN: Các widget này chỉ hiện khi user có quyền tương ứng
                 if (state.hasPermission('manage_users'))
-                  _buildFeatureCard(context, 'Quản lý người dùng', Icons.people, Colors.blue),
-                
+                  _buildFeatureCard(
+                    context,
+                    'Quản lý người dùng',
+                    Icons.people,
+                    Colors.blue,
+                  ),
+
                 if (state.hasPermission('manage_stores'))
-                  _buildFeatureCard(context, 'Quản lý cửa hàng', Icons.store, Colors.green),
-                
+                  _buildFeatureCard(
+                    context,
+                    'Quản lý cửa hàng',
+                    Icons.store,
+                    Colors.green,
+                  ),
+
                 if (state.hasPermission('view_analytics'))
-                  _buildFeatureCard(context, 'Thống kê & Báo cáo', Icons.bar_chart, Colors.orange),
-                
+                  _buildFeatureCard(
+                    context,
+                    'Thống kê & Báo cáo',
+                    Icons.bar_chart,
+                    Colors.orange,
+                  ),
+
                 if (state.hasPermission('system_settings'))
-                  _buildFeatureCard(context, 'Cài đặt hệ thống', Icons.settings, Colors.grey),
+                  _buildFeatureCard(
+                    context,
+                    'Cài đặt hệ thống',
+                    Icons.settings,
+                    Colors.grey,
+                  ),
               ],
             );
           }
@@ -65,12 +91,20 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureCard(BuildContext context, String title, IconData icon, Color color) {
+  Widget _buildFeatureCard(
+    BuildContext context,
+    String title,
+    IconData icon,
+    Color color,
+  ) {
     return Card(
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 12.0),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16.0,
+          vertical: 8.0,
+        ),
         leading: CircleAvatar(
           backgroundColor: color.withOpacity(0.1),
           child: Icon(icon, color: color),
@@ -78,9 +112,9 @@ class AdminDashboardScreen extends StatelessWidget {
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Mở chức năng: $title')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Mở chức năng: $title')));
         },
       ),
     );

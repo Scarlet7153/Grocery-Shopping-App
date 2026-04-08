@@ -27,16 +27,21 @@ class OptimizedRoute extends Equatable {
   });
 
   @override
-  List<Object?> get props =>
-      [optimizedOrders, totalDistance, estimatedTime, polyline, stops];
+  List<Object?> get props => [
+    optimizedOrders,
+    totalDistance,
+    estimatedTime,
+    polyline,
+    stops,
+  ];
 
   Map<String, dynamic> toJson() => {
-        'optimizedOrders': optimizedOrders.map((o) => o.id).toList(),
-        'totalDistance': totalDistance,
-        'estimatedTime': estimatedTime,
-        'polyline': polyline,
-        'stops': stops.map((s) => s.toJson()).toList(),
-      };
+    'optimizedOrders': optimizedOrders.map((o) => o.id).toList(),
+    'totalDistance': totalDistance,
+    'estimatedTime': estimatedTime,
+    'polyline': polyline,
+    'stops': stops.map((s) => s.toJson()).toList(),
+  };
 }
 
 /// Một stop trong route (pickup hoặc delivery)
@@ -58,17 +63,23 @@ class RouteStop extends Equatable {
   });
 
   @override
-  List<Object?> get props =>
-      [orderId, title, isPickup, latitude, longitude, address];
+  List<Object?> get props => [
+    orderId,
+    title,
+    isPickup,
+    latitude,
+    longitude,
+    address,
+  ];
 
   Map<String, dynamic> toJson() => {
-        'orderId': orderId,
-        'title': title,
-        'isPickup': isPickup,
-        'latitude': latitude,
-        'longitude': longitude,
-        'address': address,
-      };
+    'orderId': orderId,
+    'title': title,
+    'isPickup': isPickup,
+    'latitude': latitude,
+    'longitude': longitude,
+    'address': address,
+  };
 
   factory RouteStop.fromJson(Map<String, dynamic> json) {
     return RouteStop(

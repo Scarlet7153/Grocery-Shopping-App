@@ -73,19 +73,18 @@ class _RecipientInfoScreenState extends State<RecipientInfoScreen> {
   Future<void> _openAddAddress() async {
     final result = await Navigator.push<RecipientAddressResult?>(
       context,
-      MaterialPageRoute(
-        builder: (_) => const RecipientAddressFormScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const RecipientAddressFormScreen()),
     );
     if (result != null && result.address.trim().isNotEmpty) {
       setState(() {
         _extraAddresses.add(
           _SavedAddress(
-            name: (AuthSession.fullName == null ||
-                    AuthSession.fullName!.isEmpty)
+            name:
+                (AuthSession.fullName == null || AuthSession.fullName!.isEmpty)
                 ? 'Khách hàng'
                 : AuthSession.fullName!,
-            phone: (AuthSession.phoneNumber == null ||
+            phone:
+                (AuthSession.phoneNumber == null ||
                     AuthSession.phoneNumber!.isEmpty)
                 ? 'Chưa có số điện thoại'
                 : AuthSession.phoneNumber!,
@@ -195,15 +194,17 @@ class _RecipientInfoScreenState extends State<RecipientInfoScreen> {
 
   void _syncExtraToSession() {
     AuthSession.savedAddresses = _extraAddresses
-        .map((e) => {
-              'name': e.name,
-              'phone': e.phone,
-              'address': e.address,
-              'hasOtherReceiver': e.hasOtherReceiver,
-              'otherReceiverName': e.otherReceiverName,
-              'otherReceiverPhone': e.otherReceiverPhone,
-              'otherReceiverTitle': e.otherReceiverTitle,
-            })
+        .map(
+          (e) => {
+            'name': e.name,
+            'phone': e.phone,
+            'address': e.address,
+            'hasOtherReceiver': e.hasOtherReceiver,
+            'otherReceiverName': e.otherReceiverName,
+            'otherReceiverPhone': e.otherReceiverPhone,
+            'otherReceiverTitle': e.otherReceiverTitle,
+          },
+        )
         .toList();
   }
 
@@ -212,14 +213,14 @@ class _RecipientInfoScreenState extends State<RecipientInfoScreen> {
     final name = (AuthSession.fullName == null || AuthSession.fullName!.isEmpty)
         ? 'Khách hàng'
         : AuthSession.fullName!;
-    final phone = (AuthSession.phoneNumber == null ||
-            AuthSession.phoneNumber!.isEmpty)
+    final phone =
+        (AuthSession.phoneNumber == null || AuthSession.phoneNumber!.isEmpty)
         ? 'Chưa có số điện thoại'
         : AuthSession.phoneNumber!;
     final address =
         (AuthSession.address == null || AuthSession.address!.isEmpty)
-            ? 'Chưa có địa chỉ'
-            : AuthSession.address!;
+        ? 'Chưa có địa chỉ'
+        : AuthSession.address!;
 
     return Scaffold(
       appBar: AppBar(
@@ -253,9 +254,8 @@ class _RecipientInfoScreenState extends State<RecipientInfoScreen> {
                       child: _AddressCard(
                         item: entry.value,
                         selected: _selectedIndex == entry.key + 1,
-                        onSelect: () => setState(
-                          () => _selectedIndex = entry.key + 1,
-                        ),
+                        onSelect: () =>
+                            setState(() => _selectedIndex = entry.key + 1),
                         onEdit: () => _editAddress(entry.key),
                         onDelete: () => _deleteAddress(entry.key),
                       ),
@@ -275,18 +275,13 @@ class _RecipientInfoScreenState extends State<RecipientInfoScreen> {
               child: SizedBox(
                 width: double.infinity,
                 height: 48,
-                  child: ElevatedButton(
+                child: ElevatedButton(
                   onPressed: () {
                     final all = [
-                      _SavedAddress(
-                        name: name,
-                        phone: phone,
-                        address: address,
-                      ),
+                      _SavedAddress(name: name, phone: phone, address: address),
                       ..._extraAddresses,
                     ];
-                    if (_selectedIndex >= 0 &&
-                        _selectedIndex < all.length) {
+                    if (_selectedIndex >= 0 && _selectedIndex < all.length) {
                       AuthSession.address = all[_selectedIndex].address;
                     }
                     AuthSession.selectedAddressIndex = _selectedIndex;
@@ -333,9 +328,7 @@ class _RecipientCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Row(
@@ -357,15 +350,10 @@ class _RecipientCard extends StatelessWidget {
                 children: [
                   Text(
                     _displayPrimaryName(),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 6),
-                  Text(
-                    address,
-                    style: const TextStyle(color: Colors.black54),
-                  ),
+                  Text(address, style: const TextStyle(color: Colors.black54)),
                   if (hasOtherReceiver &&
                       otherReceiverName != null &&
                       otherReceiverPhone != null)
@@ -373,9 +361,7 @@ class _RecipientCard extends StatelessWidget {
                       padding: const EdgeInsets.only(top: 6),
                       child: Text(
                         'Người nhận: ${_formatOtherReceiver()} - $otherReceiverPhone',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ),
                 ],
@@ -383,14 +369,8 @@ class _RecipientCard extends StatelessWidget {
             ),
             Column(
               children: [
-                TextButton(
-                  onPressed: onEdit,
-                  child: const Text('Sửa'),
-                ),
-                TextButton(
-                  onPressed: onDelete,
-                  child: const Text('Xóa'),
-                ),
+                TextButton(onPressed: onEdit, child: const Text('Sửa')),
+                TextButton(onPressed: onDelete, child: const Text('Xóa')),
               ],
             ),
           ],
@@ -405,9 +385,7 @@ class _RecipientCard extends StatelessWidget {
         otherReceiverPhone != null) {
       final title = otherReceiverTitle;
       final name = otherReceiverName ?? '';
-      final display = (title == null || title.isEmpty)
-          ? name
-          : '$title $name';
+      final display = (title == null || title.isEmpty) ? name : '$title $name';
       return '$display, $otherReceiverPhone';
     }
     return '$name, $phone';
@@ -459,9 +437,7 @@ class _AddressCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Row(
@@ -483,9 +459,7 @@ class _AddressCard extends StatelessWidget {
                 children: [
                   Text(
                     _displayPrimaryName(item),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -499,9 +473,7 @@ class _AddressCard extends StatelessWidget {
                       padding: const EdgeInsets.only(top: 6),
                       child: Text(
                         'Người nhận: ${_formatOtherReceiver(item)} - ${item.otherReceiverPhone}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ),
                 ],
@@ -509,14 +481,8 @@ class _AddressCard extends StatelessWidget {
             ),
             Column(
               children: [
-                TextButton(
-                  onPressed: onEdit,
-                  child: const Text('Sửa'),
-                ),
-                TextButton(
-                  onPressed: onDelete,
-                  child: const Text('Xóa'),
-                ),
+                TextButton(onPressed: onEdit, child: const Text('Sửa')),
+                TextButton(onPressed: onDelete, child: const Text('Xóa')),
               ],
             ),
           ],
@@ -531,8 +497,7 @@ class _AddressCard extends StatelessWidget {
         item.otherReceiverPhone != null) {
       final title = item.otherReceiverTitle;
       final name = item.otherReceiverName ?? '';
-      final display =
-          (title == null || title.isEmpty) ? name : '$title $name';
+      final display = (title == null || title.isEmpty) ? name : '$title $name';
       return '$display, ${item.otherReceiverPhone}';
     }
     return '${item.name}, ${item.phone}';

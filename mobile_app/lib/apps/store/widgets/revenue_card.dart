@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 
 class RevenueCard extends StatelessWidget {
-
   const RevenueCard({super.key});
 
   @override
   Widget build(BuildContext context) {
-
     return Container(
-
       padding: const EdgeInsets.all(20),
 
       decoration: BoxDecoration(
@@ -17,15 +14,10 @@ class RevenueCard extends StatelessWidget {
       ),
 
       child: const Column(
-
         crossAxisAlignment: CrossAxisAlignment.start,
 
         children: [
-
-          Text(
-            "Doanh thu hôm nay",
-            style: TextStyle(color: Colors.white),
-          ),
+          Text("Doanh thu hôm nay", style: TextStyle(color: Colors.white)),
 
           SizedBox(height: 10),
 
@@ -37,7 +29,6 @@ class RevenueCard extends StatelessWidget {
               color: Colors.white,
             ),
           ),
-
         ],
       ),
     );

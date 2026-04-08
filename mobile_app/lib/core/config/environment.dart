@@ -6,10 +6,9 @@ class Environment {
     // defaultValue: 'https://api.groceryapp.com', // Production
   );
 
-  static const bool isDevelopment = String.fromEnvironment(
-    'ENVIRONMENT',
-    defaultValue: 'development',
-  ) == 'development';
+  static const bool isDevelopment =
+      String.fromEnvironment('ENVIRONMENT', defaultValue: 'development') ==
+      'development';
 
   static const bool enableLogging = bool.fromEnvironment(
     'ENABLE_LOGGING',

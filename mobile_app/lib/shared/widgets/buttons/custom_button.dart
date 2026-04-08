@@ -5,20 +5,10 @@ import '../../../core/theme/app_dimensions.dart';
 import '../loading_widget.dart';
 
 /// Button types for different visual styles
-enum ButtonType {
-  primary,
-  secondary,
-  outline,
-  ghost,
-  text,
-}
+enum ButtonType { primary, secondary, outline, ghost, text }
 
 /// Button sizes for different contexts
-enum ButtonSize {
-  small,
-  medium,
-  large,
-}
+enum ButtonSize { small, medium, large }
 
 /// Custom button widget with consistent styling across the app
 /// Supports multiple types, sizes, and loading states
@@ -112,8 +102,9 @@ class CustomButton extends StatelessWidget {
       onPressed: isLoading ? null : onPressed,
       style: TextButton.styleFrom(
         foregroundColor: _getTextButtonColor(),
-        backgroundColor:
-            isGhost ? _getBackgroundColor().withValues(alpha: 0.1) : null,
+        backgroundColor: isGhost
+            ? _getBackgroundColor().withValues(alpha: 0.1)
+            : null,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(_getBorderRadius()),
         ),

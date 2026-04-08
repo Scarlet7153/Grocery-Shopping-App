@@ -51,7 +51,10 @@ class StoreOrdersBloc extends Bloc<StoreOrdersEvent, StoreOrdersState> {
 
   final OrderService _orderService;
 
-  Future<void> _onLoad(LoadStoreOrders event, Emitter<StoreOrdersState> emit) async {
+  Future<void> _onLoad(
+    LoadStoreOrders event,
+    Emitter<StoreOrdersState> emit,
+  ) async {
     emit(StoreOrdersLoading());
     try {
       final list = await _orderService.getStoreOrders(
@@ -66,12 +69,20 @@ class StoreOrdersBloc extends Bloc<StoreOrdersEvent, StoreOrdersState> {
     }
   }
 
-  Future<void> _onUpdateStatus(UpdateStoreOrderStatus event, Emitter<StoreOrdersState> emit) async {
+  Future<void> _onUpdateStatus(
+    UpdateStoreOrderStatus event,
+    Emitter<StoreOrdersState> emit,
+  ) async {
     final current = state;
     if (current is! StoreOrdersLoaded) return;
     try {
-      final updated = await _orderService.updateOrderStatus(event.orderId, event.status);
-      final list = current.orders.map((o) => o.id == event.orderId ? updated : o).toList();
+      final updated = await _orderService.updateOrderStatus(
+        event.orderId,
+        event.status,
+      );
+      final list = current.orders
+          .map((o) => o.id == event.orderId ? updated : o)
+          .toList();
       if (!list.any((o) => o.id == event.orderId)) list.add(updated);
       emit(StoreOrdersLoaded(list));
     } catch (e) {

@@ -16,11 +16,7 @@ class AvailableOrdersList extends StatefulWidget {
   final List<ShipperOrder> orders;
   final Future<ShipperOrder?> Function(ShipperOrder order)? onAccept;
 
-  const AvailableOrdersList({
-    super.key,
-    required this.orders,
-    this.onAccept,
-  });
+  const AvailableOrdersList({super.key, required this.orders, this.onAccept});
 
   @override
   State<AvailableOrdersList> createState() => _AvailableOrdersListState();
@@ -175,8 +171,8 @@ class _AvailableOrdersListState extends State<AvailableOrdersList> {
                 Text(
                   ShipperStrings.emptyOrdersTitle,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: ShipperTheme.textLightGreyColor,
-                      ),
+                    color: ShipperTheme.textLightGreyColor,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(

@@ -91,9 +91,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
     return RichText(
       text: TextSpan(
         text: widget.label!,
-        style: AppTextStyles.inputLabel.copyWith(
-          color: _getLabelColor(),
-        ),
+        style: AppTextStyles.inputLabel.copyWith(color: _getLabelColor()),
         children: widget.isRequired
             ? [
                 TextSpan(
@@ -161,10 +159,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
           ),
           const SizedBox(width: AppDimensions.spacingXs),
           Expanded(
-            child: Text(
-              _displayError!,
-              style: AppTextStyles.inputError,
-            ),
+            child: Text(_displayError!, style: AppTextStyles.inputError),
           ),
         ],
       ),

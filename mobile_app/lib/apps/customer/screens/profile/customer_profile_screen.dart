@@ -14,10 +14,10 @@ class CustomerProfileScreen extends StatelessWidget {
         : AuthSession.fullName!;
     final address =
         (AuthSession.address == null || AuthSession.address!.isEmpty)
-            ? 'Ch\u01b0a c\u00f3 \u0111\u1ecba ch\u1ec9'
-            : AuthSession.address!;
-    final phone = (AuthSession.phoneNumber == null ||
-            AuthSession.phoneNumber!.isEmpty)
+        ? 'Ch\u01b0a c\u00f3 \u0111\u1ecba ch\u1ec9'
+        : AuthSession.address!;
+    final phone =
+        (AuthSession.phoneNumber == null || AuthSession.phoneNumber!.isEmpty)
         ? 'Ch\u01b0a c\u00f3 s\u1ed1 \u0111i\u1ec7n tho\u1ea1i'
         : AuthSession.phoneNumber!;
 
@@ -51,19 +51,13 @@ class CustomerProfileScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   phone,
-                  style: const TextStyle(
-                    color: Colors.black54,
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(color: Colors.black54, fontSize: 12),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   address,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.black54,
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(color: Colors.black54, fontSize: 12),
                 ),
               ],
             ),
@@ -92,13 +86,17 @@ class CustomerProfileScreen extends StatelessWidget {
                 const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.payment),
-                  title: const Text('Ph\u01b0\u01a1ng th\u1ee9c thanh to\u00e1n'),
+                  title: const Text(
+                    'Ph\u01b0\u01a1ng th\u1ee9c thanh to\u00e1n',
+                  ),
                   onTap: () {},
                 ),
                 const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.history),
-                  title: const Text('L\u1ecbch s\u1eed \u0111\u01a1n h\u00e0ng'),
+                  title: const Text(
+                    'L\u1ecbch s\u1eed \u0111\u01a1n h\u00e0ng',
+                  ),
                   onTap: () {},
                 ),
               ],

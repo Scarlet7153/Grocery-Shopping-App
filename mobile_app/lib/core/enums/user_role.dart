@@ -152,10 +152,10 @@ enum UserRole {
 
   /// Get all roles except admin (for mobile app)
   static List<UserRole> get mobileRoles => [
-        UserRole.customer,
-        UserRole.store,
-        UserRole.shipper,
-      ];
+    UserRole.customer,
+    UserRole.store,
+    UserRole.shipper,
+  ];
 
   /// Get all roles including admin (for web app)
   static List<UserRole> get allRoles => UserRole.values;

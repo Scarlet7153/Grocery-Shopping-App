@@ -26,16 +26,9 @@ class HomeBottomBar extends StatelessWidget {
       type: BottomNavigationBarType.fixed,
 
       items: [
+        const BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
 
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: "Home",
-        ),
-
-        BottomNavigationBarItem(
-          icon: _CartBadgeIcon(),
-          label: "Cart",
-        ),
+        BottomNavigationBarItem(icon: _CartBadgeIcon(), label: "Cart"),
 
         const BottomNavigationBarItem(
           icon: Icon(Icons.receipt),
@@ -46,7 +39,6 @@ class HomeBottomBar extends StatelessWidget {
           icon: Icon(Icons.person),
           label: "Profile",
         ),
-
       ],
     );
   }
@@ -58,8 +50,10 @@ class _CartBadgeIcon extends StatelessWidget {
     return ValueListenableBuilder<List<CartItem>>(
       valueListenable: CartSession.items,
       builder: (context, items, child) {
-        final totalQuantity =
-            items.fold<int>(0, (sum, item) => sum + item.quantity);
+        final totalQuantity = items.fold<int>(
+          0,
+          (sum, item) => sum + item.quantity,
+        );
         return Stack(
           clipBehavior: Clip.none,
           children: [
@@ -69,8 +63,10 @@ class _CartBadgeIcon extends StatelessWidget {
                 right: -6,
                 top: -6,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 2,
+                  ),
                   decoration: const BoxDecoration(
                     color: Colors.green,
                     shape: BoxShape.circle,

@@ -27,7 +27,8 @@ class LoginRequested extends AuthEvent {
   List<Object> get props => [identifier, password, appType, rememberMe];
 
   @override
-  String toString() => 'LoginRequested { identifier: $identifier, appType: $appType }';
+  String toString() =>
+      'LoginRequested { identifier: $identifier, appType: $appType }';
 }
 
 /// Register event
@@ -35,10 +36,7 @@ class RegisterRequested extends AuthEvent {
   final Map<String, dynamic> userData;
   final AppType appType;
 
-  const RegisterRequested({
-    required this.userData,
-    required this.appType,
-  });
+  const RegisterRequested({required this.userData, required this.appType});
 
   @override
   List<Object> get props => [userData, appType];

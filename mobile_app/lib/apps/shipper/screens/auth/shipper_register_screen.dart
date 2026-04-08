@@ -34,204 +34,199 @@ class _ShipperRegisterScreenState extends State<ShipperRegisterScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: ShipperTheme.backgroundColor,
-        appBar: AppBar(
-          title: const Text('Đăng ký Shipper'),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          foregroundColor: ShipperTheme.primaryColor,
-        ),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(),
-                  const SizedBox(height: 32),
-                  _buildPersonalInfo(),
-                  const SizedBox(height: 24),
-                  _buildSecurityInfo(),
-                  const SizedBox(height: 20),
-                  _buildTermsCheckbox(),
-                  const SizedBox(height: 32),
-                  _buildRegisterButton(),
-                  const SizedBox(height: 20),
-                  _buildLoginLink(),
-                ],
-              ),
-            ),
+    backgroundColor: ShipperTheme.backgroundColor,
+    appBar: AppBar(
+      title: const Text('Đăng ký Shipper'),
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      foregroundColor: ShipperTheme.primaryColor,
+    ),
+    body: SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(),
+              const SizedBox(height: 32),
+              _buildPersonalInfo(),
+              const SizedBox(height: 24),
+              _buildSecurityInfo(),
+              const SizedBox(height: 20),
+              _buildTermsCheckbox(),
+              const SizedBox(height: 32),
+              _buildRegisterButton(),
+              const SizedBox(height: 20),
+              _buildLoginLink(),
+            ],
           ),
         ),
-      );
+      ),
+    ),
+  );
 
   Widget _buildHeader() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  ShipperTheme.primaryColor.withValues(alpha: 0.1),
-                  ShipperTheme.secondaryColor.withValues(alpha: 0.1),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(
-              Icons.person_add,
-              size: 32,
-              color: ShipperTheme.primaryColor,
-            ),
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              ShipperTheme.primaryColor.withValues(alpha: 0.1),
+              ShipperTheme.secondaryColor.withValues(alpha: 0.1),
+            ],
           ),
-          const SizedBox(height: 16),
-          const Text(
-            'Trở thành Shipper',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: ShipperTheme.primaryColor,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Tham gia mạng lưới giao hàng và kiếm thu nhập ổn định',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
-              height: 1.5,
-            ),
-          ),
-        ],
-      );
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Icon(
+          Icons.person_add,
+          size: 32,
+          color: ShipperTheme.primaryColor,
+        ),
+      ),
+      const SizedBox(height: 16),
+      const Text(
+        'Trở thành Shipper',
+        style: TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: ShipperTheme.primaryColor,
+        ),
+      ),
+      const SizedBox(height: 8),
+      Text(
+        'Tham gia mạng lưới giao hàng và kiếm thu nhập ổn định',
+        style: TextStyle(fontSize: 16, color: Colors.grey[600], height: 1.5),
+      ),
+    ],
+  );
 
   Widget _buildPersonalInfo() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Thông tin cá nhân', Icons.person),
-          const SizedBox(height: 16),
-          CustomTextField(
-            label: 'Họ và tên *',
-            hint: 'Nhập họ và tên đầy đủ',
-            controller: _nameController,
-            keyboardType: TextInputType.name,
-            prefixIcon: Icons.person,
-            validator: _validateName,
-            focusColor: ShipperTheme.primaryColor,
-          ),
-          const SizedBox(height: 20),
-          CustomTextField(
-            label: 'Số điện thoại *',
-            hint: 'Nhập số điện thoại',
-            controller: _phoneController,
-            keyboardType: TextInputType.phone,
-            prefixIcon: Icons.phone,
-            validator: _validatePhone,
-            focusColor: ShipperTheme.primaryColor,
-          ),
-          const SizedBox(height: 20),
-          CustomTextField(
-            label: 'Địa chỉ (tùy chọn)',
-            hint: 'Nhập địa chỉ của bạn',
-            controller: _addressController,
-            prefixIcon: Icons.location_on,
-            focusColor: ShipperTheme.primaryColor,
-            maxLines: 2,
-          ),
-        ],
-      );
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _buildSectionTitle('Thông tin cá nhân', Icons.person),
+      const SizedBox(height: 16),
+      CustomTextField(
+        label: 'Họ và tên *',
+        hint: 'Nhập họ và tên đầy đủ',
+        controller: _nameController,
+        keyboardType: TextInputType.name,
+        prefixIcon: Icons.person,
+        validator: _validateName,
+        focusColor: ShipperTheme.primaryColor,
+      ),
+      const SizedBox(height: 20),
+      CustomTextField(
+        label: 'Số điện thoại *',
+        hint: 'Nhập số điện thoại',
+        controller: _phoneController,
+        keyboardType: TextInputType.phone,
+        prefixIcon: Icons.phone,
+        validator: _validatePhone,
+        focusColor: ShipperTheme.primaryColor,
+      ),
+      const SizedBox(height: 20),
+      CustomTextField(
+        label: 'Địa chỉ (tùy chọn)',
+        hint: 'Nhập địa chỉ của bạn',
+        controller: _addressController,
+        prefixIcon: Icons.location_on,
+        focusColor: ShipperTheme.primaryColor,
+        maxLines: 2,
+      ),
+    ],
+  );
 
   Widget _buildSecurityInfo() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle('Bảo mật', Icons.security),
-          const SizedBox(height: 16),
-          CustomTextField(
-            label: 'Mật khẩu *',
-            hint: 'Nhập mật khẩu (tối thiểu 6 ký tự)',
-            controller: _passwordController,
-            isPassword: true,
-            prefixIcon: Icons.lock,
-            validator: _validatePassword,
-            focusColor: ShipperTheme.primaryColor,
-          ),
-          const SizedBox(height: 20),
-          CustomTextField(
-            label: 'Xác nhận mật khẩu *',
-            hint: 'Nhập lại mật khẩu',
-            controller: _confirmPasswordController,
-            isPassword: true,
-            prefixIcon: Icons.lock_outline,
-            validator: _validateConfirmPassword,
-            focusColor: ShipperTheme.primaryColor,
-          ),
-        ],
-      );
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      _buildSectionTitle('Bảo mật', Icons.security),
+      const SizedBox(height: 16),
+      CustomTextField(
+        label: 'Mật khẩu *',
+        hint: 'Nhập mật khẩu (tối thiểu 6 ký tự)',
+        controller: _passwordController,
+        isPassword: true,
+        prefixIcon: Icons.lock,
+        validator: _validatePassword,
+        focusColor: ShipperTheme.primaryColor,
+      ),
+      const SizedBox(height: 20),
+      CustomTextField(
+        label: 'Xác nhận mật khẩu *',
+        hint: 'Nhập lại mật khẩu',
+        controller: _confirmPasswordController,
+        isPassword: true,
+        prefixIcon: Icons.lock_outline,
+        validator: _validateConfirmPassword,
+        focusColor: ShipperTheme.primaryColor,
+      ),
+    ],
+  );
 
   Widget _buildSectionTitle(String title, IconData icon) => Row(
-        children: [
-          Icon(icon, color: ShipperTheme.primaryColor, size: 20),
-          const SizedBox(width: 8),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: ShipperTheme.primaryColor,
-            ),
-          ),
-        ],
-      );
+    children: [
+      Icon(icon, color: ShipperTheme.primaryColor, size: 20),
+      const SizedBox(width: 8),
+      Text(
+        title,
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: ShipperTheme.primaryColor,
+        ),
+      ),
+    ],
+  );
 
   Widget _buildTermsCheckbox() => Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Checkbox(
-            value: _agreeToTerms,
-            onChanged: (value) =>
-                setState(() => _agreeToTerms = value ?? false),
-            activeColor: ShipperTheme.primaryColor,
-          ),
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _agreeToTerms = !_agreeToTerms),
-              child: RichText(
-                text: TextSpan(
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[700],
-                    height: 1.4,
-                  ),
-                  children: const [
-                    TextSpan(text: 'Tôi đồng ý với '),
-                    TextSpan(
-                      text: 'Điều khoản dành cho Shipper',
-                      style: TextStyle(
-                        color: Color(0xFFFF9800),
-                        fontWeight: FontWeight.w500,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                    TextSpan(text: ' và '),
-                    TextSpan(
-                      text: 'Chính sách bảo mật',
-                      style: TextStyle(
-                        color: Color(0xFFFF9800),
-                        fontWeight: FontWeight.w500,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                    TextSpan(text: ' của ứng dụng.'),
-                  ],
-                ),
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Checkbox(
+        value: _agreeToTerms,
+        onChanged: (value) => setState(() => _agreeToTerms = value ?? false),
+        activeColor: ShipperTheme.primaryColor,
+      ),
+      Expanded(
+        child: GestureDetector(
+          onTap: () => setState(() => _agreeToTerms = !_agreeToTerms),
+          child: RichText(
+            text: TextSpan(
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[700],
+                height: 1.4,
               ),
+              children: const [
+                TextSpan(text: 'Tôi đồng ý với '),
+                TextSpan(
+                  text: 'Điều khoản dành cho Shipper',
+                  style: TextStyle(
+                    color: Color(0xFFFF9800),
+                    fontWeight: FontWeight.w500,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+                TextSpan(text: ' và '),
+                TextSpan(
+                  text: 'Chính sách bảo mật',
+                  style: TextStyle(
+                    color: Color(0xFFFF9800),
+                    fontWeight: FontWeight.w500,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+                TextSpan(text: ' của ứng dụng.'),
+              ],
             ),
           ),
-        ],
-      );
+        ),
+      ),
+    ],
+  );
 
   Widget _buildRegisterButton() {
     return BlocListener<ShipperAuthBloc, ShipperAuthState>(
@@ -245,8 +240,9 @@ class _ShipperRegisterScreenState extends State<ShipperRegisterScreen> {
         if (state is ShipperAuthAuthenticated) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content:
-                  Text('Đăng ký thành công! Chào mừng bạn trở thành Shipper'),
+              content: Text(
+                'Đăng ký thành công! Chào mừng bạn trở thành Shipper',
+              ),
               backgroundColor: ShipperTheme.primaryColor,
             ),
           );
@@ -270,10 +266,7 @@ class _ShipperRegisterScreenState extends State<ShipperRegisterScreen> {
         height: 52,
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [
-              ShipperTheme.primaryColor,
-              ShipperTheme.secondaryColor,
-            ],
+            colors: [ShipperTheme.primaryColor, ShipperTheme.secondaryColor],
           ),
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
@@ -323,24 +316,21 @@ class _ShipperRegisterScreenState extends State<ShipperRegisterScreen> {
   }
 
   Widget _buildLoginLink() => Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'Đã có tài khoản? ',
-            style: TextStyle(color: Colors.grey[600]),
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      Text('Đã có tài khoản? ', style: TextStyle(color: Colors.grey[600])),
+      GestureDetector(
+        onTap: () => Navigator.pop(context),
+        child: const Text(
+          'Đăng nhập ngay',
+          style: TextStyle(
+            color: ShipperTheme.primaryColor,
+            fontWeight: FontWeight.w600,
           ),
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: const Text(
-              'Đăng nhập ngay',
-              style: TextStyle(
-                color: ShipperTheme.primaryColor,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      );
+        ),
+      ),
+    ],
+  );
 
   String? _validateName(String? value) {
     if (value == null || value.isEmpty) {
@@ -391,14 +381,16 @@ class _ShipperRegisterScreenState extends State<ShipperRegisterScreen> {
       return;
     }
 
-    _authBloc.add(ShipperRegisterRequested(
-      phoneNumber: _phoneController.text.trim(),
-      password: _passwordController.text,
-      fullName: _nameController.text.trim(),
-      address: _addressController.text.trim().isEmpty
-          ? null
-          : _addressController.text.trim(),
-    ));
+    _authBloc.add(
+      ShipperRegisterRequested(
+        phoneNumber: _phoneController.text.trim(),
+        password: _passwordController.text,
+        fullName: _nameController.text.trim(),
+        address: _addressController.text.trim().isEmpty
+            ? null
+            : _addressController.text.trim(),
+      ),
+    );
   }
 
   @override

@@ -74,8 +74,11 @@ class _ProofOfDeliveryScreenState extends State<ProofOfDeliveryScreen> {
                     color: Colors.blue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.receipt_long,
-                      color: Colors.blue, size: 22),
+                  child: const Icon(
+                    Icons.receipt_long,
+                    color: Colors.blue,
+                    size: 22,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 const Text(
@@ -110,10 +113,7 @@ class _ProofOfDeliveryScreenState extends State<ProofOfDeliveryScreen> {
           width: 100,
           child: Text(
             label,
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 13, color: Colors.grey[600]),
           ),
         ),
         Expanded(
@@ -147,8 +147,11 @@ class _ProofOfDeliveryScreenState extends State<ProofOfDeliveryScreen> {
                     color: Colors.green.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.camera_alt,
-                      color: Colors.green, size: 22),
+                  child: const Icon(
+                    Icons.camera_alt,
+                    color: Colors.green,
+                    size: 22,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 const Expanded(
@@ -238,11 +241,7 @@ class _ProofOfDeliveryScreenState extends State<ProofOfDeliveryScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.add_a_photo,
-            size: 48,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.add_a_photo, size: 48, color: Colors.grey[400]),
           const SizedBox(height: 12),
           Text(
             'Chọn ảnh chứng minh',
@@ -328,14 +327,17 @@ class _ProofOfDeliveryScreenState extends State<ProofOfDeliveryScreen> {
         width: double.infinity,
         height: 52,
         child: ElevatedButton.icon(
-          onPressed:
-              (_isLoading || _imageFile == null) ? null : _submitDelivery,
+          onPressed: (_isLoading || _imageFile == null)
+              ? null
+              : _submitDelivery,
           icon: _isLoading
               ? const SizedBox(
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(
-                      strokeWidth: 2, color: Colors.white),
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
                 )
               : const Icon(Icons.check_circle),
           label: Text(
@@ -343,8 +345,9 @@ class _ProofOfDeliveryScreenState extends State<ProofOfDeliveryScreen> {
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
           style: ElevatedButton.styleFrom(
-            backgroundColor:
-                _imageFile == null ? Colors.grey : ShipperTheme.primaryColor,
+            backgroundColor: _imageFile == null
+                ? Colors.grey
+                : ShipperTheme.primaryColor,
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -432,7 +435,8 @@ class _ProofOfDeliveryScreenState extends State<ProofOfDeliveryScreen> {
           );
         } else {
           setState(
-              () => _errorMessage = 'Không thể cập nhật trạng thái đơn hàng');
+            () => _errorMessage = 'Không thể cập nhật trạng thái đơn hàng',
+          );
         }
       }
     } catch (e) {
@@ -447,9 +451,6 @@ class _ProofOfDeliveryScreenState extends State<ProofOfDeliveryScreen> {
   }
 
   String _formatCurrency(double amount) {
-    return '${amount.toStringAsFixed(0).replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (m) => '${m[1]}.',
-        )}₫';
+    return '${amount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}₫';
   }
 }

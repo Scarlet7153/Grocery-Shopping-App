@@ -7,18 +7,18 @@ part of 'order_model.dart';
 // **************************************************************************
 
 OrderModel _$OrderModelFromJson(Map<String, dynamic> json) => OrderModel(
-      id: json['id'] as String?,
-      status: json['status'] as String?,
-      totalAmount: (json['totalAmount'] as num?)?.toDouble(),
-      customerName: json['customerName'] as String?,
-      customerPhone: json['customerPhone'] as String?,
-      address: json['address'] as String?,
-      createdAt: json['created_at'] as String?,
-      updatedAt: json['updated_at'] as String?,
-      items: (json['items'] as List<dynamic>?)
-          ?.map((e) => OrderItemModel.fromJson(e as Map<String, dynamic>))
-          .toList(),
-    );
+  id: json['id'] as String?,
+  status: json['status'] as String?,
+  totalAmount: (json['totalAmount'] as num?)?.toDouble(),
+  customerName: json['customerName'] as String?,
+  customerPhone: json['customerPhone'] as String?,
+  address: json['address'] as String?,
+  createdAt: json['created_at'] as String?,
+  updatedAt: json['updated_at'] as String?,
+  items: (json['items'] as List<dynamic>?)
+      ?.map((e) => OrderItemModel.fromJson(e as Map<String, dynamic>))
+      .toList(),
+);
 
 Map<String, dynamic> _$OrderModelToJson(OrderModel instance) =>
     <String, dynamic>{
@@ -50,13 +50,9 @@ Map<String, dynamic> _$OrderItemModelToJson(OrderItemModel instance) =>
     };
 
 UpdateOrderStatusRequest _$UpdateOrderStatusRequestFromJson(
-        Map<String, dynamic> json) =>
-    UpdateOrderStatusRequest(
-      status: json['status'] as String,
-    );
+  Map<String, dynamic> json,
+) => UpdateOrderStatusRequest(status: json['status'] as String);
 
 Map<String, dynamic> _$UpdateOrderStatusRequestToJson(
-        UpdateOrderStatusRequest instance) =>
-    <String, dynamic>{
-      'status': instance.status,
-    };
+  UpdateOrderStatusRequest instance,
+) => <String, dynamic>{'status': instance.status};

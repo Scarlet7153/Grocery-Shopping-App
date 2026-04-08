@@ -14,8 +14,10 @@ class ProductModel {
   final String? unit;
   final String? storeId;
   final bool? isActive;
-  @JsonKey(name: 'created_at') final String? createdAt;
-  @JsonKey(name: 'updated_at') final String? updatedAt;
+  @JsonKey(name: 'created_at')
+  final String? createdAt;
+  @JsonKey(name: 'updated_at')
+  final String? updatedAt;
 
   const ProductModel({
     this.id,

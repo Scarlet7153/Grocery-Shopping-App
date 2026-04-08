@@ -18,7 +18,7 @@ class _OtpScreenState extends State<OtpScreen> {
 
   void _verifyOtp() {
     if (_otpController.text.length < 6) return;
-    
+
     context.read<AuthBloc>().add(
       OtpVerificationRequested(
         otp: _otpController.text,
@@ -35,10 +35,17 @@ class _OtpScreenState extends State<OtpScreen> {
         listener: (context, state) {
           if (state is AuthOtpVerified) {
             // Xác thực thành công, cho phép vào Dashboard
-            Navigator.pushNamedAndRemoveUntil(context, '/admin-dashboard', (route) => false);
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/admin-dashboard',
+              (route) => false,
+            );
           } else if (state is AuthOtpError) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+              ),
             );
           }
         },
@@ -77,10 +84,15 @@ class _OtpScreenState extends State<OtpScreen> {
                   height: 50,
                   child: ElevatedButton(
                     onPressed: state is AuthOtpVerifying ? null : _verifyOtp,
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6A1B9A)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF6A1B9A),
+                    ),
                     child: state is AuthOtpVerifying
                         ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text('Xác nhận', style: TextStyle(color: Colors.white)),
+                        : const Text(
+                            'Xác nhận',
+                            style: TextStyle(color: Colors.white),
+                          ),
                   ),
                 ),
               ],

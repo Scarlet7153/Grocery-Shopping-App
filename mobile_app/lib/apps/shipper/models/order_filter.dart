@@ -81,6 +81,11 @@ class OrderFilter extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [maxDistance, minEarning, storeIds, avoidPickup, maxItems];
+  List<Object?> get props => [
+    maxDistance,
+    minEarning,
+    storeIds,
+    avoidPickup,
+    maxItems,
+  ];
 }

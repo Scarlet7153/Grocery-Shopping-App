@@ -136,8 +136,7 @@ class _RecipientAddressFormScreenState
         _districts = districts;
         if (_initialDistrictName != null) {
           final districtMatched =
-              _findByName(_districts, _initialDistrictName) ??
-                  _districts.first;
+              _findByName(_districts, _initialDistrictName) ?? _districts.first;
           _selectedDistrict = districtMatched;
           final wards = await _provinceApi.getWards(districtMatched.code);
           _wards = wards;
@@ -228,16 +227,13 @@ class _RecipientAddressFormScreenState
     final name = (AuthSession.fullName == null || AuthSession.fullName!.isEmpty)
         ? 'Khách hàng'
         : AuthSession.fullName!;
-    final phone = (AuthSession.phoneNumber == null ||
-            AuthSession.phoneNumber!.isEmpty)
+    final phone =
+        (AuthSession.phoneNumber == null || AuthSession.phoneNumber!.isEmpty)
         ? 'Chưa có số điện thoại'
         : AuthSession.phoneNumber!;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Địa chỉ nhận hàng'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Địa chỉ nhận hàng'), centerTitle: true),
       body: SafeArea(
         child: Column(
           children: [
@@ -256,16 +252,18 @@ class _RecipientAddressFormScreenState
                     label: 'Quận/Huyện',
                     value: _selectedDistrict,
                     items: _districts,
-                    onChanged:
-                        _selectedProvince == null ? null : _onDistrictChanged,
+                    onChanged: _selectedProvince == null
+                        ? null
+                        : _onDistrictChanged,
                   ),
                   const SizedBox(height: 12),
                   _buildDropdown(
                     label: 'Phường/Xã',
                     value: _selectedWard,
                     items: _wards,
-                    onChanged:
-                        _selectedDistrict == null ? null : _onWardChanged,
+                    onChanged: _selectedDistrict == null
+                        ? null
+                        : _onWardChanged,
                   ),
                   const SizedBox(height: 12),
                   TextField(
@@ -306,9 +304,7 @@ class _RecipientAddressFormScreenState
                         },
                       ),
                       const Expanded(
-                        child: Text(
-                          'Gọi người nhận khác nhận hàng (nếu có)',
-                        ),
+                        child: Text('Gọi người nhận khác nhận hàng (nếu có)'),
                       ),
                     ],
                   ),
@@ -371,17 +367,17 @@ class _RecipientAddressFormScreenState
     return DropdownButtonFormField<LocationItem>(
       value: value,
       items: items
-          .map((item) => DropdownMenuItem<LocationItem>(
-                value: item,
-                child: Text(item.name),
-              ))
+          .map(
+            (item) => DropdownMenuItem<LocationItem>(
+              value: item,
+              child: Text(item.name),
+            ),
+          )
           .toList(),
       onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -394,10 +390,12 @@ class _RecipientAddressFormScreenState
   }
 
   Future<void> _openOtherReceiverForm() async {
-    final phoneController =
-        TextEditingController(text: _otherReceiverPhone ?? '');
-    final nameController =
-        TextEditingController(text: _otherReceiverName ?? '');
+    final phoneController = TextEditingController(
+      text: _otherReceiverPhone ?? '',
+    );
+    final nameController = TextEditingController(
+      text: _otherReceiverName ?? '',
+    );
     String? selectedTitle = _otherReceiverTitle;
 
     final ok = await showModalBottomSheet<bool>(

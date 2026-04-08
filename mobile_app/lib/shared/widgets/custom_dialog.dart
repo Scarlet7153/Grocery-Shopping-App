@@ -34,8 +34,11 @@ class CustomDialog extends StatelessWidget {
     this.onConfirm,
     this.onCancel,
     this.barrierDismissible = true,
-  }) : icon =
-            const Icon(Icons.help_outline, size: 48, color: Color(0xFF2196F3));
+  }) : icon = const Icon(
+         Icons.help_outline,
+         size: 48,
+         color: Color(0xFF2196F3),
+       );
 
   const CustomDialog.warning({
     super.key,
@@ -46,8 +49,11 @@ class CustomDialog extends StatelessWidget {
     this.onConfirm,
     this.onCancel,
     this.barrierDismissible = true,
-  }) : icon =
-            const Icon(Icons.warning_amber, size: 48, color: Color(0xFFFF9800));
+  }) : icon = const Icon(
+         Icons.warning_amber,
+         size: 48,
+         color: Color(0xFFFF9800),
+       );
 
   const CustomDialog.error({
     super.key,
@@ -58,8 +64,11 @@ class CustomDialog extends StatelessWidget {
     this.onConfirm,
     this.onCancel,
     this.barrierDismissible = true,
-  }) : icon =
-            const Icon(Icons.error_outline, size: 48, color: Color(0xFFD32F2F));
+  }) : icon = const Icon(
+         Icons.error_outline,
+         size: 48,
+         color: Color(0xFFD32F2F),
+       );
 
   const CustomDialog.success({
     super.key,
@@ -70,8 +79,11 @@ class CustomDialog extends StatelessWidget {
     this.onConfirm,
     this.onCancel,
     this.barrierDismissible = true,
-  }) : icon = const Icon(Icons.check_circle_outline,
-            size: 48, color: Color(0xFF4CAF50));
+  }) : icon = const Icon(
+         Icons.check_circle_outline,
+         size: 48,
+         color: Color(0xFF4CAF50),
+       );
 
   @override
   Widget build(BuildContext context) {
@@ -92,8 +104,8 @@ class CustomDialog extends StatelessWidget {
               Text(
                 title!,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                  fontWeight: FontWeight.bold,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16.0), // Thay .h bằng .0
@@ -125,7 +137,8 @@ class CustomDialog extends StatelessWidget {
                       type:
                           ButtonType.primary, // Fixed - Use ButtonType.primary
                       customColor: const Color(
-                          0xFF4CAF50), // Fixed - Use customColor instead of backgroundColor
+                        0xFF4CAF50,
+                      ), // Fixed - Use customColor instead of backgroundColor
                     ),
                   ),
                 ],

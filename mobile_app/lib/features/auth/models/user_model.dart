@@ -7,7 +7,7 @@ part 'user_model.g.dart';
 enum UserRole {
   @JsonValue('CUSTOMER')
   customer,
-  @JsonValue('STORE') 
+  @JsonValue('STORE')
   store,
   @JsonValue('SHIPPER')
   shipper,
@@ -37,7 +37,7 @@ class UserModel extends Equatable {
   final String? avatarUrl;
   final DateTime createdAt;
   final DateTime updatedAt;
-  
+
   // Store-specific fields
   final String? storeName;
   final String? storeAddress;
@@ -56,7 +56,7 @@ class UserModel extends Equatable {
     this.storeAddress,
   });
 
-  factory UserModel.fromJson(Map<String, dynamic> json) => 
+  factory UserModel.fromJson(Map<String, dynamic> json) =>
       _$UserModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$UserModelToJson(this);
@@ -109,19 +109,20 @@ class UserModel extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        phoneNumber,
-        fullName,
-        role,
-        status,
-        address,
-        avatarUrl,
-        createdAt,
-        updatedAt,
-        storeName,
-        storeAddress,
-      ];
+    id,
+    phoneNumber,
+    fullName,
+    role,
+    status,
+    address,
+    avatarUrl,
+    createdAt,
+    updatedAt,
+    storeName,
+    storeAddress,
+  ];
 
   @override
-  String toString() => 'UserModel { id: $id, fullName: $fullName, role: $role }';
+  String toString() =>
+      'UserModel { id: $id, fullName: $fullName, role: $role }';
 }

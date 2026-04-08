@@ -1,24 +1,17 @@
 import 'package:flutter/material.dart';
 
 class RecentOrders extends StatelessWidget {
-
   const RecentOrders({super.key});
 
   @override
   Widget build(BuildContext context) {
-
     return const Column(
-
       crossAxisAlignment: CrossAxisAlignment.start,
 
       children: [
-
         Text(
           "Đơn hàng gần đây",
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
 
         SizedBox(height: 10),
@@ -34,7 +27,6 @@ class RecentOrders extends StatelessWidget {
           subtitle: Text("80.000₫"),
           trailing: Text("Đang giao"),
         ),
-
       ],
     );
   }

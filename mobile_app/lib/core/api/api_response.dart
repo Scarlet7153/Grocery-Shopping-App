@@ -5,11 +5,7 @@ class ApiResponse<T> {
   final String? message;
   final int? code;
 
-  const ApiResponse({
-    this.data,
-    this.message,
-    this.code,
-  });
+  const ApiResponse({this.data, this.message, this.code});
 
   factory ApiResponse.fromJson(
     Map<String, dynamic> json,

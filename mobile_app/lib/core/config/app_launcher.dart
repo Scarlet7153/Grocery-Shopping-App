@@ -4,15 +4,15 @@ import '../enums/app_type.dart';
 class AppLauncher extends StatelessWidget {
   const AppLauncher({super.key});
 
-  /// Helper cung cấp màu và tên riêng cho Launcher 
+  /// Helper cung cấp màu và tên riêng cho Launcher
   Map<String, dynamic> _getAppUIInfo(AppType type) {
     switch (type) {
       case AppType.customer:
         return {'name': 'Khách Hàng', 'color': 0xFF2E7D32}; // Màu xanh lá
       case AppType.store:
-        return {'name': 'Cửa Hàng', 'color': 0xFF1565C0};   // Màu xanh dương
+        return {'name': 'Cửa Hàng', 'color': 0xFF1565C0}; // Màu xanh dương
       case AppType.shipper:
-        return {'name': 'Giao Hàng', 'color': 0xFFE65100};  // Màu cam
+        return {'name': 'Giao Hàng', 'color': 0xFFE65100}; // Màu cam
       case AppType.admin:
         return {'name': 'Quản Trị Viên', 'color': 0xFF6A1B9A}; // Màu tím
     }
@@ -42,7 +42,11 @@ class AppLauncher extends StatelessWidget {
     );
   }
 
-  Widget _buildAppCard(BuildContext context, AppType appType, Map<String, dynamic> uiInfo) {
+  Widget _buildAppCard(
+    BuildContext context,
+    AppType appType,
+    Map<String, dynamic> uiInfo,
+  ) {
     final Color primaryColor = Color(uiInfo['color'] as int);
     final String appName = uiInfo['name'] as String;
 
@@ -68,11 +72,7 @@ class AppLauncher extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                _getIconForApp(appType),
-                size: 40,
-                color: Colors.white,
-              ),
+              Icon(_getIconForApp(appType), size: 40, color: Colors.white),
               const SizedBox(height: 12),
               Text(
                 appName,
@@ -103,7 +103,12 @@ class AppLauncher extends StatelessWidget {
     }
   }
 
-  void _launchApp(BuildContext context, AppType appType, String appName, Color primaryColor) {
+  void _launchApp(
+    BuildContext context,
+    AppType appType,
+    String appName,
+    Color primaryColor,
+  ) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Khởi động app: $appName'),

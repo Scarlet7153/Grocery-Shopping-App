@@ -107,8 +107,10 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
                           color: const Color(0xFF2F80ED).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(Icons.receipt_long,
-                            color: Color(0xFF2F80ED)),
+                        child: const Icon(
+                          Icons.receipt_long,
+                          color: Color(0xFF2F80ED),
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(

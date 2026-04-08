@@ -13,58 +13,127 @@ class ShipperRepository {
   static Dio _createDio() {
     final dio = NetworkConfig.createDio();
 
-    dio.interceptors
-        .add(InterceptorsWrapper(onRequest: (options, handler) async {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString(AppConstants.accessTokenKey);
-      if (token != null && token.isNotEmpty) {
-        options.headers['Authorization'] = 'Bearer $token';
-      }
-      return handler.next(options);
-    }));
-
-    dio.interceptors.add(InterceptorsWrapper(onError: (error, handler) {
-      final message = _extractErrorMessage(error);
-      throw ShipperApiException(message);
-    }));
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          final prefs = await SharedPreferences.getInstance();
+          final token = prefs.getString(AppConstants.accessTokenKey);
+          if (token != null && token.isNotEmpty) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+          return handler.next(options);
+        },
+      ),
+    );
 
     return dio;
   }
 
-  static String _extractErrorMessage(DioException e) {
-    if (e.response?.data != null) {
-      final data = e.response!.data;
-      if (data is Map<String, dynamic>) {
-        return data['message'] ??
-            data['error'] ??
-            AppConstants.serverErrorMessage;
-      }
-    }
-    if (e.type == DioExceptionType.connectionTimeout ||
-        e.type == DioExceptionType.receiveTimeout) {
-      return AppConstants.networkErrorMessage;
-    }
-    return AppConstants.serverErrorMessage;
-  }
-
   Future<bool> login({required String phone, required String password}) async {
-    final response = await _dio.post(AppConstants.loginEndpoint, data: {
-      'phoneNumber': phone,
-      'password': password,
-    });
+    try {
+      final response = await _dio.post(
+        AppConstants.loginEndpoint,
+        data: {'phoneNumber': phone, 'password': password},
+      );
 
-    if (response.statusCode == 200) {
-      final data = response.data as Map<String, dynamic>;
-      if (data['success'] == true && data['data'] != null) {
-        final token = data['data']['token'] as String?;
-        if (token != null) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString(AppConstants.accessTokenKey, token);
-          return true;
+      if (response.statusCode == 200) {
+        final data = response.data as Map<String, dynamic>;
+
+        // Debug log
+        print('Login response data: $data');
+
+        if (data['success'] == true && data['data'] != null) {
+          final token = data['data']['token'] as String?;
+          if (token != null) {
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString(AppConstants.accessTokenKey, token);
+            return true;
+          }
+        }
+
+        // Lỗi từ backend - xử lý message
+        String message = data['message']?.toString() ?? '';
+
+        // Nếu message rỗng hoặc null
+        if (message.isEmpty) {
+          message = 'Thông tin đăng nhập không chính xác';
+        }
+
+        throw Exception(message);
+      }
+      throw Exception('Lỗi máy chủ, vui lòng thử lại sau');
+    } on DioException catch (e) {
+      print('🔴 DioException StatusCode: ${e.response?.statusCode}');
+      print('🔴 DioException Response Data: ${e.response?.data}');
+      print('🔴 DioException Type: ${e.type}');
+      print('🔴 DioException Message: ${e.message}');
+      print('🔴 DioException Error: ${e.error}');
+
+      if (e.response?.data != null &&
+          e.response?.data is Map<String, dynamic>) {
+        final data = e.response!.data as Map<String, dynamic>;
+        final backendMessage = data['message']?.toString();
+        final statusCode = e.response!.statusCode;
+
+        print('🔴 Backend message: $backendMessage, statusCode: $statusCode');
+
+        if (statusCode == 401 ||
+            (backendMessage != null &&
+                (backendMessage.toLowerCase().contains('thông tin đăng nhập') ||
+                    backendMessage.toLowerCase().contains('bad credentials') ||
+                    backendMessage.toLowerCase().contains('sai')))) {
+          throw Exception('Sai số điện thoại hoặc mật khẩu');
+        }
+        if (statusCode == 404 ||
+            (backendMessage != null &&
+                backendMessage.toLowerCase().contains('chưa được đăng ký'))) {
+          throw Exception('Số điện thoại chưa được đăng ký');
+        }
+        if (statusCode == 403 ||
+            (backendMessage != null &&
+                (backendMessage.toLowerCase().contains('khóa') ||
+                    backendMessage.toLowerCase().contains('banned')))) {
+          throw Exception('Tài khoản đã bị khóa');
+        }
+        if (backendMessage != null && backendMessage.isNotEmpty) {
+          throw Exception(backendMessage);
         }
       }
+
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout) {
+        throw Exception('Kết nối quá chậm. Vui lòng thử lại.');
+      }
+      if (e.type == DioExceptionType.connectionError) {
+        throw Exception(
+          'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối Internet.',
+        );
+      }
+      if (e.type == DioExceptionType.unknown) {
+        if (e.error != null) {
+          final errorMsg = e.error.toString().toLowerCase();
+          if (errorMsg.contains('socket') ||
+              errorMsg.contains('connection') ||
+              errorMsg.contains('network')) {
+            throw Exception(
+              'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối Internet.',
+            );
+          }
+        }
+        throw Exception('Không thể kết nối đến máy chủ. Vui lòng thử lại sau.');
+      }
+
+      throw Exception('Đăng nhập thất bại. Vui lòng thử lại.');
+    } on ShipperApiException catch (e) {
+      throw Exception(e.message);
+    } catch (e) {
+      if (e is Exception) {
+        rethrow;
+      }
+      print('💥 Unexpected error: ${e.toString()}');
+      throw Exception('Lỗi không xác định, vui lòng thử lại');
     }
-    return false;
   }
 
   Future<bool> register({
@@ -73,13 +142,16 @@ class ShipperRepository {
     required String fullName,
     String? address,
   }) async {
-    final response = await _dio.post(AppConstants.registerEndpoint, data: {
-      'phoneNumber': phoneNumber,
-      'password': password,
-      'fullName': fullName,
-      'role': 'SHIPPER',
-      if (address != null && address.isNotEmpty) 'address': address,
-    });
+    final response = await _dio.post(
+      AppConstants.registerEndpoint,
+      data: {
+        'phoneNumber': phoneNumber,
+        'password': password,
+        'fullName': fullName,
+        'role': 'SHIPPER',
+        if (address != null && address.isNotEmpty) 'address': address,
+      },
+    );
     if (response.statusCode == 201) {
       final data = response.data as Map<String, dynamic>;
       if (data['success'] == true && data['data'] != null) {
@@ -98,11 +170,13 @@ class ShipperRepository {
     final availableOrders = await getAvailableOrders();
     final deliveries = await getMyDeliveries();
 
-    final deliveredCount =
-        deliveries.where((o) => o.status == OrderStatus.DELIVERED).length;
+    final deliveredCount = deliveries
+        .where((o) => o.status == OrderStatus.DELIVERED)
+        .length;
     final totalOrders = deliveries.length;
-    final acceptanceRate =
-        totalOrders == 0 ? 0.0 : (deliveredCount / totalOrders) * 100;
+    final acceptanceRate = totalOrders == 0
+        ? 0.0
+        : (deliveredCount / totalOrders) * 100;
     final earnings = deliveries
         .where((o) => o.status == OrderStatus.DELIVERED)
         .fold<double>(0.0, (prev, e) => prev + e.grandTotal);
@@ -189,35 +263,47 @@ class ShipperRepository {
   }
 
   Future<ShipperOrder?> getOrderById(int orderId) async {
-    final uri =
-        AppConstants.orderByIdEndpoint.replaceAll('{id}', orderId.toString());
+    final uri = AppConstants.orderByIdEndpoint.replaceAll(
+      '{id}',
+      orderId.toString(),
+    );
     final response = await _dio.get(uri);
     if (response.statusCode == 200) {
       final data = response.data;
-      final payload =
-          (data is Map && data['data'] != null) ? data['data'] : data;
+      final payload = (data is Map && data['data'] != null)
+          ? data['data']
+          : data;
       return ShipperOrder.fromJson(payload as Map<String, dynamic>);
     }
     return null;
   }
 
   Future<ShipperOrder?> assignOrder(int orderId) async {
-    final uri = AppConstants.assignShipperEndpoint
-        .replaceAll('{id}', orderId.toString());
+    final uri = AppConstants.assignShipperEndpoint.replaceAll(
+      '{id}',
+      orderId.toString(),
+    );
     final response = await _dio.post(uri);
     if (response.statusCode == 200) {
       final data = response.data;
-      final payload =
-          (data is Map && data['data'] != null) ? data['data'] : data;
+      final payload = (data is Map && data['data'] != null)
+          ? data['data']
+          : data;
       return ShipperOrder.fromJson(payload as Map<String, dynamic>);
     }
     return null;
   }
 
-  Future<ShipperOrder?> updateOrderStatus(int orderId, String newStatus,
-      {String? podImageUrl, String? cancelReason}) async {
-    final uri =
-        AppConstants.orderStatusEndpoint.replaceAll('{id}', orderId.toString());
+  Future<ShipperOrder?> updateOrderStatus(
+    int orderId,
+    String newStatus, {
+    String? podImageUrl,
+    String? cancelReason,
+  }) async {
+    final uri = AppConstants.orderStatusEndpoint.replaceAll(
+      '{id}',
+      orderId.toString(),
+    );
     final body = <String, dynamic>{'newStatus': newStatus};
     if (podImageUrl != null) {
       body['podImageUrl'] = podImageUrl;
@@ -228,8 +314,9 @@ class ShipperRepository {
     final response = await _dio.patch(uri, data: body);
     if (response.statusCode == 200) {
       final data = response.data;
-      final payload =
-          (data is Map && data['data'] != null) ? data['data'] : data;
+      final payload = (data is Map && data['data'] != null)
+          ? data['data']
+          : data;
       return ShipperOrder.fromJson(payload as Map<String, dynamic>);
     }
     return null;
@@ -265,11 +352,14 @@ class ShipperRepository {
     required String newPassword,
     required String confirmPassword,
   }) async {
-    final response = await _dio.post('/users/change-password', data: {
-      'oldPassword': oldPassword,
-      'newPassword': newPassword,
-      'confirmPassword': confirmPassword,
-    });
+    final response = await _dio.post(
+      '/users/change-password',
+      data: {
+        'oldPassword': oldPassword,
+        'newPassword': newPassword,
+        'confirmPassword': confirmPassword,
+      },
+    );
     return response.statusCode == 200;
   }
 
@@ -277,10 +367,10 @@ class ShipperRepository {
     required String fullName,
     String? address,
   }) async {
-    final response = await _dio.put('/users/profile', data: {
-      'fullName': fullName,
-      if (address != null) 'address': address,
-    });
+    final response = await _dio.put(
+      '/users/profile',
+      data: {'fullName': fullName, if (address != null) 'address': address},
+    );
     return response.statusCode == 200;
   }
 }

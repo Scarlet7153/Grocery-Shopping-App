@@ -28,38 +28,38 @@ AuthRegisterRequest _$AuthRegisterRequestFromJson(Map<String, dynamic> json) =>
     );
 
 Map<String, dynamic> _$AuthRegisterRequestToJson(
-        AuthRegisterRequest instance) =>
-    <String, dynamic>{
-      'phoneNumber': instance.phoneNumber,
-      'password': instance.password,
-      'name': instance.name,
-      'email': instance.email,
-      'role': instance.role,
-    };
+  AuthRegisterRequest instance,
+) => <String, dynamic>{
+  'phoneNumber': instance.phoneNumber,
+  'password': instance.password,
+  'name': instance.name,
+  'email': instance.email,
+  'role': instance.role,
+};
 
 AuthUser _$AuthUserFromJson(Map<String, dynamic> json) => AuthUser(
-      id: json['id'] as String?,
-      phoneNumber: json['phoneNumber'] as String?,
-      name: json['name'] as String?,
-      email: json['email'] as String?,
-      role: json['role'] as String?,
-    );
+  id: json['id'] as String?,
+  phoneNumber: json['phoneNumber'] as String?,
+  name: json['name'] as String?,
+  email: json['email'] as String?,
+  role: json['role'] as String?,
+);
 
 Map<String, dynamic> _$AuthUserToJson(AuthUser instance) => <String, dynamic>{
-      'id': instance.id,
-      'phoneNumber': instance.phoneNumber,
-      'name': instance.name,
-      'email': instance.email,
-      'role': instance.role,
-    };
+  'id': instance.id,
+  'phoneNumber': instance.phoneNumber,
+  'name': instance.name,
+  'email': instance.email,
+  'role': instance.role,
+};
 
 AuthResponse _$AuthResponseFromJson(Map<String, dynamic> json) => AuthResponse(
-      token: json['token'] as String,
-      refreshToken: json['refreshToken'] as String?,
-      user: json['user'] == null
-          ? null
-          : AuthUser.fromJson(json['user'] as Map<String, dynamic>),
-    );
+  token: json['token'] as String,
+  refreshToken: json['refreshToken'] as String?,
+  user: json['user'] == null
+      ? null
+      : AuthUser.fromJson(json['user'] as Map<String, dynamic>),
+);
 
 Map<String, dynamic> _$AuthResponseToJson(AuthResponse instance) =>
     <String, dynamic>{

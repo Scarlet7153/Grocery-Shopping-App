@@ -13,9 +13,7 @@ class MockAuthRepositoryImpl implements AuthRepository {
   static const String _keyAccessToken = 'auth_access_token';
   static const String _keyUserId = 'auth_user_id';
 
-  MockAuthRepositoryImpl({
-    required SharedPreferences prefs,
-  }) : _prefs = prefs {
+  MockAuthRepositoryImpl({required SharedPreferences prefs}) : _prefs = prefs {
     AppLogger.debug('MockAuthRepositoryImpl initialized 🛠️ (MOCK MODE)');
   }
 
@@ -57,7 +55,6 @@ class MockAuthRepositoryImpl implements AuthRepository {
     );
   }
 
- 
   @override
   Future<AuthResponseModel> login({
     required String identifier,
@@ -65,17 +62,20 @@ class MockAuthRepositoryImpl implements AuthRepository {
     required AppType appType,
     bool rememberMe = false,
   }) async {
-    AppLogger.info('🛠️ [MOCK] Login attempt for ${appType.name} app with: $identifier');
-    
+    AppLogger.info(
+      '🛠️ [MOCK] Login attempt for ${appType.name} app with: $identifier',
+    );
+
     // Giả lập độ trễ mạng 1.5 giây để nhìn thấy vòng xoay loading
     await Future.delayed(const Duration(milliseconds: 1500));
 
     // Kiểm tra đúng số điện thoại và mật khẩu bạn yêu cầu
     if (identifier == '0987654321' && password == '123456') {
       AppLogger.info('✅ [MOCK] Đăng nhập thành công với SĐT: $identifier');
-      
+
       final mockUser = _createMockUser(appType, identifier);
-      final mockToken = 'mock_jwt_token_${DateTime.now().millisecondsSinceEpoch}';
+      final mockToken =
+          'mock_jwt_token_${DateTime.now().millisecondsSinceEpoch}';
 
       final authData = AuthDataModel(
         token: mockToken,
@@ -125,7 +125,7 @@ class MockAuthRepositoryImpl implements AuthRepository {
     final token = await getAuthToken();
     final user = await getCurrentUser();
     final authenticated = token != null && user != null;
-    
+
     AppLogger.debug('🛠️ [MOCK] Auth check: ${authenticated ? "YES" : "NO"}');
     return authenticated;
   }
@@ -159,7 +159,10 @@ class MockAuthRepositoryImpl implements AuthRepository {
 
   // --- CÁC HÀM KHÁC (Chỉ mock đơn giản trả về lỗi hoặc kết quả rỗng) ---
   @override
-  Future<AuthResponseModel> register({required Map<String, dynamic> userData, required AppType appType}) async {
+  Future<AuthResponseModel> register({
+    required Map<String, dynamic> userData,
+    required AppType appType,
+  }) async {
     throw UnimplementedError('Mock Register chưa được cài đặt');
   }
 
@@ -169,17 +172,28 @@ class MockAuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<AuthResponseModel> forgotPassword({required String identifier, required AppType appType}) async {
+  Future<AuthResponseModel> forgotPassword({
+    required String identifier,
+    required AppType appType,
+  }) async {
     throw UnimplementedError();
   }
 
   @override
-  Future<AuthResponseModel> verifyOtp({required String otp, required String identifier, String? resetToken}) async {
+  Future<AuthResponseModel> verifyOtp({
+    required String otp,
+    required String identifier,
+    String? resetToken,
+  }) async {
     throw UnimplementedError();
   }
 
   @override
-  Future<AuthResponseModel> resetPassword({required String newPassword, required String confirmPassword, required String resetToken}) async {
+  Future<AuthResponseModel> resetPassword({
+    required String newPassword,
+    required String confirmPassword,
+    required String resetToken,
+  }) async {
     throw UnimplementedError();
   }
 

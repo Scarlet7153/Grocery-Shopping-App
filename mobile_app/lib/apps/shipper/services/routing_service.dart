@@ -12,11 +12,9 @@ class GraphHopperRoutingService {
       'https://maps.track-asia.com/api/v2/place/textsearch/json';
   static const String _trackAsiaApiKey = '0f3c3158d0682da17755746463e57bbe0c';
 
-  GraphHopperRoutingService({
-    required String apiKey,
-    Dio? dio,
-  })  : _apiKey = apiKey,
-        _dio = dio ?? Dio();
+  GraphHopperRoutingService({required String apiKey, Dio? dio})
+    : _apiKey = apiKey,
+      _dio = dio ?? Dio();
 
   Future<List<LatLng>> getRoute({
     required LatLng origin,
@@ -177,7 +175,8 @@ class GraphHopperRoutingService {
     variants.add('$normalized, Vietnam');
     variants.add(normalized.replaceAll('Đường', '').replaceAll('đường', ''));
     variants.add(
-        normalized.replaceAll('Phường', '').replaceAll('Quận', 'District'));
+      normalized.replaceAll('Phường', '').replaceAll('Quận', 'District'),
+    );
     variants.add('$normalized, Ho Chi Minh City, Vietnam');
 
     final parts = normalized.split(',').map((p) => p.trim()).toList();
@@ -232,7 +231,8 @@ class GraphHopperRoutingService {
         }).toList();
 
         final instructions = path['instructions'] as List<dynamic>?;
-        final routeInstructions = instructions?.map((inst) {
+        final routeInstructions =
+            instructions?.map((inst) {
               final i = inst as Map<String, dynamic>;
               return RouteInstruction(
                 text: i['text'] as String? ?? '',
@@ -267,8 +267,9 @@ class GraphHopperRoutingService {
     }
 
     try {
-      final points =
-          waypoints.map((p) => '${p.latitude},${p.longitude}').toList();
+      final points = waypoints
+          .map((p) => '${p.latitude},${p.longitude}')
+          .toList();
 
       final response = await _dio.get(
         _baseUrl,
@@ -312,16 +313,18 @@ class GraphHopperRoutingService {
             profile: profile,
           );
 
-          segments.add(RouteSegment(
-            start: waypoints[i],
-            end: waypoints[i + 1],
-            distance: segRoute.distance,
-            duration: segRoute.duration,
-            points: segRoute.points,
-            label: labels != null && (i + 1) < labels.length
-                ? labels[i + 1]
-                : 'Điểm dừng ${i + 1}',
-          ));
+          segments.add(
+            RouteSegment(
+              start: waypoints[i],
+              end: waypoints[i + 1],
+              distance: segRoute.distance,
+              duration: segRoute.duration,
+              points: segRoute.points,
+              label: labels != null && (i + 1) < labels.length
+                  ? labels[i + 1]
+                  : 'Điểm dừng ${i + 1}',
+            ),
+          );
         }
 
         return MultiStopRouteResult(
@@ -361,7 +364,7 @@ class GraphHopperRoutingService {
           'id': '${stop.orderId}_pickup',
           'location': [
             stop.pickupLocation.longitude,
-            stop.pickupLocation.latitude
+            stop.pickupLocation.latitude,
           ],
           'service_time': stop.pickupServiceTime ?? 600, // 10 min in seconds
         });
@@ -371,7 +374,7 @@ class GraphHopperRoutingService {
           'id': '${stop.orderId}_delivery',
           'location': [
             stop.deliveryLocation.longitude,
-            stop.deliveryLocation.latitude
+            stop.deliveryLocation.latitude,
           ],
           'service_time': stop.deliveryServiceTime ?? 300, // 5 min in seconds
         });
@@ -382,14 +385,14 @@ class GraphHopperRoutingService {
           'pickup': {
             'location': [
               stop.pickupLocation.longitude,
-              stop.pickupLocation.latitude
+              stop.pickupLocation.latitude,
             ],
             'service_time': stop.pickupServiceTime ?? 600,
           },
           'delivery': {
             'location': [
               stop.deliveryLocation.longitude,
-              stop.deliveryLocation.latitude
+              stop.deliveryLocation.latitude,
             ],
             'service_time': stop.deliveryServiceTime ?? 300,
           },
@@ -406,11 +409,11 @@ class GraphHopperRoutingService {
             },
             'type': 'car',
             'profile': 'car',
-          }
+          },
         ],
         'shipments': shipments,
         'objectives': [
-          {'type': 'min', 'value': 'completion_time'} // Minimize time
+          {'type': 'min', 'value': 'completion_time'}, // Minimize time
         ],
         'configuration': {
           'routing': {'calc_points': true},

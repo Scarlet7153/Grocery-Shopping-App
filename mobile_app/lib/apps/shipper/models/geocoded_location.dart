@@ -19,11 +19,11 @@ class GeocodedLocation extends Equatable {
 
   /// Convert to JSON
   Map<String, dynamic> toJson() => {
-        'address': address,
-        'latitude': latitude,
-        'longitude': longitude,
-        'placeId': placeId,
-      };
+    'address': address,
+    'latitude': latitude,
+    'longitude': longitude,
+    'placeId': placeId,
+  };
 
   /// Convert from JSON
   factory GeocodedLocation.fromJson(Map<String, dynamic> json) {

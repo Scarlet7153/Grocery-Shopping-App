@@ -41,9 +41,10 @@ class _PreviewRepo extends ShipperRepository {
         createdAt: DateTime.now().subtract(const Duration(minutes: 30)),
         stores: [
           StoreInfo(
-              id: 1,
-              name: 'Bách Hóa Xanh',
-              address: '456 Lê Lợi, Quận 1, TP.HCM'),
+            id: 1,
+            name: 'Bách Hóa Xanh',
+            address: '456 Lê Lợi, Quận 1, TP.HCM',
+          ),
         ],
         distanceKm: 2.3,
       ),
@@ -63,9 +64,10 @@ class _PreviewRepo extends ShipperRepository {
         createdAt: DateTime.now().subtract(const Duration(hours: 1)),
         stores: [
           StoreInfo(
-              id: 2,
-              name: 'Co.opmart',
-              address: '789 Nguyễn Huệ, Quận 1, TP.HCM'),
+            id: 2,
+            name: 'Co.opmart',
+            address: '789 Nguyễn Huệ, Quận 1, TP.HCM',
+          ),
         ],
         distanceKm: 4.1,
       ),
@@ -85,9 +87,10 @@ class _PreviewRepo extends ShipperRepository {
         createdAt: DateTime.now().subtract(const Duration(hours: 2)),
         stores: [
           StoreInfo(
-              id: 3,
-              name: 'WinCommerce',
-              address: '101 Hai Bà Trưng, Quận 1, TP.HCM'),
+            id: 3,
+            name: 'WinCommerce',
+            address: '101 Hai Bà Trưng, Quận 1, TP.HCM',
+          ),
         ],
         distanceKm: 1.8,
       ),
@@ -96,10 +99,12 @@ class _PreviewRepo extends ShipperRepository {
     return {
       'isOnline': true,
       'earnings': 150000.0,
-      'availableOrders':
-          sampleOrders.where((o) => o.status == OrderStatus.CONFIRMED).toList(),
-      'deliveries':
-          sampleOrders.where((o) => o.status != OrderStatus.CONFIRMED).toList(),
+      'availableOrders': sampleOrders
+          .where((o) => o.status == OrderStatus.CONFIRMED)
+          .toList(),
+      'deliveries': sampleOrders
+          .where((o) => o.status != OrderStatus.CONFIRMED)
+          .toList(),
       'completedCount': 15,
       'acceptanceRate': 92.0,
     };
@@ -242,10 +247,7 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
               icon: Icon(Icons.analytics),
               label: 'Thống kê',
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Cá nhân',
-            ),
+            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Cá nhân'),
           ],
         ),
         floatingActionButton: _currentIndex == 0 ? _buildFilterFAB() : null,
@@ -301,38 +303,38 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                         children: [
                           Text(
                             _userData?['fullName'] ?? 'Shipper',
-                            style: Theme.of(context)
-                                    .textTheme
-                                    .headlineSmall
-                                    ?.copyWith(
-                                      color: ShipperTheme.textColor,
-                                      fontWeight: FontWeight.w700,
-                                    ) ??
+                            style:
+                                Theme.of(
+                                  context,
+                                ).textTheme.headlineSmall?.copyWith(
+                                  color: ShipperTheme.textColor,
+                                  fontWeight: FontWeight.w700,
+                                ) ??
                                 const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: ShipperTheme.textColor),
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: ShipperTheme.textColor,
+                                ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             statusText,
-                            style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(
-                                      color: Colors.black54,
-                                    ) ??
+                            style:
+                                Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(color: Colors.black54) ??
                                 const TextStyle(
-                                    fontSize: 14, color: Colors.black54),
+                                  fontSize: 14,
+                                  color: Colors.black54,
+                                ),
                           ),
                         ],
                       ),
                     ),
                     OnlineToggle(
                       isOnline: state.isOnline,
-                      onToggle: () => context
-                          .read<ShipperDashboardBloc>()
-                          .add(ToggleOnlineStatus()),
+                      onToggle: () => context.read<ShipperDashboardBloc>().add(
+                        ToggleOnlineStatus(),
+                      ),
                     ),
                   ],
                 ),
@@ -343,15 +345,19 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                   rating: state.acceptanceRate,
                 ),
                 const SizedBox(height: 16),
-                Text('Đơn hàng sẵn có',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              color: ShipperTheme.textColor,
-                              fontWeight: FontWeight.w700,
-                            ) ??
-                        const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: ShipperTheme.textColor)),
+                Text(
+                  'Đơn hàng sẵn có',
+                  style:
+                      Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        color: ShipperTheme.textColor,
+                        fontWeight: FontWeight.w700,
+                      ) ??
+                      const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: ShipperTheme.textColor,
+                      ),
+                ),
                 const SizedBox(height: 8),
                 // Filter Chip
                 BlocBuilder<OrderFilterBloc, OrderFilterState>(
@@ -437,8 +443,9 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
   Widget _buildFilterFAB() {
     return BlocBuilder<OrderFilterBloc, OrderFilterState>(
       builder: (context, state) {
-        final currentFilter =
-            (state is OrderFilterLoaded) ? state.filter : const OrderFilter();
+        final currentFilter = (state is OrderFilterLoaded)
+            ? state.filter
+            : const OrderFilter();
 
         return OrderFilterButton(
           currentFilter: currentFilter,
@@ -455,11 +462,7 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
       padding: const EdgeInsets.symmetric(vertical: 40),
       child: Column(
         children: [
-          Icon(
-            Icons.filter_list_off,
-            size: 72,
-            color: Colors.grey[300],
-          ),
+          Icon(Icons.filter_list_off, size: 72, color: Colors.grey[300]),
           const SizedBox(height: 16),
           Text(
             'Không có đơn hàng phù hợp với bộ lọc',
@@ -503,11 +506,7 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
       padding: const EdgeInsets.symmetric(vertical: 40),
       child: Column(
         children: [
-          Icon(
-            Icons.inbox_outlined,
-            size: 72,
-            color: Colors.grey[300],
-          ),
+          Icon(Icons.inbox_outlined, size: 72, color: Colors.grey[300]),
           const SizedBox(height: 16),
           Text(
             'Chưa có đơn hàng nào',
@@ -585,9 +584,10 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                     const Text(
                       'Lịch sử đơn hàng',
                       style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: ShipperTheme.textColor),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: ShipperTheme.textColor,
+                      ),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -619,12 +619,14 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                     };
                     final count = switch (filter) {
                       HistoryFilter.all => state.deliveries.length,
-                      HistoryFilter.completed => state.deliveries
-                          .where((o) => o.status == OrderStatus.DELIVERED)
-                          .length,
-                      HistoryFilter.cancelled => state.deliveries
-                          .where((o) => o.status == OrderStatus.CANCELLED)
-                          .length,
+                      HistoryFilter.completed =>
+                        state.deliveries
+                            .where((o) => o.status == OrderStatus.DELIVERED)
+                            .length,
+                      HistoryFilter.cancelled =>
+                        state.deliveries
+                            .where((o) => o.status == OrderStatus.CANCELLED)
+                            .length,
                     };
                     final selected = filter == _historyFilter;
                     return Expanded(
@@ -688,7 +690,7 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                               onTap: () {
                                 final isActiveDelivery =
                                     order.status == OrderStatus.PICKING_UP ||
-                                        order.status == OrderStatus.DELIVERING;
+                                    order.status == OrderStatus.DELIVERING;
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -700,7 +702,8 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                               },
                               child: Card(
                                 shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14)),
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
                                 elevation: 2,
                                 child: Padding(
                                   padding: const EdgeInsets.all(12),
@@ -743,13 +746,15 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                                                 Text(
                                                   order.deliveryAddress,
                                                   style: const TextStyle(
-                                                      color: Colors.black54),
+                                                    color: Colors.black54,
+                                                  ),
                                                 ),
                                                 const SizedBox(height: 4),
                                                 Text(
                                                   'Khách: ${order.customerName}',
                                                   style: const TextStyle(
-                                                      color: Colors.black54),
+                                                    color: Colors.black54,
+                                                  ),
                                                 ),
                                               ],
                                             ),
@@ -771,14 +776,13 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                                               Container(
                                                 padding:
                                                     const EdgeInsets.symmetric(
-                                                  horizontal: 8,
-                                                  vertical: 4,
-                                                ),
+                                                      horizontal: 8,
+                                                      vertical: 4,
+                                                    ),
                                                 decoration: BoxDecoration(
-                                                  color:
-                                                      _statusColor(order.status)
-                                                          .withValues(
-                                                              alpha: 0.1),
+                                                  color: _statusColor(
+                                                    order.status,
+                                                  ).withValues(alpha: 0.1),
                                                   borderRadius:
                                                       BorderRadius.circular(8),
                                                 ),
@@ -788,14 +792,17 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                                                     fontSize: 11,
                                                     fontWeight: FontWeight.w600,
                                                     color: _statusColor(
-                                                        order.status),
+                                                      order.status,
+                                                    ),
                                                   ),
                                                 ),
                                               ),
                                             ],
                                           ),
-                                          const Icon(Icons.chevron_right,
-                                              color: Colors.grey),
+                                          const Icon(
+                                            Icons.chevron_right,
+                                            color: Colors.grey,
+                                          ),
                                         ],
                                       ),
                                     ],
@@ -819,11 +826,7 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.receipt_long_outlined,
-            size: 72,
-            color: Colors.grey[300],
-          ),
+          Icon(Icons.receipt_long_outlined, size: 72, color: Colors.grey[300]),
           const SizedBox(height: 16),
           Text(
             'Chưa có đơn hàng nào',
@@ -837,10 +840,7 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
           Text(
             'Lịch sử đơn hàng sẽ xuất hiện ở đây',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.grey[400],
-            ),
+            style: TextStyle(fontSize: 13, color: Colors.grey[400]),
           ),
         ],
       ),
@@ -903,9 +903,10 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
               const Text(
                 'Thống kê',
                 style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: ShipperTheme.textColor),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: ShipperTheme.textColor,
+                ),
               ),
               const SizedBox(height: 12),
               StatsCard(
@@ -916,7 +917,8 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
               const SizedBox(height: 16),
               Card(
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 elevation: 2,
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -931,14 +933,20 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      _buildStatRow('Giờ online',
-                          '${onlineHours.toStringAsFixed(1)} giờ'),
+                      _buildStatRow(
+                        'Giờ online',
+                        '${onlineHours.toStringAsFixed(1)} giờ',
+                      ),
                       const SizedBox(height: 8),
-                      _buildStatRow('Thu nhập tuần',
-                          '${weeklyIncome.toStringAsFixed(0)}₫'),
+                      _buildStatRow(
+                        'Thu nhập tuần',
+                        '${weeklyIncome.toStringAsFixed(0)}₫',
+                      ),
                       const SizedBox(height: 8),
-                      _buildStatRow('Tỷ lệ nhận đơn',
-                          '${state.acceptanceRate.toStringAsFixed(1)}%'),
+                      _buildStatRow(
+                        'Tỷ lệ nhận đơn',
+                        '${state.acceptanceRate.toStringAsFixed(1)}%',
+                      ),
                     ],
                   ),
                 ),
@@ -961,10 +969,7 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
         Text(title, style: const TextStyle(fontSize: 14)),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
         ),
       ],
     );

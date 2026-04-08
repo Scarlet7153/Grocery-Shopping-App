@@ -10,14 +10,14 @@ class SavedAddressesScreen extends StatelessWidget {
     final name = (AuthSession.fullName == null || AuthSession.fullName!.isEmpty)
         ? 'Khách hàng'
         : AuthSession.fullName!;
-    final phone = (AuthSession.phoneNumber == null ||
-            AuthSession.phoneNumber!.isEmpty)
+    final phone =
+        (AuthSession.phoneNumber == null || AuthSession.phoneNumber!.isEmpty)
         ? 'Chưa có số điện thoại'
         : AuthSession.phoneNumber!;
     final defaultAddress =
         (AuthSession.address == null || AuthSession.address!.isEmpty)
-            ? 'Chưa có địa chỉ'
-            : AuthSession.address!;
+        ? 'Chưa có địa chỉ'
+        : AuthSession.address!;
 
     final addresses = [
       _SavedAddress(
@@ -56,9 +56,7 @@ class SavedAddressesScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          ...addresses.map(
-            (item) => _AddressCard(item: item),
-          ),
+          ...addresses.map((item) => _AddressCard(item: item)),
           const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: () {},
@@ -102,9 +100,7 @@ class _AddressCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(
@@ -117,15 +113,15 @@ class _AddressCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     item.label,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
                 if (item.isDefault)
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFE8F5E9),
                       borderRadius: BorderRadius.circular(10),

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../../core/auth/auth_session.dart';
 import '../../../../core/cart/cart_session.dart';
@@ -42,7 +42,11 @@ class CustomerCartScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.shopping_cart_outlined, size: 56, color: Colors.grey),
+                Icon(
+                  Icons.shopping_cart_outlined,
+                  size: 56,
+                  color: Colors.grey,
+                ),
                 SizedBox(height: 12),
                 Text('Giỏ hàng đang trống'),
               ],
@@ -65,14 +69,14 @@ class CustomerCartScreen extends StatelessWidget {
         }
         final address =
             (AuthSession.address == null || AuthSession.address!.isEmpty)
-                ? 'Chua co dia chi'
-                : AuthSession.address!;
+            ? 'Chua co dia chi'
+            : AuthSession.address!;
         final receiverName =
             (AuthSession.defaultHasOtherReceiver &&
-                    (AuthSession.defaultOtherReceiverName ?? '').isNotEmpty &&
-                    (AuthSession.defaultOtherReceiverPhone ?? '').isNotEmpty)
-                ? '${(AuthSession.defaultOtherReceiverTitle ?? '').isEmpty ? '' : '${AuthSession.defaultOtherReceiverTitle} '}${AuthSession.defaultOtherReceiverName} - ${AuthSession.defaultOtherReceiverPhone}'
-                : '${(AuthSession.fullName ?? '').isEmpty ? 'Khách hàng' : AuthSession.fullName!} - ${(AuthSession.phoneNumber ?? '').isEmpty ? 'Chưa có số điện thoại' : AuthSession.phoneNumber!}';
+                (AuthSession.defaultOtherReceiverName ?? '').isNotEmpty &&
+                (AuthSession.defaultOtherReceiverPhone ?? '').isNotEmpty)
+            ? '${(AuthSession.defaultOtherReceiverTitle ?? '').isEmpty ? '' : '${AuthSession.defaultOtherReceiverTitle} '}${AuthSession.defaultOtherReceiverName} - ${AuthSession.defaultOtherReceiverPhone}'
+            : '${(AuthSession.fullName ?? '').isEmpty ? 'Khách hàng' : AuthSession.fullName!} - ${(AuthSession.phoneNumber ?? '').isEmpty ? 'Chưa có số điện thoại' : AuthSession.phoneNumber!}';
 
         return Container(
           color: const Color(0xFFF6F8FB),
@@ -108,9 +112,7 @@ class CustomerCartScreen extends StatelessWidget {
                             const SizedBox(height: 4),
                             Text(
                               receiverName,
-                              style: const TextStyle(
-                                color: Colors.black54,
-                              ),
+                              style: const TextStyle(color: Colors.black54),
                             ),
                           ],
                         ),
@@ -141,8 +143,11 @@ class CustomerCartScreen extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.store,
-                                size: 18, color: Colors.green),
+                            const Icon(
+                              Icons.store,
+                              size: 18,
+                              color: Colors.green,
+                            ),
                             const SizedBox(width: 6),
                             Text(
                               storeName,
@@ -174,26 +179,26 @@ class CustomerCartScreen extends StatelessWidget {
                                   child: const Icon(Icons.image),
                                 )
                               : (item.imageUrl.startsWith('assets/'))
-                                  ? Image.asset(
-                                      item.imageUrl,
+                              ? Image.asset(
+                                  item.imageUrl,
+                                  width: 56,
+                                  height: 56,
+                                  fit: BoxFit.cover,
+                                )
+                              : Image.network(
+                                  item.imageUrl,
+                                  width: 56,
+                                  height: 56,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stack) {
+                                    return Container(
                                       width: 56,
                                       height: 56,
-                                      fit: BoxFit.cover,
-                                    )
-                                  : Image.network(
-                                      item.imageUrl,
-                                      width: 56,
-                                      height: 56,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stack) {
-                                        return Container(
-                                          width: 56,
-                                          height: 56,
-                                          color: Colors.grey[300],
-                                          child: const Icon(Icons.image),
-                                        );
-                                      },
-                                    ),
+                                      color: Colors.grey[300],
+                                      child: const Icon(Icons.image),
+                                    );
+                                  },
+                                ),
                         ),
                         title: Text(item.name),
                         subtitle: Padding(
@@ -207,9 +212,7 @@ class CustomerCartScreen extends StatelessWidget {
                                   if (item.quantity <= 1) {
                                     final ok = await _confirmRemove(context);
                                     if (ok) {
-                                      CartSession.removeProduct(
-                                        item.productId,
-                                      );
+                                      CartSession.removeProduct(item.productId);
                                     }
                                     return;
                                   }
@@ -229,7 +232,15 @@ class CustomerCartScreen extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              _QuantityButton(                                icon: Icons.add,                                onPressed: () {                                  CartSession.updateQuantity(                                    item.productId,                                    item.quantity + 1,                                  );                                },                              ),
+                              _QuantityButton(
+                                icon: Icons.add,
+                                onPressed: () {
+                                  CartSession.updateQuantity(
+                                    item.productId,
+                                    item.quantity + 1,
+                                  );
+                                },
+                              ),
                             ],
                           ),
                         ),
@@ -264,8 +275,10 @@ class CustomerCartScreen extends StatelessWidget {
                       ),
                       Row(
                         children: [
-                          const Icon(Icons.radio_button_checked,
-                              color: Colors.green),
+                          const Icon(
+                            Icons.radio_button_checked,
+                            color: Colors.green,
+                          ),
                           const SizedBox(width: 6),
                           const Text('Tiền mặt khi nhận hàng'),
                         ],
@@ -318,7 +331,9 @@ class CustomerCartScreen extends StatelessWidget {
                 ),
                 child: ElevatedButton.icon(
                   onPressed: () async {
-                    final storeName = items.isNotEmpty ? (items.first.storeName) : '';
+                    final storeName = items.isNotEmpty
+                        ? (items.first.storeName)
+                        : '';
                     final order = <String, dynamic>{
                       'id': DateTime.now().millisecondsSinceEpoch.toString(),
                       'storeName': storeName,
@@ -327,13 +342,18 @@ class CustomerCartScreen extends StatelessWidget {
                       'grandTotal': grandTotal,
                       'createdAt': DateTime.now().toIso8601String(),
                     };
-                    AuthSession.localOrders = [order, ...AuthSession.localOrders];
+                    AuthSession.localOrders = [
+                      order,
+                      ...AuthSession.localOrders,
+                    ];
                     await showDialog<void>(
                       context: context,
                       builder: (context) {
                         return AlertDialog(
                           title: const Text('Đặt hàng thành công'),
-                          content: const Text('Đơn hàng của bạn đã được ghi nhận.'),
+                          content: const Text(
+                            'Đơn hàng của bạn đã được ghi nhận.',
+                          ),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.of(context).pop(),
@@ -356,7 +376,7 @@ class CustomerCartScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-              )
+              ),
             ],
           ),
         );
@@ -369,10 +389,7 @@ class _QuantityButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onPressed;
 
-  const _QuantityButton({
-    required this.icon,
-    required this.onPressed,
-  });
+  const _QuantityButton({required this.icon, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -383,9 +400,7 @@ class _QuantityButton extends StatelessWidget {
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           padding: EdgeInsets.zero,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
         ),
         child: Icon(icon, size: 16),
       ),
@@ -415,9 +430,7 @@ class _SummaryRow extends StatelessWidget {
         Expanded(child: Text(label, style: style)),
         Text(
           value,
-          style: style.copyWith(
-            color: isTotal ? Colors.red : Colors.black87,
-          ),
+          style: style.copyWith(color: isTotal ? Colors.red : Colors.black87),
         ),
       ],
     );

@@ -26,15 +26,15 @@ class ShipperDashboardState extends Equatable {
   });
 
   const ShipperDashboardState.initial()
-      : status = DashboardStatus.initial,
-        isOnline = false,
-        earnings = 0,
-        availableOrders = const [],
-        deliveries = const [],
-        completedCount = 0,
-        acceptanceRate = 0.0,
-        error = null,
-        distances = const {};
+    : status = DashboardStatus.initial,
+      isOnline = false,
+      earnings = 0,
+      availableOrders = const [],
+      deliveries = const [],
+      completedCount = 0,
+      acceptanceRate = 0.0,
+      error = null,
+      distances = const {};
 
   ShipperDashboardState copyWith({
     DashboardStatus? status,
@@ -62,14 +62,14 @@ class ShipperDashboardState extends Equatable {
 
   @override
   List<Object?> get props => [
-        status,
-        isOnline,
-        earnings,
-        availableOrders,
-        deliveries,
-        completedCount,
-        acceptanceRate,
-        error,
-        distances
-      ];
+    status,
+    isOnline,
+    earnings,
+    availableOrders,
+    deliveries,
+    completedCount,
+    acceptanceRate,
+    error,
+    distances,
+  ];
 }

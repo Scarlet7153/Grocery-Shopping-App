@@ -50,21 +50,19 @@ class _HomeShellState extends State<_HomeShell> {
       body = const _HomeView();
       final name =
           (AuthSession.fullName == null || AuthSession.fullName!.isEmpty)
-              ? 'Kh\u00e1ch h\u00e0ng'
-              : AuthSession.fullName!;
+          ? 'Kh\u00e1ch h\u00e0ng'
+          : AuthSession.fullName!;
       final location =
           (AuthSession.address == null || AuthSession.address!.isEmpty)
-              ? 'Ch\u01b0a c\u00f3 \u0111\u1ecba ch\u1ec9'
-              : AuthSession.address!;
+          ? 'Ch\u01b0a c\u00f3 \u0111\u1ecba ch\u1ec9'
+          : AuthSession.address!;
       appBar = CustomerHomeHeader(
         name: name,
         location: location,
         onTap: () async {
           await Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (_) => const RecipientInfoScreen(),
-            ),
+            MaterialPageRoute(builder: (_) => const RecipientInfoScreen()),
           );
           if (mounted) setState(() {});
         },
@@ -116,9 +114,7 @@ class _HomeViewState extends State<_HomeView> {
     return BlocBuilder<CustomerHomeBloc, CustomerHomeState>(
       builder: (context, state) {
         if (state is CustomerHomeLoading) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+          return const Center(child: CircularProgressIndicator());
         }
 
         if (state is CustomerHomeLoaded) {
@@ -138,12 +134,14 @@ class _HomeViewState extends State<_HomeView> {
                       textInputAction: TextInputAction.search,
                       onChanged: (value) {
                         _debounce?.cancel();
-                        _debounce =
-                            Timer(const Duration(milliseconds: 350), () {
-                          context.read<CustomerHomeBloc>().add(
-                                SearchProductsEvent(value),
-                              );
-                        });
+                        _debounce = Timer(
+                          const Duration(milliseconds: 350),
+                          () {
+                            context.read<CustomerHomeBloc>().add(
+                              SearchProductsEvent(value),
+                            );
+                          },
+                        );
                       },
                       onSubmitted: (value) {
                         final keyword = value.trim();
@@ -197,10 +195,7 @@ class _HomeViewState extends State<_HomeView> {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: const [
-                            BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 8,
-                            )
+                            BoxShadow(color: Colors.black12, blurRadius: 8),
                           ],
                         ),
                         child: ListView.builder(
@@ -222,10 +217,10 @@ class _HomeViewState extends State<_HomeView> {
                                 _searchController.text = product.name;
                                 _searchController.selection =
                                     TextSelection.fromPosition(
-                                  TextPosition(
-                                    offset: _searchController.text.length,
-                                  ),
-                                );
+                                      TextPosition(
+                                        offset: _searchController.text.length,
+                                      ),
+                                    );
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -251,10 +246,7 @@ class _HomeViewState extends State<_HomeView> {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
                         gradient: const LinearGradient(
-                          colors: [
-                            Color(0xFF2F80ED),
-                            Color(0xFF56CCF2),
-                          ],
+                          colors: [Color(0xFF2F80ED), Color(0xFF56CCF2)],
                         ),
                       ),
                       child: Stack(
@@ -301,7 +293,9 @@ class _HomeViewState extends State<_HomeView> {
                   SizedBox(
                     height: 90,
                     child: state.categories.isEmpty
-                        ? const Center(child: Text('Ch\u01b0a c\u00f3 danh m\u1ee5c'))
+                        ? const Center(
+                            child: Text('Ch\u01b0a c\u00f3 danh m\u1ee5c'),
+                          )
                         : ListView.builder(
                             scrollDirection: Axis.horizontal,
                             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -317,7 +311,9 @@ class _HomeViewState extends State<_HomeView> {
                     height: 140,
                     child: state.featuredStores.isEmpty
                         ? const Center(
-                            child: Text('Ch\u01b0a c\u00f3 c\u1eeda h\u00e0ng n\u1ed5i b\u1eadt'),
+                            child: Text(
+                              'Ch\u01b0a c\u00f3 c\u1eeda h\u00e0ng n\u1ed5i b\u1eadt',
+                            ),
                           )
                         : ListView.builder(
                             scrollDirection: Axis.horizontal,
@@ -337,18 +333,20 @@ class _HomeViewState extends State<_HomeView> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: state.products.isEmpty
-                        ? const Center(child: Text('Ch\u01b0a c\u00f3 s\u1ea3n ph\u1ea9m'))
+                        ? const Center(
+                            child: Text('Ch\u01b0a c\u00f3 s\u1ea3n ph\u1ea9m'),
+                          )
                         : GridView.builder(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             itemCount: state.products.length,
                             gridDelegate:
                                 const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              childAspectRatio: 0.72,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                            ),
+                                  crossAxisCount: 2,
+                                  childAspectRatio: 0.72,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 12,
+                                ),
                             itemBuilder: (context, index) {
                               final product = state.products[index];
 
@@ -357,8 +355,8 @@ class _HomeViewState extends State<_HomeView> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => ProductDetailScreen(
-                                          product: product),
+                                      builder: (_) =>
+                                          ProductDetailScreen(product: product),
                                     ),
                                   );
                                 },
@@ -370,7 +368,7 @@ class _HomeViewState extends State<_HomeView> {
                                       BoxShadow(
                                         color: Colors.black12,
                                         blurRadius: 8,
-                                      )
+                                      ),
                                     ],
                                   ),
                                   child: Column(
@@ -381,36 +379,38 @@ class _HomeViewState extends State<_HomeView> {
                                         child: ClipRRect(
                                           borderRadius:
                                               const BorderRadius.vertical(
-                                            top: Radius.circular(16),
-                                          ),
+                                                top: Radius.circular(16),
+                                              ),
                                           child: product.imageUrl.isEmpty
                                               ? Container(
                                                   color: Colors.grey[300],
-                                                  child:
-                                                      const Icon(Icons.image),
+                                                  child: const Icon(
+                                                    Icons.image,
+                                                  ),
                                                 )
-                                              : (product.imageUrl
-                                                      .startsWith('assets/'))
-                                                  ? Image.asset(
-                                                      product.imageUrl,
-                                                      fit: BoxFit.cover,
-                                                      width: double.infinity,
-                                                    )
-                                                  : Image.network(
-                                                      product.imageUrl,
-                                                      fit: BoxFit.cover,
-                                                      width: double.infinity,
-                                                      errorBuilder:
-                                                          (context, error,
-                                                              stack) {
+                                              : (product.imageUrl.startsWith(
+                                                  'assets/',
+                                                ))
+                                              ? Image.asset(
+                                                  product.imageUrl,
+                                                  fit: BoxFit.cover,
+                                                  width: double.infinity,
+                                                )
+                                              : Image.network(
+                                                  product.imageUrl,
+                                                  fit: BoxFit.cover,
+                                                  width: double.infinity,
+                                                  errorBuilder:
+                                                      (context, error, stack) {
                                                         return Container(
                                                           color:
                                                               Colors.grey[300],
                                                           child: const Icon(
-                                                              Icons.image),
+                                                            Icons.image,
+                                                          ),
                                                         );
                                                       },
-                                                    ),
+                                                ),
                                         ),
                                       ),
                                       Padding(
@@ -432,22 +432,23 @@ class _HomeViewState extends State<_HomeView> {
                                             Row(
                                               children: [
                                                 Container(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 4,
-                                                  ),
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 4,
+                                                      ),
                                                   decoration: BoxDecoration(
                                                     color: _primaryBlue
-                                                        .withValues(
-                                                            alpha: 0.1),
+                                                        .withValues(alpha: 0.1),
                                                     borderRadius:
                                                         BorderRadius.circular(
-                                                            8),
+                                                          8,
+                                                        ),
                                                   ),
                                                   child: Text(
                                                     formatVnd(
-                                                        product.displayPrice),
+                                                      product.displayPrice,
+                                                    ),
                                                     style: const TextStyle(
                                                       color: _primaryBlue,
                                                       fontWeight:
@@ -460,16 +461,18 @@ class _HomeViewState extends State<_HomeView> {
                                                 InkWell(
                                                   onTap: () {
                                                     CartSession.addProduct(
-                                                        product);
+                                                      product,
+                                                    );
                                                     ScaffoldMessenger.of(
-                                                            context)
-                                                        .showSnackBar(
+                                                      context,
+                                                    ).showSnackBar(
                                                       const SnackBar(
                                                         behavior:
                                                             SnackBarBehavior
                                                                 .floating,
                                                         content: Text(
-                                                            '\u0110\u00e3 th\u00eam v\u00e0o gi\u1ecf h\u00e0ng'),
+                                                          '\u0110\u00e3 th\u00eam v\u00e0o gi\u1ecf h\u00e0ng',
+                                                        ),
                                                       ),
                                                     );
                                                   },
@@ -480,7 +483,8 @@ class _HomeViewState extends State<_HomeView> {
                                                       color: _primaryBlue,
                                                       borderRadius:
                                                           BorderRadius.circular(
-                                                              10),
+                                                            10,
+                                                          ),
                                                     ),
                                                     child: const Icon(
                                                       Icons.add_shopping_cart,
@@ -488,12 +492,12 @@ class _HomeViewState extends State<_HomeView> {
                                                       size: 18,
                                                     ),
                                                   ),
-                                                )
+                                                ),
                                               ],
-                                            )
+                                            ),
                                           ],
                                         ),
-                                      )
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -520,16 +524,10 @@ Widget _sectionHeader(String text) {
       children: [
         Text(
           text,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const Spacer(),
-        TextButton(
-          onPressed: () {},
-          child: const Text('Xem t\u1ea5t c\u1ea3'),
-        )
+        TextButton(onPressed: () {}, child: const Text('Xem t\u1ea5t c\u1ea3')),
       ],
     ),
   );
@@ -542,12 +540,7 @@ Widget _categoryItem(String name) {
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(14),
-      boxShadow: const [
-        BoxShadow(
-          color: Colors.black12,
-          blurRadius: 6,
-        )
-      ],
+      boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6)],
     ),
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -558,11 +551,7 @@ Widget _categoryItem(String name) {
             color: _primaryBlue.withValues(alpha: 0.12),
             shape: BoxShape.circle,
           ),
-          child: Icon(
-            _categoryIcon(name),
-            size: 18,
-            color: _primaryBlue,
-          ),
+          child: Icon(_categoryIcon(name), size: 18, color: _primaryBlue),
         ),
         const SizedBox(height: 8),
         Text(
@@ -599,12 +588,7 @@ Widget _storeCard({
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(14),
-      boxShadow: const [
-        BoxShadow(
-          color: Colors.black12,
-          blurRadius: 6,
-        )
-      ],
+      boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 6)],
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,

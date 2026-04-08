@@ -28,51 +28,42 @@ class _CustomerSplashScreenState extends State<CustomerSplashScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                CustomerTheme.primaryColor,
-                CustomerTheme.primaryColor.withValues(alpha: 0.8),
-              ],
-            ),
-          ),
-          child: const Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Logo riêng cho Customer
-                Icon(
-                  Icons.shopping_cart_outlined,
-                  size: 80,
-                  color: Colors.white,
-                ),
-                SizedBox(height: 24),
-                Text(
-                  'Đi Chợ Hộ',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Dành cho Khách hàng',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white70,
-                  ),
-                ),
-                SizedBox(height: 48),
-                CircularProgressIndicator(
-                  color: Colors.white,
-                ),
-              ],
-            ),
-          ),
+    body: Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            CustomerTheme.primaryColor,
+            CustomerTheme.primaryColor.withValues(alpha: 0.8),
+          ],
         ),
-      );
+      ),
+      child: const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Logo riêng cho Customer
+            Icon(Icons.shopping_cart_outlined, size: 80, color: Colors.white),
+            SizedBox(height: 24),
+            Text(
+              'Đi Chợ Hộ',
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Dành cho Khách hàng',
+              style: TextStyle(fontSize: 16, color: Colors.white70),
+            ),
+            SizedBox(height: 48),
+            CircularProgressIndicator(color: Colors.white),
+          ],
+        ),
+      ),
+    ),
+  );
 }

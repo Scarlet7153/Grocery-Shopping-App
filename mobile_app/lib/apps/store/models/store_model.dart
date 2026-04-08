@@ -1,5 +1,4 @@
 class StoreModel {
-
   final String name;
   final String address;
   final String status;
@@ -15,7 +14,6 @@ class StoreModel {
   });
 
   factory StoreModel.fromJson(Map<String, dynamic> json) {
-
     return StoreModel(
       name: json["name"] ?? "",
       address: json["address"] ?? "",
@@ -23,6 +21,5 @@ class StoreModel {
       revenueToday: json["revenueToday"] ?? 0,
       ordersToday: json["ordersToday"] ?? 0,
     );
-
   }
 }

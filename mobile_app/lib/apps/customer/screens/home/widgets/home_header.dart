@@ -1,6 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
-class CustomerHomeHeader extends StatelessWidget implements PreferredSizeWidget {
+class CustomerHomeHeader extends StatelessWidget
+    implements PreferredSizeWidget {
   final String name;
   final String location;
   final VoidCallback? onTap;
@@ -25,10 +26,7 @@ class CustomerHomeHeader extends StatelessWidget implements PreferredSizeWidget 
         borderRadius: BorderRadius.circular(8),
         child: Row(
           children: [
-            const CircleAvatar(
-              radius: 20,
-              child: Icon(Icons.person),
-            ),
+            const CircleAvatar(radius: 20, child: Icon(Icons.person)),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -49,9 +47,7 @@ class CustomerHomeHeader extends StatelessWidget implements PreferredSizeWidget 
                       Expanded(
                         child: Text(
                           location,
-                          style: const TextStyle(
-                            fontSize: 12,
-                          ),
+                          style: const TextStyle(fontSize: 12),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),

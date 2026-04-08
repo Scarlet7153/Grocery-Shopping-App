@@ -50,29 +50,17 @@ class _RoleSelectionCardState extends State<RoleSelectionCard>
       vsync: this,
     );
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutBack,
-    ));
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack),
+    );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
 
-    _selectionAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _selectionController,
-      curve: Curves.easeInOut,
-    ));
+    _selectionAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _selectionController, curve: Curves.easeInOut),
+    );
   }
 
   void _startEntryAnimation() {
@@ -110,10 +98,7 @@ class _RoleSelectionCardState extends State<RoleSelectionCard>
       builder: (context, child) {
         return Transform.scale(
           scale: _scaleAnimation.value,
-          child: Opacity(
-            opacity: _fadeAnimation.value,
-            child: _buildCard(),
-          ),
+          child: Opacity(opacity: _fadeAnimation.value, child: _buildCard()),
         );
       },
     );
@@ -129,8 +114,9 @@ class _RoleSelectionCardState extends State<RoleSelectionCard>
             widget.onTap();
           },
           child: AnimatedContainer(
-            duration:
-                const Duration(milliseconds: AppDimensions.animationNormal),
+            duration: const Duration(
+              milliseconds: AppDimensions.animationNormal,
+            ),
             curve: Curves.easeInOut,
             padding: const EdgeInsets.all(AppDimensions.spacingL),
             decoration: _buildCardDecoration(),

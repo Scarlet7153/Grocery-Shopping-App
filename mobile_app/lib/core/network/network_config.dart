@@ -7,10 +7,12 @@ class NetworkConfig {
     final dio = Dio(
       BaseOptions(
         baseUrl: AppConstants.baseUrl,
-        connectTimeout:
-            const Duration(milliseconds: AppConstants.connectionTimeoutMs),
-        receiveTimeout:
-            const Duration(milliseconds: AppConstants.receiveTimeoutMs),
+        connectTimeout: const Duration(
+          milliseconds: AppConstants.connectionTimeoutMs,
+        ),
+        receiveTimeout: const Duration(
+          milliseconds: AppConstants.receiveTimeoutMs,
+        ),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',

@@ -40,9 +40,9 @@ class _DeliveryConfirmationScreenState
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi chọn ảnh: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi chọn ảnh: $e')));
       }
     }
   }
@@ -80,9 +80,9 @@ class _DeliveryConfirmationScreenState
     } catch (e) {
       if (mounted) {
         setState(() => _isUploading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi xác nhận: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi xác nhận: $e')));
       }
     }
   }
@@ -127,8 +127,9 @@ class _DeliveryConfirmationScreenState
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
                         ),
                       )
                     : const Icon(Icons.check_circle, size: 22),
@@ -178,8 +179,11 @@ class _DeliveryConfirmationScreenState
                   color: Colors.blue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.shopping_bag,
-                    color: Colors.blue, size: 20),
+                child: const Icon(
+                  Icons.shopping_bag,
+                  color: Colors.blue,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 12),
               Text(
@@ -205,14 +209,14 @@ class _DeliveryConfirmationScreenState
               Text(
                 'Tổng tiền',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: ShipperTheme.textGreyColor,
-                    ),
+                  color: ShipperTheme.textGreyColor,
+                ),
               ),
               Text(
                 '${totalPrice.toStringAsFixed(0)} ₫',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: ShipperTheme.successColor,
-                    ),
+                  color: ShipperTheme.successColor,
+                ),
               ),
             ],
           ),
@@ -225,15 +229,12 @@ class _DeliveryConfirmationScreenState
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
+        Text(label, style: Theme.of(context).textTheme.bodyMedium),
         Text(
           value,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
         ),
       ],
     );
@@ -259,8 +260,11 @@ class _DeliveryConfirmationScreenState
                   color: Colors.red.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child:
-                    const Icon(Icons.location_on, color: Colors.red, size: 20),
+                child: const Icon(
+                  Icons.location_on,
+                  color: Colors.red,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 12),
               Text(
@@ -289,8 +293,8 @@ class _DeliveryConfirmationScreenState
                     Text(
                       widget.order.customerName,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
@@ -304,7 +308,8 @@ class _DeliveryConfirmationScreenState
             onTap: () async {
               try {
                 await launchUrl(
-                    Uri(scheme: 'tel', path: widget.order.customerPhone));
+                  Uri(scheme: 'tel', path: widget.order.customerPhone),
+                );
               } catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -330,9 +335,9 @@ class _DeliveryConfirmationScreenState
                       Text(
                         widget.order.customerPhone,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              color: ShipperTheme.secondaryColor,
-                              decoration: TextDecoration.underline,
-                            ),
+                          color: ShipperTheme.secondaryColor,
+                          decoration: TextDecoration.underline,
+                        ),
                       ),
                     ],
                   ),
@@ -386,8 +391,11 @@ class _DeliveryConfirmationScreenState
                 color: Colors.purple.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child:
-                  const Icon(Icons.camera_alt, color: Colors.purple, size: 20),
+              child: const Icon(
+                Icons.camera_alt,
+                color: Colors.purple,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 12),
             Text(
@@ -411,10 +419,7 @@ class _DeliveryConfirmationScreenState
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Image.file(
-                    _proofImage!,
-                    fit: BoxFit.cover,
-                  ),
+                  child: Image.file(_proofImage!, fit: BoxFit.cover),
                 ),
               ),
               const SizedBox(height: 14),
@@ -457,14 +462,17 @@ class _DeliveryConfirmationScreenState
                 ),
                 child: Column(
                   children: [
-                    Icon(Icons.image_not_supported,
-                        size: 56, color: Colors.grey[300]),
+                    Icon(
+                      Icons.image_not_supported,
+                      size: 56,
+                      color: Colors.grey[300],
+                    ),
                     const SizedBox(height: 12),
                     Text(
                       'Chưa có ảnh chứng minh',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: ShipperTheme.textLightGreyColor,
-                          ),
+                        color: ShipperTheme.textLightGreyColor,
+                      ),
                     ),
                   ],
                 ),
@@ -485,7 +493,9 @@ class _DeliveryConfirmationScreenState
                       label: const Text(
                         'Chụp ảnh',
                         style: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w600),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: ShipperTheme.primaryColor,
@@ -508,7 +518,9 @@ class _DeliveryConfirmationScreenState
                       label: const Text(
                         'Chọn từ thư viện',
                         style: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w600),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.grey[200],

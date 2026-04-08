@@ -57,15 +57,17 @@ class _OrderMapScreenState extends State<OrderMapScreen>
   Animation<double>? _rotationAnimation;
 
   _OrderMapScreenState()
-      : _routingService = GraphHopperRoutingService(
-            apiKey: 'c251cd70-5c14-49fe-a134-0ad33f0bf0ed');
+    : _routingService = GraphHopperRoutingService(
+        apiKey: 'c251cd70-5c14-49fe-a134-0ad33f0bf0ed',
+      );
 
   @override
   void initState() {
     super.initState();
     _order = widget.order;
     // Nếu order đã ở trạng thái DELIVERING hoặc DELIVERED, tự động bật chế độ giao hàng
-    _isDelivering = _order.status == OrderStatus.DELIVERING ||
+    _isDelivering =
+        _order.status == OrderStatus.DELIVERING ||
         _order.status == OrderStatus.DELIVERED;
     // Load lại trạng thái order mới nhất từ server
     _refreshOrderStatus();
@@ -81,7 +83,8 @@ class _OrderMapScreenState extends State<OrderMapScreen>
         setState(() {
           _order = freshOrder;
           // Cập nhật lại _isDelivering dựa trên status mới
-          _isDelivering = _order.status == OrderStatus.DELIVERING ||
+          _isDelivering =
+              _order.status == OrderStatus.DELIVERING ||
               _order.status == OrderStatus.DELIVERED;
         });
       }
@@ -137,7 +140,8 @@ class _OrderMapScreenState extends State<OrderMapScreen>
     try {
       // Nếu đang ở PICKING_UP và chưa ấn "Bắt đầu giao hàng",
       // chỉ hiển thị route đến store (không đến khách hàng)
-      final isGoingToStoreOnly = _order.status == OrderStatus.PICKING_UP &&
+      final isGoingToStoreOnly =
+          _order.status == OrderStatus.PICKING_UP &&
           !_isDelivering &&
           !widget.showDeliveryRoute;
 
@@ -174,25 +178,26 @@ class _OrderMapScreenState extends State<OrderMapScreen>
   }
 
   void _startLocationTracking() {
-    _positionStream = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 10, // Update more frequently for navigation
-      ),
-    ).listen((Position position) {
-      if (mounted) {
-        setState(() {
-          _currentPosition = LatLng(position.latitude, position.longitude);
-          _heading = position.heading; // Get heading direction
-        });
-        _updateCurrentMarker();
+    _positionStream =
+        Geolocator.getPositionStream(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 10, // Update more frequently for navigation
+          ),
+        ).listen((Position position) {
+          if (mounted) {
+            setState(() {
+              _currentPosition = LatLng(position.latitude, position.longitude);
+              _heading = position.heading; // Get heading direction
+            });
+            _updateCurrentMarker();
 
-        // Auto-rotate map when in navigation mode
-        if (_isNavigating && _currentPosition != null) {
-          _updateNavigationCamera();
-        }
-      }
-    });
+            // Auto-rotate map when in navigation mode
+            if (_isNavigating && _currentPosition != null) {
+              _updateNavigationCamera();
+            }
+          }
+        });
   }
 
   void _updateNavigationCamera() {
@@ -286,8 +291,9 @@ class _OrderMapScreenState extends State<OrderMapScreen>
     if (hasGeocodingError && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content:
-              Text('Một số địa chỉ không geocode được, dùng vị trí ước lượng'),
+          content: Text(
+            'Một số địa chỉ không geocode được, dùng vị trí ước lượng',
+          ),
           duration: Duration(seconds: 3),
         ),
       );
@@ -359,62 +365,66 @@ class _OrderMapScreenState extends State<OrderMapScreen>
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? _buildErrorState()
-              : Stack(
+          ? _buildErrorState()
+          : Stack(
+              children: [
+                FlutterMap(
+                  mapController: _mapController,
+                  options: MapOptions(
+                    initialCenter:
+                        _currentPosition ??
+                        (_storeLocations.isNotEmpty
+                            ? _storeLocations.first
+                            : _destination),
+                    initialZoom: 14,
+                    minZoom: 10,
+                    maxZoom: 18,
+                  ),
                   children: [
-                    FlutterMap(
-                      mapController: _mapController,
-                      options: MapOptions(
-                        initialCenter: _currentPosition ??
-                            (_storeLocations.isNotEmpty
-                                ? _storeLocations.first
-                                : _destination),
-                        initialZoom: 14,
-                        minZoom: 10,
-                        maxZoom: 18,
-                      ),
-                      children: [
-                        TileLayer(
-                          urlTemplate:
-                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                          userAgentPackageName: 'com.grocery.shopping_app',
-                        ),
-                        if (_routePoints.isNotEmpty)
-                          PolylineLayer(
-                            polylines: [
-                              Polyline(
-                                points: _routePoints,
-                                color: const Color(0xFF4285F4),
-                                strokeWidth: 5,
-                              ),
-                            ],
-                          ),
-                        MarkerLayer(markers: _buildMarkers()),
-                      ],
+                    TileLayer(
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.grocery.shopping_app',
                     ),
-                    if (_showDirections) _buildDirectionsPanel(),
-                    _buildLocationInfoPanel(),
-
-                    // Navigation mode toggle button
-                    if (_isDelivering)
-                      Positioned(
-                        right: 16,
-                        bottom: 320, // Above the location info panel
-                        child: FloatingActionButton.small(
-                          heroTag: 'navigation_toggle',
-                          onPressed: _toggleNavigationMode,
-                          backgroundColor: _isNavigating
-                              ? ShipperTheme.primaryColor
-                              : Colors.white,
-                          foregroundColor:
-                              _isNavigating ? Colors.white : Colors.black87,
-                          child: Icon(_isNavigating
-                              ? Icons.navigation
-                              : Icons.navigation_outlined),
-                        ),
+                    if (_routePoints.isNotEmpty)
+                      PolylineLayer(
+                        polylines: [
+                          Polyline(
+                            points: _routePoints,
+                            color: const Color(0xFF4285F4),
+                            strokeWidth: 5,
+                          ),
+                        ],
                       ),
+                    MarkerLayer(markers: _buildMarkers()),
                   ],
                 ),
+                if (_showDirections) _buildDirectionsPanel(),
+                _buildLocationInfoPanel(),
+
+                // Navigation mode toggle button
+                if (_isDelivering)
+                  Positioned(
+                    right: 16,
+                    bottom: 320, // Above the location info panel
+                    child: FloatingActionButton.small(
+                      heroTag: 'navigation_toggle',
+                      onPressed: _toggleNavigationMode,
+                      backgroundColor: _isNavigating
+                          ? ShipperTheme.primaryColor
+                          : Colors.white,
+                      foregroundColor: _isNavigating
+                          ? Colors.white
+                          : Colors.black87,
+                      child: Icon(
+                        _isNavigating
+                            ? Icons.navigation
+                            : Icons.navigation_outlined,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
     );
   }
 
@@ -422,33 +432,42 @@ class _OrderMapScreenState extends State<OrderMapScreen>
     final markers = <Marker>[];
 
     if (_currentPosition != null) {
-      markers.add(Marker(
-        point: _currentPosition!,
-        width: 40,
-        height: 40,
-        child: _buildCurrentLocationMarker(),
-      ));
+      markers.add(
+        Marker(
+          point: _currentPosition!,
+          width: 40,
+          height: 40,
+          child: _buildCurrentLocationMarker(),
+        ),
+      );
     }
 
     for (int i = 0; i < _storeLocations.length; i++) {
       final storeName = i < widget.order.stores.length
           ? widget.order.stores[i].name
           : widget.order.storeName;
-      markers.add(Marker(
-        point: _storeLocations[i],
-        width: 40,
-        height: 40,
-        child: _buildLocationMarker(Icons.store, Colors.purple, storeName),
-      ));
+      markers.add(
+        Marker(
+          point: _storeLocations[i],
+          width: 40,
+          height: 40,
+          child: _buildLocationMarker(Icons.store, Colors.purple, storeName),
+        ),
+      );
     }
 
-    markers.add(Marker(
-      point: _destination,
-      width: 40,
-      height: 40,
-      child:
-          _buildLocationMarker(Icons.location_on, Colors.green, 'Khách hàng'),
-    ));
+    markers.add(
+      Marker(
+        point: _destination,
+        width: 40,
+        height: 40,
+        child: _buildLocationMarker(
+          Icons.location_on,
+          Colors.green,
+          'Khách hàng',
+        ),
+      ),
+    );
 
     return markers;
   }
@@ -481,10 +500,7 @@ class _OrderMapScreenState extends State<OrderMapScreen>
         shape: BoxShape.circle,
         border: Border.all(color: Colors.white, width: 2),
         boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.3),
-            blurRadius: 5,
-          ),
+          BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 5),
         ],
       ),
       child: Icon(icon, color: Colors.white, size: 22),
@@ -636,8 +652,10 @@ class _OrderMapScreenState extends State<OrderMapScreen>
               // ===== DURING DELIVERY - Customer info + Actions =====
               // Status badge (16px text)
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: _order.status == OrderStatus.PICKING_UP
                       ? Colors.orange.withValues(alpha: 0.1)
@@ -665,10 +683,10 @@ class _OrderMapScreenState extends State<OrderMapScreen>
                           ? 'Xác nhận nhận hàng'
                           : 'Đang giao hàng',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: _order.status == OrderStatus.PICKING_UP
-                                ? Colors.orange
-                                : Colors.green,
-                          ),
+                        color: _order.status == OrderStatus.PICKING_UP
+                            ? Colors.orange
+                            : Colors.green,
+                      ),
                     ),
                   ],
                 ),
@@ -699,8 +717,12 @@ class _OrderMapScreenState extends State<OrderMapScreen>
                     InkWell(
                       onTap: () async {
                         try {
-                          await launchUrl(Uri(
-                              scheme: 'tel', path: widget.order.customerPhone));
+                          await launchUrl(
+                            Uri(
+                              scheme: 'tel',
+                              path: widget.order.customerPhone,
+                            ),
+                          );
                         } catch (e) {
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -711,15 +733,16 @@ class _OrderMapScreenState extends State<OrderMapScreen>
                       },
                       child: Row(
                         children: [
-                          Icon(Icons.phone,
-                              color: ShipperTheme.primaryColor, size: 20),
+                          Icon(
+                            Icons.phone,
+                            color: ShipperTheme.primaryColor,
+                            size: 20,
+                          ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               widget.order.customerPhone,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyLarge
+                              style: Theme.of(context).textTheme.bodyLarge
                                   ?.copyWith(
                                     color: ShipperTheme.primaryColor,
                                     decoration: TextDecoration.underline,
@@ -761,8 +784,12 @@ class _OrderMapScreenState extends State<OrderMapScreen>
                     child: OutlinedButton.icon(
                       onPressed: () async {
                         try {
-                          await launchUrl(Uri(
-                              scheme: 'tel', path: widget.order.customerPhone));
+                          await launchUrl(
+                            Uri(
+                              scheme: 'tel',
+                              path: widget.order.customerPhone,
+                            ),
+                          );
                         } catch (e) {
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -775,12 +802,16 @@ class _OrderMapScreenState extends State<OrderMapScreen>
                       label: const Text(
                         'Gọi',
                         style: TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w600),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: ShipperTheme.secondaryColor,
                         side: const BorderSide(
-                            color: ShipperTheme.secondaryColor, width: 2),
+                          color: ShipperTheme.secondaryColor,
+                          width: 2,
+                        ),
                       ),
                     ),
                   ),
@@ -796,12 +827,16 @@ class _OrderMapScreenState extends State<OrderMapScreen>
                         label: const Text(
                           'Chi tiết',
                           style: TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w600),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.orange,
-                          side:
-                              const BorderSide(color: Colors.orange, width: 2),
+                          side: const BorderSide(
+                            color: Colors.orange,
+                            width: 2,
+                          ),
                         ),
                       ),
                     )
@@ -835,7 +870,9 @@ class _OrderMapScreenState extends State<OrderMapScreen>
                                 ? 'Đang xác nhận...'
                                 : 'Xác nhận đã nhận hàng',
                             style: const TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.w700),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green,
@@ -870,7 +907,9 @@ class _OrderMapScreenState extends State<OrderMapScreen>
                           label: const Text(
                             'Xác nhận',
                             style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.w700),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: ShipperTheme.successColor,
@@ -951,10 +990,7 @@ class _OrderMapScreenState extends State<OrderMapScreen>
               const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.black87,
-                ),
+                style: const TextStyle(fontSize: 12, color: Colors.black87),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -1007,8 +1043,10 @@ class _OrderMapScreenState extends State<OrderMapScreen>
 
     try {
       final repository = context.read<ShipperRepository>();
-      final updated =
-          await repository.updateOrderStatus(_order.id, 'DELIVERING');
+      final updated = await repository.updateOrderStatus(
+        _order.id,
+        'DELIVERING',
+      );
 
       if (updated != null) {
         setState(() {
@@ -1026,9 +1064,9 @@ class _OrderMapScreenState extends State<OrderMapScreen>
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
       }
     } finally {
       if (mounted) {
@@ -1064,22 +1102,21 @@ class _OrderMapScreenState extends State<OrderMapScreen>
     );
 
     // Zoom animation (ease in out)
-    _zoomAnimation = Tween<double>(
-      begin: currentZoom,
-      end: targetZoom,
-    ).animate(CurvedAnimation(
-      parent: _navAnimationController!,
-      curve: Curves.easeInOutCubic,
-    ));
+    _zoomAnimation = Tween<double>(begin: currentZoom, end: targetZoom).animate(
+      CurvedAnimation(
+        parent: _navAnimationController!,
+        curve: Curves.easeInOutCubic,
+      ),
+    );
 
     // Rotation animation (ease in out) - shortest path
-    _rotationAnimation = Tween<double>(
-      begin: currentRotation,
-      end: endRotation,
-    ).animate(CurvedAnimation(
-      parent: _navAnimationController!,
-      curve: Curves.easeInOutCubic,
-    ));
+    _rotationAnimation = Tween<double>(begin: currentRotation, end: endRotation)
+        .animate(
+          CurvedAnimation(
+            parent: _navAnimationController!,
+            curve: Curves.easeInOutCubic,
+          ),
+        );
 
     // Listen to animation and update map
     _navAnimationController!.addListener(() {
@@ -1118,13 +1155,16 @@ class _OrderMapScreenState extends State<OrderMapScreen>
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: ShipperTheme.primaryColor.withValues(alpha: 0.1),
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(20)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(20),
+                  ),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.receipt_long,
-                        color: ShipperTheme.primaryColor),
+                    const Icon(
+                      Icons.receipt_long,
+                      color: ShipperTheme.primaryColor,
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -1149,37 +1189,34 @@ class _OrderMapScreenState extends State<OrderMapScreen>
                   padding: const EdgeInsets.all(16),
                   children: [
                     // Store info
-                    _buildDialogSection(
-                      'Cửa hàng',
-                      [
-                        _buildDialogItem(Icons.store, _order.storeName),
-                        _buildDialogItem(
-                            Icons.location_on, _order.storeAddress),
-                      ],
-                    ),
+                    _buildDialogSection('Cửa hàng', [
+                      _buildDialogItem(Icons.store, _order.storeName),
+                      _buildDialogItem(Icons.location_on, _order.storeAddress),
+                    ]),
                     const SizedBox(height: 16),
                     // Customer info
-                    _buildDialogSection(
-                      'Khách hàng',
-                      [
-                        _buildDialogItem(Icons.person, _order.customerName),
-                        _buildDialogItem(Icons.phone, _order.customerPhone),
-                        _buildDialogItem(
-                            Icons.location_on, _order.deliveryAddress),
-                      ],
-                    ),
+                    _buildDialogSection('Khách hàng', [
+                      _buildDialogItem(Icons.person, _order.customerName),
+                      _buildDialogItem(Icons.phone, _order.customerPhone),
+                      _buildDialogItem(
+                        Icons.location_on,
+                        _order.deliveryAddress,
+                      ),
+                    ]),
                     const SizedBox(height: 16),
                     // Items (nếu có)
                     if (_order.items.isNotEmpty)
                       _buildDialogSection(
                         'Sản phẩm (${_order.items.length})',
                         _order.items
-                            .map((item) => _buildDialogItem(
-                                  Icons.shopping_bag,
-                                  '${item.productName} x${item.quantity}',
-                                  trailing:
-                                      '${item.subtotal.toStringAsFixed(0)}₫',
-                                ))
+                            .map(
+                              (item) => _buildDialogItem(
+                                Icons.shopping_bag,
+                                '${item.productName} x${item.quantity}',
+                                trailing:
+                                    '${item.subtotal.toStringAsFixed(0)}₫',
+                              ),
+                            )
                             .toList(),
                       ),
                     const SizedBox(height: 16),
@@ -1253,19 +1290,11 @@ class _OrderMapScreenState extends State<OrderMapScreen>
         children: [
           Icon(icon, size: 18, color: Colors.grey[600]),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(fontSize: 14),
-            ),
-          ),
+          Expanded(child: Text(text, style: const TextStyle(fontSize: 14))),
           if (trailing != null)
             Text(
               trailing,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
             ),
         ],
       ),
@@ -1279,7 +1308,8 @@ class _OrderMapScreenState extends State<OrderMapScreen>
 
     for (int i = 0; i < _routeResult!.segments.length; i++) {
       final segment = _routeResult!.segments[i];
-      final isLastStore = i == _routeResult!.segments.length - 1 ||
+      final isLastStore =
+          i == _routeResult!.segments.length - 1 ||
           segment.label.contains('Khách');
 
       String subtitle = '';
@@ -1338,8 +1368,9 @@ class _OrderMapScreenState extends State<OrderMapScreen>
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: ShipperTheme.primaryColor,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(12)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
+                ),
               ),
               child: Row(
                 children: [
@@ -1356,8 +1387,10 @@ class _OrderMapScreenState extends State<OrderMapScreen>
                   if (_routeResult != null)
                     Text(
                       '${_routeResult!.totalDistanceKm.toStringAsFixed(1)} km • ${_routeResult!.totalDurationMinutes} ph',
-                      style:
-                          const TextStyle(color: Colors.white70, fontSize: 12),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
                     ),
                 ],
               ),
@@ -1433,10 +1466,7 @@ class _OrderMapScreenState extends State<OrderMapScreen>
           Icon(icon, size: 20, color: Colors.black54),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              inst.text,
-              style: const TextStyle(fontSize: 13),
-            ),
+            child: Text(inst.text, style: const TextStyle(fontSize: 13)),
           ),
           Text(
             distanceText,

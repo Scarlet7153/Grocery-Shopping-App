@@ -138,9 +138,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 const SizedBox(width: 12),
                 Text(
                   'Thông tin khách hàng',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ) ??
+                  style:
+                      Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ) ??
                       const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -192,15 +193,19 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     color: Colors.purple.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child:
-                      const Icon(Icons.store, color: Colors.purple, size: 22),
+                  child: const Icon(
+                    Icons.store,
+                    color: Colors.purple,
+                    size: 22,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Text(
                   'Cửa hàng',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ) ??
+                  style:
+                      Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ) ??
                       const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -244,9 +249,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 const SizedBox(width: 12),
                 Text(
                   'Địa chỉ giao hàng',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ) ??
+                  style:
+                      Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ) ??
                       const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -255,10 +261,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            Text(
-              _order.deliveryAddress,
-              style: const TextStyle(fontSize: 15),
-            ),
+            Text(_order.deliveryAddress, style: const TextStyle(fontSize: 15)),
           ],
         ),
       ),
@@ -282,15 +285,19 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     color: Colors.green.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.shopping_basket,
-                      color: Colors.green, size: 22),
+                  child: const Icon(
+                    Icons.shopping_basket,
+                    color: Colors.green,
+                    size: 22,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Text(
                   'Sản phẩm (${_order.items.length})',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ) ??
+                  style:
+                      Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ) ??
                       const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -325,10 +332,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               ),
               Text(
                 'x${item.quantity}',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: Colors.grey[600], fontSize: 14),
               ),
             ],
           ),
@@ -337,10 +341,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             children: [
               Text(
                 '${item.unitName} · ${_formatCurrency(item.unitPrice)}',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: Colors.grey[600], fontSize: 12),
               ),
               const Spacer(),
               Text(
@@ -376,15 +377,19 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     color: Colors.amber.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.receipt_long,
-                      color: Colors.amber, size: 22),
+                  child: const Icon(
+                    Icons.receipt_long,
+                    color: Colors.amber,
+                    size: 22,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Text(
                   'Thanh toán',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ) ??
+                  style:
+                      Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ) ??
                       const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -408,10 +413,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 children: [
                   const Text(
                     'Tổng thanh toán',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   Text(
                     _formatCurrency(_order.grandTotal),
@@ -486,10 +488,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               : Icon(buttonIcon),
           label: Text(
             buttonText,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
           style: ElevatedButton.styleFrom(
             backgroundColor: ShipperTheme.primaryColor,
@@ -515,10 +514,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             children: [
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[500],
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey[500]),
               ),
               Text(
                 value,
@@ -538,19 +534,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey[700],
-          ),
-        ),
+        Text(label, style: TextStyle(fontSize: 14, color: Colors.grey[700])),
         Text(
           _formatCurrency(amount),
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
         ),
       ],
     );
@@ -562,9 +549,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       await launchUrl(uri);
     } else {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Không thể gọi điện')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Không thể gọi điện')));
       }
     }
   }
@@ -580,9 +567,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -600,9 +587,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -612,9 +599,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   Future<void> _openProofOfDelivery() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => ProofOfDeliveryScreen(order: _order),
-      ),
+      MaterialPageRoute(builder: (_) => ProofOfDeliveryScreen(order: _order)),
     );
     if (mounted && result == true) {
       context.read<ShipperDashboardBloc>().add(RefreshDashboardData());
@@ -622,9 +607,6 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   String _formatCurrency(double amount) {
-    return '${amount.toStringAsFixed(0).replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (m) => '${m[1]}.',
-        )}₫';
+    return '${amount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}₫';
   }
 }

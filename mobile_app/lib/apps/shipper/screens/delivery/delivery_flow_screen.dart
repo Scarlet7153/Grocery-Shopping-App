@@ -78,11 +78,23 @@ class _DeliveryFlowScreenState extends State<DeliveryFlowScreen> {
   Widget _buildStepper() {
     final steps = [
       _StepData(
-          'Lấy hàng', 'Đến cửa hàng', Icons.store, OrderStatus.PICKING_UP),
-      _StepData('Giao hàng', 'Đến khách hàng', Icons.delivery_dining,
-          OrderStatus.DELIVERING),
-      _StepData('Hoàn thành', 'Giao thành công', Icons.check_circle,
-          OrderStatus.DELIVERED),
+        'Lấy hàng',
+        'Đến cửa hàng',
+        Icons.store,
+        OrderStatus.PICKING_UP,
+      ),
+      _StepData(
+        'Giao hàng',
+        'Đến khách hàng',
+        Icons.delivery_dining,
+        OrderStatus.DELIVERING,
+      ),
+      _StepData(
+        'Hoàn thành',
+        'Giao thành công',
+        Icons.check_circle,
+        OrderStatus.DELIVERED,
+      ),
     ];
 
     return Row(
@@ -104,8 +116,9 @@ class _DeliveryFlowScreenState extends State<DeliveryFlowScreen> {
                     Text(
                       step.title,
                       style: TextStyle(
-                        fontWeight:
-                            isCurrent ? FontWeight.bold : FontWeight.w500,
+                        fontWeight: isCurrent
+                            ? FontWeight.bold
+                            : FontWeight.w500,
                         fontSize: 13,
                         color: isCompleted || isCurrent
                             ? ShipperTheme.primaryColor
@@ -175,8 +188,11 @@ class _DeliveryFlowScreenState extends State<DeliveryFlowScreen> {
                     color: Colors.orange.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child:
-                      const Icon(Icons.store, color: Colors.orange, size: 24),
+                  child: const Icon(
+                    Icons.store,
+                    color: Colors.orange,
+                    size: 24,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 const Text(
@@ -226,10 +242,8 @@ class _DeliveryFlowScreenState extends State<DeliveryFlowScreen> {
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => OrderMapScreen(
-                      order: _order,
-                      showDeliveryRoute: false,
-                    ),
+                    builder: (_) =>
+                        OrderMapScreen(order: _order, showDeliveryRoute: false),
                   ),
                 ),
                 icon: const Icon(Icons.map, size: 18),
@@ -267,8 +281,11 @@ class _DeliveryFlowScreenState extends State<DeliveryFlowScreen> {
                     color: Colors.teal.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.delivery_dining,
-                      color: Colors.teal, size: 24),
+                  child: const Icon(
+                    Icons.delivery_dining,
+                    color: Colors.teal,
+                    size: 24,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 const Text(
@@ -392,8 +409,11 @@ class _DeliveryFlowScreenState extends State<DeliveryFlowScreen> {
                 color: Colors.green.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child:
-                  const Icon(Icons.check_circle, color: Colors.green, size: 60),
+              child: const Icon(
+                Icons.check_circle,
+                color: Colors.green,
+                size: 60,
+              ),
             ),
             const SizedBox(height: 20),
             const Text(
@@ -465,8 +485,10 @@ class _DeliveryFlowScreenState extends State<DeliveryFlowScreen> {
               ),
               Text(
                 value,
-                style:
-                    const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ],
           ),
@@ -509,7 +531,9 @@ class _DeliveryFlowScreenState extends State<DeliveryFlowScreen> {
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(
-                      strokeWidth: 2, color: Colors.white),
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
                 )
               : Icon(buttonIcon),
           label: Text(
@@ -543,9 +567,9 @@ class _DeliveryFlowScreenState extends State<DeliveryFlowScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -553,10 +577,7 @@ class _DeliveryFlowScreenState extends State<DeliveryFlowScreen> {
   }
 
   String _formatCurrency(double amount) {
-    return '${amount.toStringAsFixed(0).replaceAllMapped(
-          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-          (m) => '${m[1]}.',
-        )}₫';
+    return '${amount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}₫';
   }
 }
 

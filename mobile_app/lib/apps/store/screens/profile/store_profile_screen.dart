@@ -37,7 +37,9 @@ class StoreProfileScreen extends StatelessWidget {
         ),
         child: Center(
           child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: isWide ? 520 : double.infinity),
+            constraints: BoxConstraints(
+              maxWidth: isWide ? 520 : double.infinity,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -53,8 +55,16 @@ class StoreProfileScreen extends StatelessWidget {
                 const SizedBox(height: 12),
                 const _InfoCard(
                   items: [
-                    _InfoRow(icon: Icons.phone_rounded, label: 'Số điện thoại', value: '0901 234 567'),
-                    _InfoRow(icon: Icons.email_rounded, label: 'Email', value: 'contact@minib.vn'),
+                    _InfoRow(
+                      icon: Icons.phone_rounded,
+                      label: 'Số điện thoại',
+                      value: '0901 234 567',
+                    ),
+                    _InfoRow(
+                      icon: Icons.email_rounded,
+                      label: 'Email',
+                      value: 'contact@minib.vn',
+                    ),
                   ],
                 ),
                 const SizedBox(height: kSectionSpacing),
@@ -62,7 +72,11 @@ class StoreProfileScreen extends StatelessWidget {
                 const SizedBox(height: 12),
                 const _InfoCard(
                   items: [
-                    _InfoRow(icon: Icons.access_time_rounded, label: 'Mở cửa', value: '07:00 - 22:00'),
+                    _InfoRow(
+                      icon: Icons.access_time_rounded,
+                      label: 'Mở cửa',
+                      value: '07:00 - 22:00',
+                    ),
                   ],
                 ),
                 const SizedBox(height: kSectionSpacing),
@@ -72,7 +86,9 @@ class StoreProfileScreen extends StatelessWidget {
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Cập nhật thông tin cửa hàng (demo) — kết nối API khi triển khai'),
+                          content: Text(
+                            'Cập nhật thông tin cửa hàng (demo) — kết nối API khi triển khai',
+                          ),
                           backgroundColor: _kPrimary,
                         ),
                       );
@@ -83,7 +99,9 @@ class StoreProfileScreen extends StatelessWidget {
                       backgroundColor: _kPrimary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusMedium)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(kRadiusMedium),
+                      ),
                     ),
                   ),
                 ),
@@ -115,7 +133,10 @@ class _StoreHeaderCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(kRadiusLarge),
-        border: Border.all(color: Colors.grey.shade200.withValues(alpha: 0.6), width: 1),
+        border: Border.all(
+          color: Colors.grey.shade200.withValues(alpha: 0.6),
+          width: 1,
+        ),
         boxShadow: const [
           BoxShadow(color: _kCardShadow, blurRadius: 8, offset: Offset(0, 3)),
         ],
@@ -128,7 +149,11 @@ class _StoreHeaderCard extends StatelessWidget {
               CircleAvatar(
                 radius: 40,
                 backgroundColor: _kPrimary.withValues(alpha: 0.12),
-                child: const Icon(Icons.store_rounded, color: _kPrimary, size: 44),
+                child: const Icon(
+                  Icons.store_rounded,
+                  color: _kPrimary,
+                  size: 44,
+                ),
               ),
               const SizedBox(width: kPaddingLarge),
               Expanded(
@@ -145,11 +170,17 @@ class _StoreHeaderCard extends StatelessWidget {
                     ),
                     const SizedBox(height: kPaddingSmall),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: _kPrimary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: _kPrimary.withValues(alpha: 0.3), width: 1),
+                        border: Border.all(
+                          color: _kPrimary.withValues(alpha: 0.3),
+                          width: 1,
+                        ),
                       ),
                       child: Text(
                         status,
@@ -168,7 +199,11 @@ class _StoreHeaderCard extends StatelessWidget {
           const SizedBox(height: 22),
           Row(
             children: [
-              Icon(Icons.location_on_rounded, size: 22, color: Colors.grey.shade600),
+              Icon(
+                Icons.location_on_rounded,
+                size: 22,
+                color: Colors.grey.shade600,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -218,14 +253,15 @@ class _InfoCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(kRadiusLarge),
-        border: Border.all(color: Colors.grey.shade200.withValues(alpha: 0.6), width: 1),
+        border: Border.all(
+          color: Colors.grey.shade200.withValues(alpha: 0.6),
+          width: 1,
+        ),
         boxShadow: const [
           BoxShadow(color: _kCardShadow, blurRadius: 8, offset: Offset(0, 3)),
         ],
       ),
-      child: Column(
-        children: items,
-      ),
+      child: Column(children: items),
     );
   }
 }
@@ -262,10 +298,7 @@ class _InfoRow extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
                 const SizedBox(height: 4),
                 Text(

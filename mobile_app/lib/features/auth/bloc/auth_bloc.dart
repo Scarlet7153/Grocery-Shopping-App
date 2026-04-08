@@ -13,10 +13,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _authRepository;
   Timer? _tokenRefreshTimer;
 
-  AuthBloc({
-    required AuthRepository authRepository,
-  })  : _authRepository = authRepository,
-        super(const AuthInitial()) {
+  AuthBloc({required AuthRepository authRepository})
+    : _authRepository = authRepository,
+      super(const AuthInitial()) {
     // Register event handlers
     on<LoginRequested>(_onLoginRequested);
     on<RegisterRequested>(_onRegisterRequested);
@@ -59,34 +58,28 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         final token = authResponse.data?.token ?? '';
 
         AppLogger.info('✅ Login successful for ${user.fullName}');
-        
-        emit(AuthAuthenticated(
-          user: user,
-          token: token,
-        ));
+
+        emit(AuthAuthenticated(user: user, token: token));
 
         // Start token refresh timer if needed
         _startTokenRefreshTimer();
-        
       } else {
         AppLogger.warning('❌ Login failed: ${authResponse.message}');
-        emit(AuthError(
-          message: authResponse.message,
-          errorCode: 'login_failed',
-        ));
+        emit(
+          AuthError(message: authResponse.message, errorCode: 'login_failed'),
+        );
       }
     } on ServerException catch (e) {
       AppLogger.error('🔥 Login server error: ${e.message}', e);
-      emit(AuthError(
-        message: e.message,
-        errorCode: 'server_error',
-      ));
+      emit(AuthError(message: e.message, errorCode: 'server_error'));
     } catch (e) {
       AppLogger.error('💥 Login unexpected error: ${e.toString()}', e);
-      emit(const AuthError(
-        message: 'Đã xảy ra lỗi không xác định',
-        errorCode: 'unknown_error',
-      ));
+      emit(
+        const AuthError(
+          message: 'Đã xảy ra lỗi không xác định',
+          errorCode: 'unknown_error',
+        ),
+      );
     }
   }
 
@@ -106,26 +99,28 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       if (authResponse.isAuthenticated) {
         AppLogger.info('✅ Registration successful');
-        emit(const AuthRegistrationSuccess(
-          message: 'Đăng ký thành công! Vui lòng đăng nhập.',
-        ));
+        emit(
+          const AuthRegistrationSuccess(
+            message: 'Đăng ký thành công! Vui lòng đăng nhập.',
+          ),
+        );
       } else {
         AppLogger.warning('❌ Registration failed: ${authResponse.message}');
-        emit(AuthRegistrationError(
-          message: authResponse.message,
-        ));
+        emit(AuthRegistrationError(message: authResponse.message));
       }
     } on ServerException catch (e) {
       AppLogger.error('🔥 Registration server error: ${e.message}', e);
-      emit(AuthRegistrationError(
-        message: e.message,
-        validationErrors: e.statusCode == 400 ? {'general': e.message} : null,
-      ));
+      emit(
+        AuthRegistrationError(
+          message: e.message,
+          validationErrors: e.statusCode == 400 ? {'general': e.message} : null,
+        ),
+      );
     } catch (e) {
       AppLogger.error('💥 Registration unexpected error: ${e.toString()}', e);
-      emit(const AuthRegistrationError(
-        message: 'Đã xảy ra lỗi không xác định',
-      ));
+      emit(
+        const AuthRegistrationError(message: 'Đã xảy ra lỗi không xác định'),
+      );
     }
   }
 
@@ -136,23 +131,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     try {
       AppLogger.info('🚪 Logout attempt started');
-      
+
       // Cancel token refresh timer
       _tokenRefreshTimer?.cancel();
-      
+
       // Call API logout
       await _authRepository.logout();
-      
+
       AppLogger.info('✅ Logout successful');
-      emit(AuthUnauthenticated(
-        reason: event.reason ?? 'User logged out',
-      ));
+      emit(AuthUnauthenticated(reason: event.reason ?? 'User logged out'));
     } catch (e) {
       AppLogger.warning('⚠️ Logout error (continuing): ${e.toString()}');
       // Still emit unauthenticated even if API call fails
-      emit(AuthUnauthenticated(
-        reason: event.reason ?? 'Logout with error',
-      ));
+      emit(AuthUnauthenticated(reason: event.reason ?? 'Logout with error'));
     }
   }
 
@@ -177,10 +168,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         final token = authResponse.data?.token ?? currentState.token;
 
         AppLogger.info('✅ Token refresh successful');
-        emit(AuthAuthenticated(
-          user: user,
-          token: token,
-        ));
+        emit(AuthAuthenticated(user: user, token: token));
 
         // Restart timer
         _startTokenRefreshTimer();
@@ -203,17 +191,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       AppLogger.debug('🔍 Checking authentication status');
 
       final isAuthenticated = await _authRepository.isAuthenticated();
-      
+
       if (isAuthenticated) {
         final user = await _authRepository.getCurrentUser();
         final token = await _authRepository.getAuthToken();
 
         if (user != null && token != null) {
           AppLogger.info('✅ User is authenticated: ${user.fullName}');
-          emit(AuthAuthenticated(
-            user: user,
-            token: token,
-          ));
+          emit(AuthAuthenticated(user: user, token: token));
           _startTokenRefreshTimer();
         } else {
           AppLogger.warning('⚠️ Invalid auth data, clearing');
@@ -241,23 +226,26 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       final response = await _authRepository.forgotPassword(
         identifier: event.identifier,
-        appType: AppType.customer, // Default to customer, sửa từ AppConfig.currentAppType
+        appType: AppType
+            .customer, // Default to customer, sửa từ AppConfig.currentAppType
       );
 
       AppLogger.info('✅ Password reset sent');
-      emit(AuthPasswordResetSent(
-        message: response.message,
-      ));
+      emit(AuthPasswordResetSent(message: response.message));
     } on UnimplementedError catch (e) {
       AppLogger.warning('⚠️ Forgot password not implemented: ${e.message}');
-      emit(const AuthPasswordResetError(
-        message: 'Tính năng quên mật khẩu chưa được hỗ trợ',
-      ));
+      emit(
+        const AuthPasswordResetError(
+          message: 'Tính năng quên mật khẩu chưa được hỗ trợ',
+        ),
+      );
     } catch (e) {
       AppLogger.error('🔥 Forgot password error: ${e.toString()}', e);
-      emit(AuthPasswordResetError(
-        message: 'Không thể gửi mã xác nhận: ${e.toString()}',
-      ));
+      emit(
+        AuthPasswordResetError(
+          message: 'Không thể gửi mã xác nhận: ${e.toString()}',
+        ),
+      );
     }
   }
 
@@ -278,25 +266,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       if (response.isAuthenticated) {
         AppLogger.info('✅ OTP verified successfully');
-        emit(AuthOtpVerified(
-          message: response.message,
-        ));
+        emit(AuthOtpVerified(message: response.message));
       } else {
         AppLogger.warning('❌ OTP verification failed');
-        emit(AuthOtpError(
-          message: response.message,
-        ));
+        emit(AuthOtpError(message: response.message));
       }
     } on UnimplementedError catch (e) {
       AppLogger.warning('⚠️ OTP verification not implemented: ${e.message}');
-      emit(const AuthOtpError(
-        message: 'Tính năng xác nhận OTP chưa được hỗ trợ',
-      ));
+      emit(
+        const AuthOtpError(message: 'Tính năng xác nhận OTP chưa được hỗ trợ'),
+      );
     } catch (e) {
       AppLogger.error('🔥 OTP verification error: ${e.toString()}', e);
-      emit(AuthOtpError(
-        message: 'Không thể xác nhận OTP: ${e.toString()}',
-      ));
+      emit(AuthOtpError(message: 'Không thể xác nhận OTP: ${e.toString()}'));
     }
   }
 
@@ -317,25 +299,27 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       if (response.isAuthenticated) {
         AppLogger.info('✅ Password reset successful');
-        emit(const AuthPasswordResetSent(
-          message: 'Đặt lại mật khẩu thành công',
-        ));
+        emit(
+          const AuthPasswordResetSent(message: 'Đặt lại mật khẩu thành công'),
+        );
       } else {
         AppLogger.warning('❌ Password reset failed');
-        emit(AuthPasswordResetError(
-          message: response.message,
-        ));
+        emit(AuthPasswordResetError(message: response.message));
       }
     } on UnimplementedError catch (e) {
       AppLogger.warning('⚠️ Password reset not implemented: ${e.message}');
-      emit(const AuthPasswordResetError(
-        message: 'Tính năng đặt lại mật khẩu chưa được hỗ trợ',
-      ));
+      emit(
+        const AuthPasswordResetError(
+          message: 'Tính năng đặt lại mật khẩu chưa được hỗ trợ',
+        ),
+      );
     } catch (e) {
       AppLogger.error('🔥 Password reset error: ${e.toString()}', e);
-      emit(AuthPasswordResetError(
-        message: 'Không thể đặt lại mật khẩu: ${e.toString()}',
-      ));
+      emit(
+        AuthPasswordResetError(
+          message: 'Không thể đặt lại mật khẩu: ${e.toString()}',
+        ),
+      );
     }
   }
 
@@ -353,7 +337,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       // TODOhehe: Implement profile update API call
       // final updatedUser = await _authRepository.updateProfile(event.userData);
-      
+
       // Temporary mock response
       final updatedUser = currentState.user.copyWith(
         fullName: event.userData['fullName'] ?? currentState.user.fullName,
@@ -365,15 +349,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       // Return to authenticated state with updated user
       await Future.delayed(const Duration(seconds: 1));
-      emit(AuthAuthenticated(
-        user: updatedUser,
-        token: currentState.token,
-      ));
+      emit(AuthAuthenticated(user: updatedUser, token: currentState.token));
     } catch (e) {
       AppLogger.error('🔥 Profile update error: ${e.toString()}', e);
-      emit(AuthProfileUpdateError(
-        message: 'Không thể cập nhật thông tin: ${e.toString()}',
-      ));
+      emit(
+        AuthProfileUpdateError(
+          message: 'Không thể cập nhật thông tin: ${e.toString()}',
+        ),
+      );
 
       // Return to previous authenticated state
       emit(currentState);
@@ -383,16 +366,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   /// Start token refresh timer (15 minutes before expiry)
   void _startTokenRefreshTimer() {
     _tokenRefreshTimer?.cancel();
-    
+
     // Refresh token every 45 minutes (assuming 60 min expiry)
-    _tokenRefreshTimer = Timer.periodic(
-      const Duration(minutes: 45),
-      (timer) {
-        AppLogger.debug('🕐 Auto token refresh triggered');
-        add(const TokenRefreshRequested());
-      },
-    );
-    
+    _tokenRefreshTimer = Timer.periodic(const Duration(minutes: 45), (timer) {
+      AppLogger.debug('🕐 Auto token refresh triggered');
+      add(const TokenRefreshRequested());
+    });
+
     AppLogger.debug('🕐 Token refresh timer started');
   }
 

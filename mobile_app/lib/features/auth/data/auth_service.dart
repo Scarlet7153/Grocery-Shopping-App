@@ -30,7 +30,9 @@ class AuthService {
       await _client.setAccessToken(auth.token);
       return auth;
     } on DioException catch (e) {
-      throw e.error is ApiException ? e.error as ApiException : ApiException(message: e.message ?? 'Lỗi đăng nhập');
+      throw e.error is ApiException
+          ? e.error as ApiException
+          : ApiException(message: e.message ?? 'Lỗi đăng nhập');
     }
   }
 
@@ -49,7 +51,9 @@ class AuthService {
       if (auth.token.isNotEmpty) await _client.setAccessToken(auth.token);
       return auth;
     } on DioException catch (e) {
-      throw e.error is ApiException ? e.error as ApiException : ApiException(message: e.message ?? 'Lỗi đăng ký');
+      throw e.error is ApiException
+          ? e.error as ApiException
+          : ApiException(message: e.message ?? 'Lỗi đăng ký');
     }
   }
 

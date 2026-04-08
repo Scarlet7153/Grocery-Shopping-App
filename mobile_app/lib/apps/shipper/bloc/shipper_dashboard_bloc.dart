@@ -12,8 +12,8 @@ class ShipperDashboardBloc
   final ShipperRepository _repository;
 
   ShipperDashboardBloc({required ShipperRepository repository})
-      : _repository = repository,
-        super(const ShipperDashboardState.initial()) {
+    : _repository = repository,
+      super(const ShipperDashboardState.initial()) {
     on<LoadDashboardData>(onLoadData);
     on<RefreshDashboardData>(onLoadData);
     on<AcceptOrder>(onAcceptOrder);
@@ -23,33 +23,42 @@ class ShipperDashboardBloc
   }
 
   void onUpdateDistances(
-      UpdateDistances event, Emitter<ShipperDashboardState> emit) {
+    UpdateDistances event,
+    Emitter<ShipperDashboardState> emit,
+  ) {
     emit(state.copyWith(distances: event.distances));
   }
 
   Future<void> onLoadData(
-      ShipperDashboardEvent event, Emitter<ShipperDashboardState> emit) async {
+    ShipperDashboardEvent event,
+    Emitter<ShipperDashboardState> emit,
+  ) async {
     emit(state.copyWith(status: DashboardStatus.loading));
     try {
       final data = await _repository.fetchDashboardData();
-      emit(state.copyWith(
-        status: DashboardStatus.loaded,
-        isOnline: data['isOnline'] as bool,
-        earnings: data['earnings'] as double,
-        availableOrders:
-            List<ShipperOrder>.from(data['availableOrders'] as List),
-        deliveries: List<ShipperOrder>.from(data['deliveries'] as List),
-        completedCount: data['completedCount'] as int,
-        acceptanceRate: data['acceptanceRate'] as double,
-        distances: state.distances.isNotEmpty ? state.distances : const {},
-      ));
+      emit(
+        state.copyWith(
+          status: DashboardStatus.loaded,
+          isOnline: data['isOnline'] as bool,
+          earnings: data['earnings'] as double,
+          availableOrders: List<ShipperOrder>.from(
+            data['availableOrders'] as List,
+          ),
+          deliveries: List<ShipperOrder>.from(data['deliveries'] as List),
+          completedCount: data['completedCount'] as int,
+          acceptanceRate: data['acceptanceRate'] as double,
+          distances: state.distances.isNotEmpty ? state.distances : const {},
+        ),
+      );
     } catch (e) {
       emit(state.copyWith(status: DashboardStatus.error, error: e.toString()));
     }
   }
 
   Future<ShipperOrder?> onAcceptOrder(
-      AcceptOrder event, Emitter<ShipperDashboardState> emit) async {
+    AcceptOrder event,
+    Emitter<ShipperDashboardState> emit,
+  ) async {
     try {
       final order = await _repository.assignOrder(event.orderId);
       if (order != null) {
@@ -64,10 +73,14 @@ class ShipperDashboardBloc
   }
 
   Future<ShipperOrder?> onCompleteOrder(
-      CompleteOrder event, Emitter<ShipperDashboardState> emit) async {
+    CompleteOrder event,
+    Emitter<ShipperDashboardState> emit,
+  ) async {
     try {
-      final order =
-          await _repository.updateOrderStatus(event.orderId, 'DELIVERED');
+      final order = await _repository.updateOrderStatus(
+        event.orderId,
+        'DELIVERED',
+      );
       if (order != null) {
         add(RefreshDashboardData());
       }
@@ -80,7 +93,9 @@ class ShipperDashboardBloc
   }
 
   void onToggleOnline(
-      ToggleOnlineStatus event, Emitter<ShipperDashboardState> emit) {
+    ToggleOnlineStatus event,
+    Emitter<ShipperDashboardState> emit,
+  ) {
     emit(state.copyWith(isOnline: !state.isOnline));
   }
 

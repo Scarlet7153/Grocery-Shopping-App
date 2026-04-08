@@ -10,8 +10,10 @@ class OrderModel {
   final String? customerName;
   final String? customerPhone;
   final String? address;
-  @JsonKey(name: 'created_at') final String? createdAt;
-  @JsonKey(name: 'updated_at') final String? updatedAt;
+  @JsonKey(name: 'created_at')
+  final String? createdAt;
+  @JsonKey(name: 'updated_at')
+  final String? updatedAt;
   final List<OrderItemModel>? items;
 
   const OrderModel({

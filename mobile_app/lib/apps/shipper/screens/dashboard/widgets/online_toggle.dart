@@ -5,8 +5,11 @@ class OnlineToggle extends StatefulWidget {
   final bool isOnline;
   final VoidCallback onToggle;
 
-  const OnlineToggle(
-      {super.key, required this.isOnline, required this.onToggle});
+  const OnlineToggle({
+    super.key,
+    required this.isOnline,
+    required this.onToggle,
+  });
 
   @override
   State<OnlineToggle> createState() => _OnlineToggleState();
@@ -48,13 +51,11 @@ class _OnlineToggleState extends State<OnlineToggle>
       children: [
         Text(
           'Trạng thái: ',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ) ??
-              const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
+          style:
+              Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500) ??
+              const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
         ),
         Stack(
           alignment: Alignment.center,
@@ -83,12 +84,13 @@ class _OnlineToggleState extends State<OnlineToggle>
         ),
         Text(
           widget.isOnline ? 'Online' : 'Offline',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: widget.isOnline
-                        ? ShipperTheme.primaryColor
-                        : Colors.grey[600],
-                  ) ??
+          style:
+              Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: widget.isOnline
+                    ? ShipperTheme.primaryColor
+                    : Colors.grey[600],
+              ) ??
               TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,

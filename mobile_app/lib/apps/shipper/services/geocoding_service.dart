@@ -35,16 +35,19 @@ class GeocodingService {
     for (final variant in addressVariants) {
       try {
         final encodedAddress = Uri.encodeComponent(variant);
-        final url = 'https://nominatim.openstreetmap.org/search'
+        final url =
+            'https://nominatim.openstreetmap.org/search'
             '?q=$encodedAddress'
             '&format=json'
             '&limit=1'
             '&countrycodes=vn';
 
-        final response = await http.get(
-          Uri.parse(url),
-          headers: {'User-Agent': 'GroceryShoppingApp/1.0'},
-        ).timeout(const Duration(seconds: 10));
+        final response = await http
+            .get(
+              Uri.parse(url),
+              headers: {'User-Agent': 'GroceryShoppingApp/1.0'},
+            )
+            .timeout(const Duration(seconds: 10));
 
         if (response.statusCode == 200) {
           final List<dynamic> data = json.decode(response.body);
@@ -90,7 +93,8 @@ class GeocodingService {
     variants.add('$normalized, Vietnam');
     variants.add(normalized.replaceAll('Đường', '').replaceAll('đường', ''));
     variants.add(
-        normalized.replaceAll('Phường', '').replaceAll('Quận', 'District'));
+      normalized.replaceAll('Phường', '').replaceAll('Quận', 'District'),
+    );
     variants.add('$normalized, Ho Chi Minh City, Vietnam');
 
     final parts = normalized.split(',').map((p) => p.trim()).toList();
@@ -135,15 +139,18 @@ class GeocodingService {
 
   static Future<String?> _reverseGeocodeWithNominatim(LatLng location) async {
     try {
-      final url = 'https://nominatim.openstreetmap.org/reverse'
+      final url =
+          'https://nominatim.openstreetmap.org/reverse'
           '?lat=${location.latitude}'
           '&lon=${location.longitude}'
           '&format=json';
 
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {'User-Agent': 'GroceryShoppingApp/1.0'},
-      ).timeout(const Duration(seconds: 10));
+      final response = await http
+          .get(
+            Uri.parse(url),
+            headers: {'User-Agent': 'GroceryShoppingApp/1.0'},
+          )
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);

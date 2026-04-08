@@ -35,21 +35,13 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
 
-    _slideAnimation = Tween<double>(
-      begin: 50.0,
-      end: 0.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
+    _slideAnimation = Tween<double>(begin: 50.0, end: 0.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
+    );
 
     _animationController.forward();
   }
@@ -68,10 +60,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              AppColors.background,
-              AppColors.backgroundSecondary,
-            ],
+            colors: [AppColors.background, AppColors.backgroundSecondary],
           ),
         ),
         child: SafeArea(
@@ -228,9 +217,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
             size: AppDimensions.iconS,
           ),
           label: const Text('Đăng nhập Admin'),
-          style: TextButton.styleFrom(
-            foregroundColor: AppColors.adminPrimary,
-          ),
+          style: TextButton.styleFrom(foregroundColor: AppColors.adminPrimary),
         ),
       ],
     );
@@ -249,11 +236,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
     if (selectedRole == null) return;
 
     // Navigate to login screen for selected role
-    Navigator.pushNamed(
-      context,
-      '/login',
-      arguments: selectedRole,
-    );
+    Navigator.pushNamed(context, '/login', arguments: selectedRole);
   }
 
   void _navigateToAdminLogin() {

@@ -18,10 +18,7 @@ const double _kLabelSize = 13;
 class StoreDashboardScreen extends StatefulWidget {
   final String token;
 
-  const StoreDashboardScreen({
-    super.key,
-    required this.token,
-  });
+  const StoreDashboardScreen({super.key, required this.token});
 
   @override
   State<StoreDashboardScreen> createState() => _StoreDashboardScreenState();
@@ -60,7 +57,10 @@ class _StoreDashboardScreenState extends State<StoreDashboardScreen> {
         builder: (context, state) {
           final isLoading = state is StoreDashboardLoading;
           return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: kPaddingLarge, vertical: kPaddingMedium).copyWith(bottom: isWide ? 48 : 32),
+            padding: const EdgeInsets.symmetric(
+              horizontal: kPaddingLarge,
+              vertical: kPaddingMedium,
+            ).copyWith(bottom: isWide ? 48 : 32),
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: kMaxContentWidth),
@@ -76,7 +76,11 @@ class _StoreDashboardScreenState extends State<StoreDashboardScreen> {
                     if (!isLoading) _ExtraStatsRow(),
                     const SizedBox(height: kSectionSpacing),
                     if (isLoading) _SkeletonRecentOrdersPreview(),
-                    if (!isLoading) _RecentOrdersPreview(onViewAll: () => _push(context, const StoreOrdersScreen())),
+                    if (!isLoading)
+                      _RecentOrdersPreview(
+                        onViewAll: () =>
+                            _push(context, const StoreOrdersScreen()),
+                      ),
                     const SizedBox(height: kSectionSpacing),
                     if (isLoading) _SkeletonRevenueSection(),
                     if (!isLoading) _RevenueSection(),
@@ -112,7 +116,11 @@ class _SkeletonBox extends StatelessWidget {
   final double height;
   final double borderRadius;
 
-  const _SkeletonBox({this.width, required this.height, this.borderRadius = kRadiusMedium});
+  const _SkeletonBox({
+    this.width,
+    required this.height,
+    this.borderRadius = kRadiusMedium,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -164,11 +172,17 @@ class _SkeletonStatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: kCardPadding),
+      padding: const EdgeInsets.symmetric(
+        vertical: 20,
+        horizontal: kCardPadding,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(kRadiusLarge),
-        border: Border.all(color: Colors.grey.shade200.withValues(alpha: 0.6), width: 1),
+        border: Border.all(
+          color: Colors.grey.shade200.withValues(alpha: 0.6),
+          width: 1,
+        ),
       ),
       child: const Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -229,7 +243,10 @@ class _SkeletonRecentOrdersPreview extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(kRadiusLarge),
-            border: Border.all(color: Colors.grey.shade200.withValues(alpha: 0.6), width: 1),
+            border: Border.all(
+              color: Colors.grey.shade200.withValues(alpha: 0.6),
+              width: 1,
+            ),
           ),
           child: Column(
             children: [
@@ -288,7 +305,10 @@ class _SkeletonRevenueSection extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(kRadiusLarge),
-            border: Border.all(color: Colors.grey.shade200.withValues(alpha: 0.6), width: 1),
+            border: Border.all(
+              color: Colors.grey.shade200.withValues(alpha: 0.6),
+              width: 1,
+            ),
           ),
           child: const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -318,20 +338,30 @@ class _SkeletonTopSellingSection extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(kRadiusLarge),
-            border: Border.all(color: Colors.grey.shade200.withValues(alpha: 0.6), width: 1),
+            border: Border.all(
+              color: Colors.grey.shade200.withValues(alpha: 0.6),
+              width: 1,
+            ),
           ),
           child: Column(
-            children: List.generate(5, (i) => const Padding(
-              padding: EdgeInsets.symmetric(vertical: 10),
-              child: Row(
-                children: [
-                  _SkeletonBox(width: 28, height: 28, borderRadius: kRadiusSmall),
-                  SizedBox(width: 14),
-                  Expanded(child: _SkeletonBox(height: 14)),
-                  _SkeletonBox(width: 70, height: 13),
-                ],
+            children: List.generate(
+              5,
+              (i) => const Padding(
+                padding: EdgeInsets.symmetric(vertical: 10),
+                child: Row(
+                  children: [
+                    _SkeletonBox(
+                      width: 28,
+                      height: 28,
+                      borderRadius: kRadiusSmall,
+                    ),
+                    SizedBox(width: 14),
+                    Expanded(child: _SkeletonBox(height: 14)),
+                    _SkeletonBox(width: 70, height: 13),
+                  ],
+                ),
               ),
-            )),
+            ),
           ),
         ),
       ],
@@ -353,20 +383,30 @@ class _SkeletonRecentActivitySection extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(kRadiusLarge),
-            border: Border.all(color: Colors.grey.shade200.withValues(alpha: 0.6), width: 1),
+            border: Border.all(
+              color: Colors.grey.shade200.withValues(alpha: 0.6),
+              width: 1,
+            ),
           ),
           child: Column(
-            children: List.generate(5, (i) => const Padding(
-              padding: EdgeInsets.symmetric(vertical: 10),
-              child: Row(
-                children: [
-                  _SkeletonBox(width: 40, height: 40, borderRadius: kRadiusSmall),
-                  SizedBox(width: 14),
-                  Expanded(child: _SkeletonBox(height: 14)),
-                  _SkeletonBox(width: 60, height: 12),
-                ],
+            children: List.generate(
+              5,
+              (i) => const Padding(
+                padding: EdgeInsets.symmetric(vertical: 10),
+                child: Row(
+                  children: [
+                    _SkeletonBox(
+                      width: 40,
+                      height: 40,
+                      borderRadius: kRadiusSmall,
+                    ),
+                    SizedBox(width: 14),
+                    Expanded(child: _SkeletonBox(height: 14)),
+                    _SkeletonBox(width: 60, height: 12),
+                  ],
+                ),
               ),
-            )),
+            ),
           ),
         ),
       ],
@@ -403,15 +443,25 @@ class _HeaderSection extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: _kPrimary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: _kPrimary.withValues(alpha: 0.4), width: 1),
+                    border: Border.all(
+                      color: _kPrimary.withValues(alpha: 0.4),
+                      width: 1,
+                    ),
                   ),
                   child: const Text(
                     'Đang mở',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _kPrimary),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: _kPrimary,
+                    ),
                   ),
                 ),
               ],
@@ -441,7 +491,11 @@ class _RevenueSection extends StatelessWidget {
             ),
             borderRadius: BorderRadius.circular(kRadiusLarge),
             boxShadow: const [
-              BoxShadow(color: _kCardShadow, blurRadius: 8, offset: Offset(0, 3)),
+              BoxShadow(
+                color: _kCardShadow,
+                blurRadius: 8,
+                offset: Offset(0, 3),
+              ),
             ],
           ),
           child: Column(
@@ -497,15 +551,24 @@ class _RevenueChartSectionState extends State<_RevenueChartSection> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(kRadiusLarge),
-        border: Border.all(color: Colors.grey.shade200.withValues(alpha: 0.6), width: 1),
-        boxShadow: const [BoxShadow(color: _kCardShadow, blurRadius: 8, offset: Offset(0, 3))],
+        border: Border.all(
+          color: Colors.grey.shade200.withValues(alpha: 0.6),
+          width: 1,
+        ),
+        boxShadow: const [
+          BoxShadow(color: _kCardShadow, blurRadius: 8, offset: Offset(0, 3)),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             'Doanh thu tuần này',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A)),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1A1A1A),
+            ),
           ),
           const SizedBox(height: kSectionSpacing),
           SizedBox(
@@ -528,12 +591,23 @@ class _RevenueChartSectionState extends State<_RevenueChartSection> {
                       end: Alignment.topCenter,
                       colors: isToday
                           ? [_kPrimary, const Color(0xFF008C39)]
-                          : [_kPrimary.withValues(alpha: 0.85), _kPrimary.withValues(alpha: 0.5)],
+                          : [
+                              _kPrimary.withValues(alpha: 0.85),
+                              _kPrimary.withValues(alpha: 0.5),
+                            ],
                     ),
                     borderRadius: BorderRadius.circular(kRadiusMedium),
-                    border: isToday ? Border.all(color: Colors.white, width: 2) : null,
+                    border: isToday
+                        ? Border.all(color: Colors.white, width: 2)
+                        : null,
                     boxShadow: isHovered
-                        ? [BoxShadow(color: _kPrimary.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 2))]
+                        ? [
+                            BoxShadow(
+                              color: _kPrimary.withValues(alpha: 0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
                         : null,
                   ),
                 );
@@ -559,10 +633,15 @@ class _RevenueChartSectionState extends State<_RevenueChartSection> {
                           Padding(
                             padding: const EdgeInsets.only(bottom: 6),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: const Color(0xFF1A1A1A),
-                                borderRadius: BorderRadius.circular(kRadiusSmall),
+                                borderRadius: BorderRadius.circular(
+                                  kRadiusSmall,
+                                ),
                               ),
                               child: Text(
                                 '$amountđ',
@@ -580,8 +659,14 @@ class _RevenueChartSectionState extends State<_RevenueChartSection> {
                           _kWeekDays[i],
                           style: TextStyle(
                             fontSize: 12,
-                            fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
-                            color: isToday ? _kPrimary : (isHovered && kIsWeb ? _kPrimary : Colors.grey.shade700),
+                            fontWeight: isToday
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: isToday
+                                ? _kPrimary
+                                : (isHovered && kIsWeb
+                                      ? _kPrimary
+                                      : Colors.grey.shade700),
                           ),
                         ),
                       ],
@@ -613,19 +698,49 @@ class _ExtraStatsRow extends StatelessWidget {
             crossAxisSpacing: kCardPadding,
             childAspectRatio: 1.6,
             children: const [
-              _StatCard(value: '50', label: 'Tổng sản phẩm', icon: Icons.inventory_2_rounded),
-              _StatCard(value: '45tr', label: 'Doanh thu tháng', icon: Icons.trending_up_rounded),
-              _StatCard(value: '3', label: 'Đơn bị hủy', icon: Icons.cancel_rounded),
+              _StatCard(
+                value: '50',
+                label: 'Tổng sản phẩm',
+                icon: Icons.inventory_2_rounded,
+              ),
+              _StatCard(
+                value: '45tr',
+                label: 'Doanh thu tháng',
+                icon: Icons.trending_up_rounded,
+              ),
+              _StatCard(
+                value: '3',
+                label: 'Đơn bị hủy',
+                icon: Icons.cancel_rounded,
+              ),
             ],
           );
         }
         return const Row(
           children: [
-            Expanded(child: _StatCard(value: '50', label: 'Tổng sản phẩm', icon: Icons.inventory_2_rounded)),
+            Expanded(
+              child: _StatCard(
+                value: '50',
+                label: 'Tổng sản phẩm',
+                icon: Icons.inventory_2_rounded,
+              ),
+            ),
             SizedBox(width: kCardPadding),
-            Expanded(child: _StatCard(value: '45.000.000đ', label: 'Doanh thu tháng', icon: Icons.trending_up_rounded)),
+            Expanded(
+              child: _StatCard(
+                value: '45.000.000đ',
+                label: 'Doanh thu tháng',
+                icon: Icons.trending_up_rounded,
+              ),
+            ),
             SizedBox(width: kCardPadding),
-            Expanded(child: _StatCard(value: '3', label: 'Đơn bị hủy', icon: Icons.cancel_rounded)),
+            Expanded(
+              child: _StatCard(
+                value: '3',
+                label: 'Đơn bị hủy',
+                icon: Icons.cancel_rounded,
+              ),
+            ),
           ],
         );
       },
@@ -648,22 +763,62 @@ class _StatisticsRow extends StatelessWidget {
             crossAxisSpacing: kCardPadding,
             childAspectRatio: 1.4,
             children: const [
-              _StatCard(value: '18', label: 'Đơn hôm nay', icon: Icons.shopping_bag_rounded),
-              _StatCard(value: '4', label: 'Đang chuẩn bị', icon: Icons.hourglass_top_rounded),
-              _StatCard(value: '2', label: 'Đang giao', icon: Icons.local_shipping_rounded),
-              _StatCard(value: '14', label: 'Hoàn thành', icon: Icons.check_circle_rounded),
+              _StatCard(
+                value: '18',
+                label: 'Đơn hôm nay',
+                icon: Icons.shopping_bag_rounded,
+              ),
+              _StatCard(
+                value: '4',
+                label: 'Đang chuẩn bị',
+                icon: Icons.hourglass_top_rounded,
+              ),
+              _StatCard(
+                value: '2',
+                label: 'Đang giao',
+                icon: Icons.local_shipping_rounded,
+              ),
+              _StatCard(
+                value: '14',
+                label: 'Hoàn thành',
+                icon: Icons.check_circle_rounded,
+              ),
             ],
           );
         }
         return const Row(
           children: [
-            Expanded(child: _StatCard(value: '18', label: 'Đơn hôm nay', icon: Icons.shopping_bag_rounded)),
+            Expanded(
+              child: _StatCard(
+                value: '18',
+                label: 'Đơn hôm nay',
+                icon: Icons.shopping_bag_rounded,
+              ),
+            ),
             SizedBox(width: kCardPadding),
-            Expanded(child: _StatCard(value: '4', label: 'Đang chuẩn bị', icon: Icons.hourglass_top_rounded)),
+            Expanded(
+              child: _StatCard(
+                value: '4',
+                label: 'Đang chuẩn bị',
+                icon: Icons.hourglass_top_rounded,
+              ),
+            ),
             SizedBox(width: kCardPadding),
-            Expanded(child: _StatCard(value: '2', label: 'Đang giao', icon: Icons.local_shipping_rounded)),
+            Expanded(
+              child: _StatCard(
+                value: '2',
+                label: 'Đang giao',
+                icon: Icons.local_shipping_rounded,
+              ),
+            ),
             SizedBox(width: kCardPadding),
-            Expanded(child: _StatCard(value: '14', label: 'Hoàn thành', icon: Icons.check_circle_rounded)),
+            Expanded(
+              child: _StatCard(
+                value: '14',
+                label: 'Hoàn thành',
+                icon: Icons.check_circle_rounded,
+              ),
+            ),
           ],
         );
       },
@@ -676,7 +831,11 @@ class _StatCard extends StatefulWidget {
   final String label;
   final IconData icon;
 
-  const _StatCard({required this.value, required this.label, required this.icon});
+  const _StatCard({
+    required this.value,
+    required this.label,
+    required this.icon,
+  });
 
   @override
   State<_StatCard> createState() => _StatCardState();
@@ -689,12 +848,17 @@ class _StatCardState extends State<_StatCard> {
   Widget build(BuildContext context) {
     Widget card = AnimatedContainer(
       duration: const Duration(milliseconds: 150),
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: kCardPadding),
+      padding: const EdgeInsets.symmetric(
+        vertical: 20,
+        horizontal: kCardPadding,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(kRadiusLarge),
         border: Border.all(
-          color: _hover ? _kPrimary.withValues(alpha: 0.35) : Colors.grey.shade200.withValues(alpha: 0.6),
+          color: _hover
+              ? _kPrimary.withValues(alpha: 0.35)
+              : Colors.grey.shade200.withValues(alpha: 0.6),
           width: 1,
         ),
         boxShadow: [
@@ -796,8 +960,17 @@ class _TopSellingSection extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(kRadiusLarge),
-            border: Border.all(color: Colors.grey.shade200.withValues(alpha: 0.6), width: 1),
-            boxShadow: const [BoxShadow(color: _kCardShadow, blurRadius: 8, offset: Offset(0, 3))],
+            border: Border.all(
+              color: Colors.grey.shade200.withValues(alpha: 0.6),
+              width: 1,
+            ),
+            boxShadow: const [
+              BoxShadow(
+                color: _kCardShadow,
+                blurRadius: 8,
+                offset: Offset(0, 3),
+              ),
+            ],
           ),
           child: Column(
             children: [
@@ -813,7 +986,9 @@ class _TopSellingSection extends StatelessWidget {
                         height: 28,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: i < 3 ? _kPrimary.withValues(alpha: 0.15) : Colors.grey.shade100,
+                          color: i < 3
+                              ? _kPrimary.withValues(alpha: 0.15)
+                              : Colors.grey.shade100,
                           borderRadius: BorderRadius.circular(kRadiusSmall),
                         ),
                         child: Text(
@@ -829,12 +1004,20 @@ class _TopSellingSection extends StatelessWidget {
                       Expanded(
                         child: Text(
                           _kTopSellingToday[i].name,
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFF1A1A1A)),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF1A1A1A),
+                          ),
                         ),
                       ),
                       Text(
                         '${_kTopSellingToday[i].sold} đã bán',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade700),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade700,
+                        ),
                       ),
                     ],
                   ),
@@ -851,7 +1034,11 @@ class _TopSellingSection extends StatelessWidget {
 /// Hoạt động gần đây — 📦 đơn, 🛒 sản phẩm, 💬 tin nhắn
 const List<({String icon, String text, String time})> _kRecentActivity = [
   (icon: 'order', text: 'Đơn #1241 đã được chấp nhận', time: '5 phút trước'),
-  (icon: 'product', text: 'Sản phẩm "Chuối" được cập nhật', time: '25 phút trước'),
+  (
+    icon: 'product',
+    text: 'Sản phẩm "Chuối" được cập nhật',
+    time: '25 phút trước',
+  ),
   (icon: 'chat', text: 'Khách hàng gửi tin nhắn', time: '1 giờ trước'),
   (icon: 'order', text: 'Đơn #1235 đang giao', time: '2 giờ trước'),
   (icon: 'product', text: 'Sản phẩm "Mì gói" thêm mới', time: '3 giờ trước'),
@@ -871,8 +1058,17 @@ class _RecentActivitySection extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(kRadiusLarge),
-            border: Border.all(color: Colors.grey.shade200.withValues(alpha: 0.6), width: 1),
-            boxShadow: const [BoxShadow(color: _kCardShadow, blurRadius: 8, offset: Offset(0, 3))],
+            border: Border.all(
+              color: Colors.grey.shade200.withValues(alpha: 0.6),
+              width: 1,
+            ),
+            boxShadow: const [
+              BoxShadow(
+                color: _kCardShadow,
+                blurRadius: 8,
+                offset: Offset(0, 3),
+              ),
+            ],
           ),
           child: Column(
             children: [
@@ -895,8 +1091,8 @@ class _RecentActivitySection extends StatelessWidget {
                           _kRecentActivity[i].icon == 'order'
                               ? '📦'
                               : _kRecentActivity[i].icon == 'chat'
-                                  ? '💬'
-                                  : '🛒',
+                              ? '💬'
+                              : '🛒',
                           style: const TextStyle(fontSize: 20),
                         ),
                       ),
@@ -904,12 +1100,18 @@ class _RecentActivitySection extends StatelessWidget {
                       Expanded(
                         child: Text(
                           _kRecentActivity[i].text,
-                          style: const TextStyle(fontSize: 14, color: Color(0xFF1A1A1A)),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFF1A1A1A),
+                          ),
                         ),
                       ),
                       Text(
                         _kRecentActivity[i].time,
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
                       ),
                     ],
                   ),
@@ -930,9 +1132,24 @@ class _RecentOrdersPreview extends StatelessWidget {
   const _RecentOrdersPreview({required this.onViewAll});
 
   static const _recentOrders = [
-    (id: '#1234', amount: '150.000đ', status: 'Đang chuẩn bị', statusType: OrderStatus.processing),
-    (id: '#1235', amount: '80.000đ', status: 'Đang giao', statusType: OrderStatus.shipping),
-    (id: '#1236', amount: '120.000đ', status: 'Hoàn thành', statusType: OrderStatus.done),
+    (
+      id: '#1234',
+      amount: '150.000đ',
+      status: 'Đang chuẩn bị',
+      statusType: OrderStatus.processing,
+    ),
+    (
+      id: '#1235',
+      amount: '80.000đ',
+      status: 'Đang giao',
+      statusType: OrderStatus.shipping,
+    ),
+    (
+      id: '#1236',
+      amount: '120.000đ',
+      status: 'Hoàn thành',
+      statusType: OrderStatus.done,
+    ),
   ];
 
   @override
@@ -948,17 +1165,28 @@ class _RecentOrdersPreview extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(kRadiusLarge),
-            border: Border.all(color: Colors.grey.shade200.withValues(alpha: 0.6), width: 1),
-            boxShadow: const [BoxShadow(color: _kCardShadow, blurRadius: 8, offset: Offset(0, 3))],
+            border: Border.all(
+              color: Colors.grey.shade200.withValues(alpha: 0.6),
+              width: 1,
+            ),
+            boxShadow: const [
+              BoxShadow(
+                color: _kCardShadow,
+                blurRadius: 8,
+                offset: Offset(0, 3),
+              ),
+            ],
           ),
           child: Column(
             children: [
-              ..._recentOrders.map((o) => _RecentOrderRow(
-                    id: o.id,
-                    amount: o.amount,
-                    status: o.status,
-                    statusType: o.statusType,
-                  )),
+              ..._recentOrders.map(
+                (o) => _RecentOrderRow(
+                  id: o.id,
+                  amount: o.amount,
+                  status: o.status,
+                  statusType: o.statusType,
+                ),
+              ),
               const SizedBox(height: 16),
               const Divider(height: 1),
               const SizedBox(height: 12),
@@ -974,7 +1202,13 @@ class _RecentOrdersPreview extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('Xem tất cả', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                      Text(
+                        'Xem tất cả',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
                       SizedBox(width: 6),
                       Icon(Icons.arrow_forward_rounded, size: 18),
                     ],
@@ -1028,9 +1262,23 @@ class _RecentOrderRowState extends State<_RecentOrderRow> {
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       child: Row(
         children: [
-          Text('Đơn ${widget.id}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF1A1A1A))),
+          Text(
+            'Đơn ${widget.id}',
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1A1A1A),
+            ),
+          ),
           const SizedBox(width: 12),
-          Text(widget.amount, style: TextStyle(fontSize: 13, color: Colors.grey.shade700, fontWeight: FontWeight.w500)),
+          Text(
+            widget.amount,
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey.shade700,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
           const Spacer(),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -1038,15 +1286,28 @@ class _RecentOrderRowState extends State<_RecentOrderRow> {
               color: _statusColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Text(widget.status, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: _statusColor)),
+            child: Text(
+              widget.status,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: _statusColor,
+              ),
+            ),
           ),
           const SizedBox(width: 8),
-          Icon(Icons.chevron_right_rounded, size: 20, color: Colors.grey.shade500),
+          Icon(
+            Icons.chevron_right_rounded,
+            size: 20,
+            color: Colors.grey.shade500,
+          ),
         ],
       ),
     );
     row = Material(
-      color: _hover ? _kPrimaryLight.withValues(alpha: 0.4) : Colors.transparent,
+      color: _hover
+          ? _kPrimaryLight.withValues(alpha: 0.4)
+          : Colors.transparent,
       borderRadius: BorderRadius.circular(10),
       child: row,
     );

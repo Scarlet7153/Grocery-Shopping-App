@@ -21,10 +21,11 @@ class EarningsCard extends StatelessWidget {
               children: [
                 Text(
                   'Thu nhập hôm nay',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: Colors.grey[600],
-                            fontWeight: FontWeight.w500,
-                          ) ??
+                  style:
+                      Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ) ??
                       TextStyle(
                         fontSize: 16,
                         color: Colors.grey[600],
@@ -34,11 +35,12 @@ class EarningsCard extends StatelessWidget {
                 const SizedBox(height: 10),
                 Text(
                   '${amount.toStringAsFixed(0)}₫',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            color: ShipperTheme.primaryColor,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 24,
-                          ) ??
+                  style:
+                      Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        color: ShipperTheme.primaryColor,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 24,
+                      ) ??
                       const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w700,

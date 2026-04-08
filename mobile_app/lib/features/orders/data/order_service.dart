@@ -33,14 +33,26 @@ class OrderService {
 
       if (data is List) {
         return data
-            .map((e) => OrderModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e as Map)))
+            .map(
+              (e) => OrderModel.fromJson(
+                e is Map<String, dynamic>
+                    ? e
+                    : Map<String, dynamic>.from(e as Map),
+              ),
+            )
             .toList();
       }
       if (data is Map<String, dynamic>) {
         final list = data['data'] ?? data['orders'];
         if (list is List) {
           return list
-              .map((e) => OrderModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e as Map)))
+              .map(
+                (e) => OrderModel.fromJson(
+                  e is Map<String, dynamic>
+                      ? e
+                      : Map<String, dynamic>.from(e as Map),
+                ),
+              )
               .toList();
         }
       }
@@ -67,10 +79,16 @@ class OrderService {
       }
       final order = data['data'] ?? data;
       return OrderModel.fromJson(
-        order is Map<String, dynamic> ? order : Map<String, dynamic>.from(order as Map),
+        order is Map<String, dynamic>
+            ? order
+            : Map<String, dynamic>.from(order as Map),
       );
     } on DioException catch (e) {
-      throw e.error is ApiException ? e.error as ApiException : ApiException(message: e.message ?? 'Lỗi cập nhật trạng thái đơn hàng');
+      throw e.error is ApiException
+          ? e.error as ApiException
+          : ApiException(
+              message: e.message ?? 'Lỗi cập nhật trạng thái đơn hàng',
+            );
     }
   }
 }

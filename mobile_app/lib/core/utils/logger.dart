@@ -8,7 +8,7 @@ class AppLogger {
   static void initialize() {
     _logger = Logger(
       filter: _CustomLogFilter(),
-      printer: Environment.isDevelopment 
+      printer: Environment.isDevelopment
           ? PrettyPrinter(
               methodCount: 2,
               errorMethodCount: 8,
@@ -50,14 +50,23 @@ class AppLogger {
   /// API specific logging
   static void apiRequest(String method, String url, {dynamic data}) {
     if (Environment.enableLogging) {
-      info('🔵 API Request: $method $url${data != null ? '\nData: $data' : ''}');
+      info(
+        '🔵 API Request: $method $url${data != null ? '\nData: $data' : ''}',
+      );
     }
   }
 
-  static void apiResponse(String method, String url, int statusCode, {dynamic data}) {
+  static void apiResponse(
+    String method,
+    String url,
+    int statusCode, {
+    dynamic data,
+  }) {
     if (Environment.enableLogging) {
       final emoji = statusCode >= 200 && statusCode < 300 ? '🟢' : '🔴';
-      info('$emoji API Response: $method $url [$statusCode]${data != null ? '\nData: $data' : ''}');
+      info(
+        '$emoji API Response: $method $url [$statusCode]${data != null ? '\nData: $data' : ''}',
+      );
     }
   }
 
@@ -90,7 +99,7 @@ class _CustomLogOutput extends LogOutput {
       // ignore: avoid_print
       print(line);
     }
-    
+
     // Có thể thêm remote logging ở đây
     // _sendToRemoteLogging(event);
   }

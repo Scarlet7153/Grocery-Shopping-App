@@ -28,21 +28,17 @@ class _StoreSplashScreenState extends State<StoreSplashScreen>
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
 
     _animationController.forward();
   }
@@ -138,90 +134,86 @@ class _StoreSplashScreenState extends State<StoreSplashScreen>
   }
 
   Widget _buildStoreBranding() => Column(
-        children: [
-          // Store Icon với Background
-          Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: StoreTheme.primaryColor.withValues(alpha: 0.2),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: const Icon(
-              Icons.store,
-              size: 80,
-              color: StoreTheme.primaryColor,
-            ),
-          ),
-
-          const SizedBox(height: 32),
-
-          // App Name cho Store
-          const Text(
-            'Đi Chợ Hộ',
-            style: TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-              color: StoreTheme.primaryColor,
-              letterSpacing: 1.2,
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          // Store Subtitle
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            decoration: BoxDecoration(
-              color: StoreTheme.primaryColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Text(
-              'CHỦ CỬA HÀNG',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: StoreTheme.primaryColor,
-                letterSpacing: 2,
-              ),
-            ),
-          ),
-        ],
-      );
-
-  Widget _buildTagline() => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 40),
-        child: Column(
-          children: [
-            Text(
-              'Quản lý cửa hàng thông minh',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[700],
-                height: 1.3,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Bán hàng hiệu quả • Quản lý đơn hàng dễ dàng • Tăng doanh thu',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-                height: 1.4,
-              ),
+    children: [
+      // Store Icon với Background
+      Container(
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: StoreTheme.primaryColor.withValues(alpha: 0.2),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
             ),
           ],
         ),
-      );
+        child: const Icon(
+          Icons.store,
+          size: 80,
+          color: StoreTheme.primaryColor,
+        ),
+      ),
+
+      const SizedBox(height: 32),
+
+      // App Name cho Store
+      const Text(
+        'Đi Chợ Hộ',
+        style: TextStyle(
+          fontSize: 36,
+          fontWeight: FontWeight.bold,
+          color: StoreTheme.primaryColor,
+          letterSpacing: 1.2,
+        ),
+      ),
+
+      const SizedBox(height: 8),
+
+      // Store Subtitle
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        decoration: BoxDecoration(
+          color: StoreTheme.primaryColor.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Text(
+          'CHỦ CỬA HÀNG',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: StoreTheme.primaryColor,
+            letterSpacing: 2,
+          ),
+        ),
+      ),
+    ],
+  );
+
+  Widget _buildTagline() => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 40),
+    child: Column(
+      children: [
+        Text(
+          'Quản lý cửa hàng thông minh',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[700],
+            height: 1.3,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Bán hàng hiệu quả • Quản lý đơn hàng dễ dàng • Tăng doanh thu',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 14, color: Colors.grey[600], height: 1.4),
+        ),
+      ],
+    ),
+  );
 
   @override
   void dispose() {

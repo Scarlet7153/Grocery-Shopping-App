@@ -55,9 +55,10 @@ class _OrderFilterModalState extends State<OrderFilterModal> {
                 centerTitle: true,
                 title: Text(
                   'Lọc đơn hàng',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            color: Colors.black,
-                          ) ??
+                  style:
+                      Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        color: Colors.black,
+                      ) ??
                       const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -116,9 +117,10 @@ class _OrderFilterModalState extends State<OrderFilterModal> {
       children: [
         Text(
           'Khoảng cách tối đa',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Colors.black54,
-                  ) ??
+          style:
+              Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: Colors.black54) ??
               const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -148,10 +150,10 @@ class _OrderFilterModalState extends State<OrderFilterModal> {
                   ),
                   onPressed: distance > 0
                       ? () => setState(() {
-                            _currentFilter = _currentFilter.copyWith(
-                              maxDistance: (distance - 1).toDouble(),
-                            );
-                          })
+                          _currentFilter = _currentFilter.copyWith(
+                            maxDistance: (distance - 1).toDouble(),
+                          );
+                        })
                       : null,
                   child: const Icon(Icons.remove, size: 20),
                 ),
@@ -161,9 +163,10 @@ class _OrderFilterModalState extends State<OrderFilterModal> {
                 child: Center(
                   child: Text(
                     '${distance.toStringAsFixed(1)} km',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              color: ShipperTheme.primaryColor,
-                            ) ??
+                    style:
+                        Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          color: ShipperTheme.primaryColor,
+                        ) ??
                         const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -186,10 +189,10 @@ class _OrderFilterModalState extends State<OrderFilterModal> {
                   ),
                   onPressed: distance < 20
                       ? () => setState(() {
-                            _currentFilter = _currentFilter.copyWith(
-                              maxDistance: (distance + 1).toDouble(),
-                            );
-                          })
+                          _currentFilter = _currentFilter.copyWith(
+                            maxDistance: (distance + 1).toDouble(),
+                          );
+                        })
                       : null,
                   child: const Icon(Icons.add, size: 20),
                 ),
@@ -209,9 +212,10 @@ class _OrderFilterModalState extends State<OrderFilterModal> {
       children: [
         Text(
           'Thu nhập tối thiểu',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Colors.black54,
-                  ) ??
+          style:
+              Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: Colors.black54) ??
               const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -241,10 +245,10 @@ class _OrderFilterModalState extends State<OrderFilterModal> {
                   ),
                   onPressed: earning > 10000
                       ? () => setState(() {
-                            _currentFilter = _currentFilter.copyWith(
-                              minEarning: (earning - 5000).toDouble(),
-                            );
-                          })
+                          _currentFilter = _currentFilter.copyWith(
+                            minEarning: (earning - 5000).toDouble(),
+                          );
+                        })
                       : null,
                   child: const Icon(Icons.remove, size: 20),
                 ),
@@ -254,9 +258,10 @@ class _OrderFilterModalState extends State<OrderFilterModal> {
                 child: Center(
                   child: Text(
                     '${earning ~/ 1000}K₫',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              color: ShipperTheme.primaryColor,
-                            ) ??
+                    style:
+                        Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          color: ShipperTheme.primaryColor,
+                        ) ??
                         const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -279,10 +284,10 @@ class _OrderFilterModalState extends State<OrderFilterModal> {
                   ),
                   onPressed: earning < 100000
                       ? () => setState(() {
-                            _currentFilter = _currentFilter.copyWith(
-                              minEarning: (earning + 5000).toDouble(),
-                            );
-                          })
+                          _currentFilter = _currentFilter.copyWith(
+                            minEarning: (earning + 5000).toDouble(),
+                          );
+                        })
                       : null,
                   child: const Icon(Icons.add, size: 20),
                 ),
@@ -302,9 +307,10 @@ class _OrderFilterModalState extends State<OrderFilterModal> {
       children: [
         Text(
           'Tối đa sản phẩm',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Colors.black54,
-                  ) ??
+          style:
+              Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: Colors.black54) ??
               const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -334,10 +340,10 @@ class _OrderFilterModalState extends State<OrderFilterModal> {
                   ),
                   onPressed: items > 10
                       ? () => setState(() {
-                            _currentFilter = _currentFilter.copyWith(
-                              maxItems: items - 1,
-                            );
-                          })
+                          _currentFilter = _currentFilter.copyWith(
+                            maxItems: items - 1,
+                          );
+                        })
                       : null,
                   child: const Icon(Icons.remove, size: 20),
                 ),
@@ -347,9 +353,10 @@ class _OrderFilterModalState extends State<OrderFilterModal> {
                 child: Center(
                   child: Text(
                     '$items sản phẩm',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              color: ShipperTheme.primaryColor,
-                            ) ??
+                    style:
+                        Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          color: ShipperTheme.primaryColor,
+                        ) ??
                         const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -372,10 +379,10 @@ class _OrderFilterModalState extends State<OrderFilterModal> {
                   ),
                   onPressed: items < 50
                       ? () => setState(() {
-                            _currentFilter = _currentFilter.copyWith(
-                              maxItems: items + 1,
-                            );
-                          })
+                          _currentFilter = _currentFilter.copyWith(
+                            maxItems: items + 1,
+                          );
+                        })
                       : null,
                   child: const Icon(Icons.add, size: 20),
                 ),
@@ -394,9 +401,10 @@ class _OrderFilterModalState extends State<OrderFilterModal> {
       children: [
         Text(
           'Tùy chọn',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Colors.black54,
-                  ) ??
+          style:
+              Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: Colors.black54) ??
               const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -411,27 +419,25 @@ class _OrderFilterModalState extends State<OrderFilterModal> {
             border: Border.all(color: Colors.grey[300]!, width: 1),
           ),
           child: CheckboxListTile(
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 4,
+            ),
             title: Text(
               'Tránh lấy hàng (chỉ giao)',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ) ??
-                  const TextStyle(
-                    fontSize: 16,
+              style:
+                  Theme.of(context).textTheme.bodyLarge?.copyWith(
                     fontWeight: FontWeight.w500,
-                  ),
+                  ) ??
+                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
             subtitle: Text(
               'Chỉ nhận những order cửa hàng chuẩn bị sẵn',
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: Colors.grey[600],
-                      ) ??
-                  TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
+              style:
+                  Theme.of(
+                    context,
+                  ).textTheme.labelMedium?.copyWith(color: Colors.grey[600]) ??
+                  TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
             value: _currentFilter.avoidPickup ?? false,
             onChanged: (value) {
@@ -463,14 +469,16 @@ class _OrderFilterModalState extends State<OrderFilterModal> {
               style: OutlinedButton.styleFrom(
                 side: BorderSide(color: Colors.grey[400]!, width: 2),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               child: Text(
                 'Đặt lại',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: Colors.grey[700],
-                          fontWeight: FontWeight.w600,
-                        ) ??
+                style:
+                    Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: Colors.grey[700],
+                      fontWeight: FontWeight.w600,
+                    ) ??
                     TextStyle(
                       color: Colors.grey[700],
                       fontWeight: FontWeight.w600,
@@ -487,23 +495,25 @@ class _OrderFilterModalState extends State<OrderFilterModal> {
             height: 56,
             child: ElevatedButton(
               onPressed: () {
-                context
-                    .read<OrderFilterBloc>()
-                    .add(SaveOrderFilter(_currentFilter));
+                context.read<OrderFilterBloc>().add(
+                  SaveOrderFilter(_currentFilter),
+                );
                 widget.onApply(_currentFilter);
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: ShipperTheme.primaryColor,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               child: Text(
                 'Áp dụng',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                        ) ??
+                style:
+                    Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ) ??
                     const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,

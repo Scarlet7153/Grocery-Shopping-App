@@ -21,9 +21,7 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: _primaryColor,
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
       textTheme: const TextTheme(
@@ -32,10 +30,7 @@ class AppTheme {
           fontWeight: FontWeight.bold,
           color: Colors.black87,
         ),
-        bodyMedium: TextStyle(
-          fontSize: 16,
-          color: Colors.black87,
-        ),
+        bodyMedium: TextStyle(fontSize: 16, color: Colors.black87),
       ),
     );
   }
@@ -47,17 +42,12 @@ class AppTheme {
         seedColor: _primaryColor,
         brightness: Brightness.dark,
       ),
-      appBarTheme: const AppBarTheme(
-        centerTitle: true,
-        elevation: 0,
-      ),
+      appBarTheme: const AppBarTheme(centerTitle: true, elevation: 0),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: _primaryColor,
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
     );

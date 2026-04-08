@@ -20,7 +20,7 @@ CREATE TABLE users (
     phone_number VARCHAR(15) UNIQUE NOT NULL COMMENT 'Số điện thoại đăng nhập',
     password_hash VARCHAR(255) NOT NULL COMMENT 'Mật khẩu đã mã hóa BCrypt',
     role ENUM('CUSTOMER', 'SHIPPER', 'STORE', 'ADMIN') NOT NULL COMMENT 'Vai trò tài khoản',
-    status ENUM('ACTIVE', 'BANNED') DEFAULT 'ACTIVE' COMMENT 'Trạng thái tài khoản',
+    status ENUM('ACTIVE', 'BANNED', 'PENDING') DEFAULT 'ACTIVE' COMMENT 'Trạng thái tài khoản',
     full_name VARCHAR(100) COMMENT 'Họ và tên',
     avatar_url VARCHAR(255) COMMENT 'Đường dẫn ảnh đại diện',
     address VARCHAR(255) COMMENT 'Địa chỉ cá nhân',

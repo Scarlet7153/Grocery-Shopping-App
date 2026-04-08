@@ -134,14 +134,22 @@ class _ChatTileState extends State<_ChatTile> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 120),
           decoration: BoxDecoration(
-            color: _hover ? _kPrimaryLight.withValues(alpha: 0.5) : Colors.white,
+            color: _hover
+                ? _kPrimaryLight.withValues(alpha: 0.5)
+                : Colors.white,
             borderRadius: BorderRadius.circular(kRadiusLarge),
             border: Border.all(
-              color: _hover ? _kPrimary.withValues(alpha: 0.2) : Colors.grey.shade200.withValues(alpha: 0.6),
+              color: _hover
+                  ? _kPrimary.withValues(alpha: 0.2)
+                  : Colors.grey.shade200.withValues(alpha: 0.6),
               width: 1,
             ),
             boxShadow: const [
-              BoxShadow(color: _kCardShadow, blurRadius: 8, offset: Offset(0, 3)),
+              BoxShadow(
+                color: _kCardShadow,
+                blurRadius: 8,
+                offset: Offset(0, 3),
+              ),
             ],
           ),
           child: Material(
@@ -153,7 +161,10 @@ class _ChatTileState extends State<_ChatTile> {
               splashColor: _kPrimary.withValues(alpha: 0.12),
               highlightColor: _kPrimary.withValues(alpha: 0.06),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 18,
+                ),
                 child: Row(
                   children: [
                     Stack(
@@ -162,7 +173,10 @@ class _ChatTileState extends State<_ChatTile> {
                         Container(
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            border: Border.all(color: _kPrimary.withValues(alpha: 0.3), width: 1.5),
+                            border: Border.all(
+                              color: _kPrimary.withValues(alpha: 0.3),
+                              width: 1.5,
+                            ),
                             boxShadow: const [
                               BoxShadow(
                                 color: _kCardShadow,
@@ -175,7 +189,9 @@ class _ChatTileState extends State<_ChatTile> {
                             radius: 28,
                             backgroundColor: _kPrimary.withValues(alpha: 0.12),
                             child: Icon(
-                              widget.type == _ChatType.shipper ? Icons.local_shipping_rounded : Icons.person_rounded,
+                              widget.type == _ChatType.shipper
+                                  ? Icons.local_shipping_rounded
+                                  : Icons.person_rounded,
                               color: _kPrimary,
                               size: kIconSizeLarge,
                             ),
@@ -191,8 +207,18 @@ class _ChatTileState extends State<_ChatTile> {
                               decoration: BoxDecoration(
                                 color: const Color(0xFF1976D2),
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2),
-                                boxShadow: [BoxShadow(color: const Color(0xFF1976D2).withValues(alpha: 0.4), blurRadius: 4)],
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(
+                                      0xFF1976D2,
+                                    ).withValues(alpha: 0.4),
+                                    blurRadius: 4,
+                                  ),
+                                ],
                               ),
                             ),
                           ),
@@ -210,7 +236,9 @@ class _ChatTileState extends State<_ChatTile> {
                                   widget.name,
                                   style: TextStyle(
                                     fontSize: 15,
-                                    fontWeight: widget.hasUnread ? FontWeight.w700 : FontWeight.w600,
+                                    fontWeight: widget.hasUnread
+                                        ? FontWeight.w700
+                                        : FontWeight.w600,
                                     color: const Color(0xFF1A1A1A),
                                   ),
                                 ),
@@ -228,11 +256,19 @@ class _ChatTileState extends State<_ChatTile> {
                           const SizedBox(height: 8),
                           Container(
                             width: double.infinity,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
+                            ),
                             decoration: BoxDecoration(
                               color: _kPrimary.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(kRadiusMedium),
-                              border: Border.all(color: _kPrimary.withValues(alpha: 0.15), width: 1),
+                              borderRadius: BorderRadius.circular(
+                                kRadiusMedium,
+                              ),
+                              border: Border.all(
+                                color: _kPrimary.withValues(alpha: 0.15),
+                                width: 1,
+                              ),
                             ),
                             child: Text(
                               widget.lastMessage,
@@ -249,7 +285,11 @@ class _ChatTileState extends State<_ChatTile> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Icon(Icons.chevron_right_rounded, color: Colors.grey.shade400, size: kIconSizeMedium),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: Colors.grey.shade400,
+                      size: kIconSizeMedium,
+                    ),
                   ],
                 ),
               ),

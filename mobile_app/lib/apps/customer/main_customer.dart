@@ -20,9 +20,8 @@ class CustomerApp extends StatelessWidget {
     return RepositoryProvider(
       create: (_) => CustomerAuthRepository(),
       child: BlocProvider(
-        create: (context) => CustomerAuthBloc(
-          context.read<CustomerAuthRepository>(),
-        ),
+        create: (context) =>
+            CustomerAuthBloc(context.read<CustomerAuthRepository>()),
         child: MaterialApp(
           title: 'Đi Chợ Hộ - Khách Hàng',
           theme: CustomerTheme.lightTheme,

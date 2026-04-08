@@ -6,7 +6,6 @@ import '../repository/store_repository.dart';
 abstract class StoreDashboardEvent {}
 
 class LoadStoreDashboard extends StoreDashboardEvent {
-
   final String token;
 
   LoadStoreDashboard(this.token);
@@ -21,7 +20,6 @@ class StoreDashboardInitial extends StoreDashboardState {}
 class StoreDashboardLoading extends StoreDashboardState {}
 
 class StoreDashboardLoaded extends StoreDashboardState {
-
   final Map<String, dynamic> store;
 
   StoreDashboardLoaded(this.store);
@@ -29,34 +27,23 @@ class StoreDashboardLoaded extends StoreDashboardState {
 
 class StoreDashboardError extends StoreDashboardState {}
 
-
 /// BLOC
 
 class StoreDashboardBloc
     extends Bloc<StoreDashboardEvent, StoreDashboardState> {
-
   final StoreRepository repository;
 
   StoreDashboardBloc(this.repository) : super(StoreDashboardInitial()) {
-
     on<LoadStoreDashboard>((event, emit) async {
-
       emit(StoreDashboardLoading());
 
       try {
-
         final data = await repository.getMyStore(event.token);
 
         emit(StoreDashboardLoaded(data));
-
       } catch (e) {
-
         emit(StoreDashboardError());
-
       }
-
     });
-
   }
-
 }

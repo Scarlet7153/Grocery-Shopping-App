@@ -24,14 +24,10 @@ class ProductSearchScreen extends StatelessWidget {
     final lower = keyword.toLowerCase();
     final results = keyword.isEmpty
         ? <ProductModel>[]
-        : products
-            .where((p) => p.name.toLowerCase().contains(lower))
-            .toList();
+        : products.where((p) => p.name.toLowerCase().contains(lower)).toList();
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(keyword.isEmpty ? 'Tìm kiếm' : keyword),
-      ),
+      appBar: AppBar(title: Text(keyword.isEmpty ? 'Tìm kiếm' : keyword)),
       body: Container(
         color: _softBg,
         child: results.isEmpty
@@ -58,8 +54,7 @@ class ProductSearchScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) =>
-                              ProductDetailScreen(product: product),
+                          builder: (_) => ProductDetailScreen(product: product),
                         ),
                       );
                     },
@@ -68,10 +63,7 @@ class ProductSearchScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                         color: Colors.white,
                         boxShadow: const [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 8,
-                          )
+                          BoxShadow(color: Colors.black12, blurRadius: 8),
                         ],
                       ),
                       child: Column(
@@ -88,23 +80,22 @@ class ProductSearchScreen extends StatelessWidget {
                                       child: const Icon(Icons.image),
                                     )
                                   : (product.imageUrl.startsWith('assets/'))
-                                      ? Image.asset(
-                                          product.imageUrl,
-                                          fit: BoxFit.cover,
-                                          width: double.infinity,
-                                        )
-                                      : Image.network(
-                                          product.imageUrl,
-                                          fit: BoxFit.cover,
-                                          width: double.infinity,
-                                          errorBuilder:
-                                              (context, error, stack) {
-                                            return Container(
-                                              color: Colors.grey[300],
-                                              child: const Icon(Icons.image),
-                                            );
-                                          },
-                                        ),
+                                  ? Image.asset(
+                                      product.imageUrl,
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                    )
+                                  : Image.network(
+                                      product.imageUrl,
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      errorBuilder: (context, error, stack) {
+                                        return Container(
+                                          color: Colors.grey[300],
+                                          child: const Icon(Icons.image),
+                                        );
+                                      },
+                                    ),
                             ),
                           ),
                           Padding(
@@ -130,8 +121,9 @@ class ProductSearchScreen extends StatelessWidget {
                                         vertical: 4,
                                       ),
                                       decoration: BoxDecoration(
-                                        color:
-                                            _primaryBlue.withValues(alpha: 0.1),
+                                        color: _primaryBlue.withValues(
+                                          alpha: 0.1,
+                                        ),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Text(
@@ -147,13 +139,14 @@ class ProductSearchScreen extends StatelessWidget {
                                     InkWell(
                                       onTap: () {
                                         CartSession.addProduct(product);
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
                                           const SnackBar(
-                                            behavior:
-                                                SnackBarBehavior.floating,
+                                            behavior: SnackBarBehavior.floating,
                                             content: Text(
-                                                'Đã thêm vào giỏ hàng'),
+                                              'Đã thêm vào giỏ hàng',
+                                            ),
                                           ),
                                         );
                                       },
@@ -161,8 +154,9 @@ class ProductSearchScreen extends StatelessWidget {
                                         padding: const EdgeInsets.all(8),
                                         decoration: BoxDecoration(
                                           color: _primaryBlue,
-                                          borderRadius:
-                                              BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
                                         ),
                                         child: const Icon(
                                           Icons.add_shopping_cart,
@@ -170,12 +164,12 @@ class ProductSearchScreen extends StatelessWidget {
                                           size: 18,
                                         ),
                                       ),
-                                    )
+                                    ),
                                   ],
-                                )
+                                ),
                               ],
                             ),
-                          )
+                          ),
                         ],
                       ),
                     ),

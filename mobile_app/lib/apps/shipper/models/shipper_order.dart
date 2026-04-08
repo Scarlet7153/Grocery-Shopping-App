@@ -70,8 +70,9 @@ class ShipperOrder {
       createdAt: _parseDate(data['createdAt']),
       items: _parseItems(data['items']),
       stores: _parseStores(data['stores']),
-      distanceKm:
-          data['distanceKm'] != null ? _toDouble(data['distanceKm']) : null,
+      distanceKm: data['distanceKm'] != null
+          ? _toDouble(data['distanceKm'])
+          : null,
     );
   }
 
@@ -123,11 +124,7 @@ class StoreInfo {
   final String name;
   final String address;
 
-  StoreInfo({
-    required this.id,
-    required this.name,
-    required this.address,
-  });
+  StoreInfo({required this.id, required this.name, required this.address});
 
   factory StoreInfo.fromJson(Map<String, dynamic> json) {
     return StoreInfo(

@@ -25,4 +25,14 @@ class ApiRoutes {
   static String assignShipper(String id) => '/orders/$id/assign-shipper';
   static String updateOrderStatus(String id) => '/orders/$id/status';
   static String orderById(String id) => '/orders/$id';
+
+  // ─── Monitoring ─────────────────────────────────────────────────────────
+  static const String stats = '/admin/stats';
+  static const String activities = '/admin/activities';
+
+  // ─── Uploads ────────────────────────────────────────────────────────────
+  static const String uploadProduct = '/upload/product';
+  static String uploadProductWithId(String id) => '/upload/product/$id';
+  static String uploadStore(String id) => '/upload/store/$id';
+  static const String uploadAvatar = '/upload/avatar';
 }

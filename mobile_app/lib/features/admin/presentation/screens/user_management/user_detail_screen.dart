@@ -6,6 +6,9 @@ import '../../../data/repositories/api_user_repository_impl.dart';
 import 'package:grocery_shopping_app/features/orders/data/order_model.dart';
 import 'package:grocery_shopping_app/features/orders/data/order_service.dart';
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../../../../core/api/upload_service.dart';
+import '../../../../../core/api/api_routes.dart';
 
 class UserDetailScreen extends StatefulWidget {
   final UserModel user;
@@ -19,6 +22,8 @@ class UserDetailScreen extends StatefulWidget {
 class _UserDetailScreenState extends State<UserDetailScreen> {
   final UserRepository _userRepository = ApiUserRepositoryImpl();
   final OrderService _orderService = OrderService();
+  final _uploadService = UploadService();
+  final _picker = ImagePicker();
   final _currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
 
   late UserModel _user;
@@ -31,7 +36,21 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   void initState() {
     super.initState();
     _user = widget.user;
+    _loadUserData();
     _loadUserOrders();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final updatedUser = await _userRepository.getUserById(_user.id);
+      if (mounted) {
+        setState(() {
+          _user = updatedUser;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error refetching user details: $e');
+    }
   }
 
   Future<void> _loadUserOrders() async {
@@ -259,29 +278,17 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
         child: Column(
           children: [
             GestureDetector(
-              onTap: () async {
-                // Mock avatar change
-                final updated = _user.copyWith(avatarUrl: 'mock_avatar_url');
-                setState(() => _isLoading = true);
-                await _userRepository.updateUser(updated);
-                setState(() {
-                  _user = updated;
-                  _isLoading = false;
-                });
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cập nhật avatar thành công!')));
-                }
-              },
+              onTap: _pickAndUploadAvatar,
               child: Stack(
                 alignment: Alignment.bottomRight,
                 children: [
                   CircleAvatar(
                     radius: 40,
                     backgroundColor: Colors.purple.withOpacity(0.1),
-                    backgroundImage: _user.avatarUrl != null 
-                        ? const NetworkImage('https://i.pravatar.cc/150') // Fake UI image
+                    backgroundImage: _user.avatarUrl != null && _user.avatarUrl!.isNotEmpty 
+                        ? NetworkImage(_user.avatarUrl!)
                         : null,
-                    child: _user.avatarUrl == null
+                    child: (_user.avatarUrl == null || _user.avatarUrl!.isEmpty)
                         ? Text(
                             _user.fullName[0].toUpperCase(),
                             style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.purple),
@@ -310,6 +317,35 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _pickAndUploadAvatar() async {
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+      if (image == null) return;
+
+      setState(() => _isLoading = true);
+      
+      final String endpoint = ApiRoutes.uploadAvatar;
+      final String newUrl = await _uploadService.uploadImage(endpoint, image);
+
+      if (mounted) {
+        setState(() {
+          _user = _user.copyWith(avatarUrl: newUrl);
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cập nhật avatar thành công!'), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi upload: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   Widget _buildInfoRow(IconData icon, String label, String value, {Color? color}) {

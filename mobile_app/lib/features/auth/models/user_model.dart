@@ -68,7 +68,7 @@ class UserModel extends Equatable {
       role: _parseRole(json['role']),
       status: _parseStatus(json['status']),
       address: json['address'],
-      avatarUrl: json['avatarUrl'],
+      avatarUrl: json['avatarUrl'] ?? json['avatar_url'],
       createdAt: json['createdAt'] != null 
           ? DateTime.parse(json['createdAt']) 
           : DateTime.now(),

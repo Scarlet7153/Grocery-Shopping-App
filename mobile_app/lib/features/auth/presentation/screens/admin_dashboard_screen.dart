@@ -98,7 +98,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           controller: _pageController,
                           onPageChanged: (index) => setState(() => _currentIndex = index),
                           children: [
-                            _buildOverviewTab(),
+                            _buildOverviewTab(user),
                             const UserManagementScreen(),
                             const StoreManagementScreen(),
                             const ShipperManagementScreen(),
@@ -309,7 +309,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   // --- TAB 0: TỔNG QUAN ---
-  Widget _buildOverviewTab() {
+  Widget _buildOverviewTab(UserModel user) {
     return FutureBuilder<Map<String, dynamic>>(
       future: _loadDashboardStats(),
       builder: (context, snapshot) {
@@ -327,7 +327,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
-                _buildWelcomeHeader(stats),
+                _buildWelcomeHeader(user, stats),
                 const SizedBox(height: 24),
                 _buildStatsGrid(stats),
                 const SizedBox(height: 24),
@@ -349,20 +349,80 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildWelcomeHeader(Map<String, dynamic> stats) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Chào buổi sáng, Admin! 👋',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
+  String _getGreeting(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final hour = DateTime.now().hour;
+    if (hour < 12) return l.translate('greeting_morning');
+    if (hour < 18) return l.translate('greeting_afternoon');
+    return l.translate('greeting_evening');
+  }
+
+  Widget _buildWelcomeHeader(UserModel user, Map<String, dynamic> stats) {
+    final l = AppLocalizations.of(context)!;
+    final greeting = _getGreeting(context);
+    
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.indigo[800]!, Colors.indigo[600]!],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        const SizedBox(height: 4),
-        Text(
-          'Hệ thống đang hoạt động ổn định. Kiểm tra ngay hôm nay.',
-          style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-        ),
-      ],
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.indigo.withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$greeting, ${user.fullName.split(' ').last}! 👋',
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l.translate('greeting_welcome_back'),
+                  style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.9)),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.verified_user, color: Colors.white, size: 14),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Hệ thống đang hoạt động ổn định',
+                        style: TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Background decoration icon
+          Opacity(
+            opacity: 0.1,
+            child: Icon(Icons.auto_graph, size: 80, color: Colors.white),
+          ),
+        ],
+      ),
     );
   }
 

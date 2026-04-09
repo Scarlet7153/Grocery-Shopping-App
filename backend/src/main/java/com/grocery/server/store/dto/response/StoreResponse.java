@@ -23,6 +23,7 @@ public class StoreResponse {
     private String storeName;
     private String address;
     private Boolean isOpen;
+    private String imageUrl;
     
     /**
      * Chuyển từ Store entity sang StoreResponse DTO
@@ -36,6 +37,7 @@ public class StoreResponse {
                 .storeName(store.getStoreName())
                 .address(store.getAddress())
                 .isOpen(store.getIsOpen())
+                .imageUrl(store.getImageUrl())
                 .build();
     }
 }

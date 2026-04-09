@@ -83,10 +83,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             builder: (context, authState) {
             String userName = 'Admin';
             String userPhone = '0987654321';
+            String? avatarUrl;
             
             if (authState is AuthAuthenticated) {
               userName = authState.user.fullName;
               userPhone = authState.user.phoneNumber.isNotEmpty ? authState.user.phoneNumber : 'N/A';
+              avatarUrl = authState.user.avatarUrl;
             }
 
             return Scaffold(
@@ -102,7 +104,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 physics: const BouncingScrollPhysics(),
                 child: Column(
                   children: [
-                    _buildProfileHeader(context, userName, userPhone),
+                    _buildProfileHeader(context, userName, userPhone, avatarUrl),
                     const SizedBox(height: 8),
                     _buildSettingsSection(context, l.translate('settings_account'), [
                       _SettingsItem(
@@ -373,7 +375,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildProfileHeader(BuildContext context, String name, String phone) {
+  Widget _buildProfileHeader(BuildContext context, String name, String phone, String? avatarUrl) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -386,13 +388,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Container(
             width: 60, height: 60,
             decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [Colors.indigo[400]!, Colors.indigo[700]!]),
+              gradient: avatarUrl == null || avatarUrl.isEmpty 
+                  ? LinearGradient(colors: [Colors.indigo[400]!, Colors.indigo[700]!])
+                  : null,
               borderRadius: BorderRadius.circular(18),
               boxShadow: [BoxShadow(color: Colors.indigo.withOpacity(0.2), blurRadius: 8, offset: const Offset(0, 4))],
+              image: avatarUrl != null && avatarUrl.isNotEmpty
+                  ? DecorationImage(image: NetworkImage(avatarUrl), fit: BoxFit.cover)
+                  : null,
             ),
-            child: Center(
-              child: Text(name.characters.first.toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-            ),
+            child: (avatarUrl == null || avatarUrl.isEmpty)
+                ? Center(
+                    child: Text(name.characters.first.toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                  )
+                : null,
           ),
           const SizedBox(width: 16),
           Expanded(

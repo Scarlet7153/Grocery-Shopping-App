@@ -168,6 +168,14 @@ public class UserService {
     }
 
     /**
+     * Lấy ID của user hiện tại
+     */
+    public Long getCurrentUserId() {
+        User user = getCurrentUser();
+        return user.getId();
+    }
+
+    /**
      * Helper: Lấy current user từ SecurityContext
      */
     private User getCurrentUser() {

@@ -267,9 +267,21 @@ class _StoreManagementScreenState extends State<StoreManagementScreen> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(color: Colors.indigo[50], borderRadius: BorderRadius.circular(12)),
-                    child: const Icon(Icons.store, color: Colors.indigo, size: 24),
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.indigo[50],
+                      borderRadius: BorderRadius.circular(12),
+                      image: store['imageUrl'] != null && store['imageUrl'].toString().isNotEmpty
+                          ? DecorationImage(
+                              image: NetworkImage(store['imageUrl'].toString()),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
+                    ),
+                    child: store['imageUrl'] == null || store['imageUrl'].toString().isEmpty
+                        ? const Icon(Icons.store, color: Colors.indigo, size: 24)
+                        : null,
                   ),
                   const SizedBox(width: 16),
                   Expanded(

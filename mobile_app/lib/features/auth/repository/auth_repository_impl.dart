@@ -13,8 +13,6 @@ import '../../../core/constants/app_constants.dart';
 
 // ApiClient class was removed from here. Using global one.
 
-
-
 class AuthRepositoryImpl implements AuthRepository {
   final ApiClient _apiClient;
   final SharedPreferences _prefs;
@@ -27,8 +25,8 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({
     required ApiClient apiClient,
     required SharedPreferences prefs,
-  })  : _apiClient = apiClient,
-        _prefs = prefs {
+  }) : _apiClient = apiClient,
+       _prefs = prefs {
     AppLogger.debug('AuthRepositoryImpl initialized');
     _syncTokenWithApiClient();
   }
@@ -50,10 +48,12 @@ class AuthRepositoryImpl implements AuthRepository {
     bool rememberMe = false,
   }) async {
     final stopwatch = Stopwatch()..start();
-    
+
     try {
-      AppLogger.info('🔐 Login attempt for ${appType.name} app with identifier: ${_maskIdentifier(identifier)}');
-      
+      AppLogger.info(
+        '🔐 Login attempt for ${appType.name} app with identifier: ${_maskIdentifier(identifier)}',
+      );
+
       final requestData = LoginRequestModel(
         phoneNumber: identifier,
         password: password,
@@ -113,10 +113,12 @@ class AuthRepositoryImpl implements AuthRepository {
     required AppType appType,
   }) async {
     final stopwatch = Stopwatch()..start();
-    
+
     try {
-      AppLogger.info('🔐 Registration attempt for ${appType.name} app with phone: ${_maskIdentifier(userData['phoneNumber'])}');
-      
+      AppLogger.info(
+        '🔐 Registration attempt for ${appType.name} app with phone: ${_maskIdentifier(userData['phoneNumber'])}',
+      );
+
       final requestData = RegisterRequestModel(
         phoneNumber: userData['phoneNumber'],
         password: userData['password'],
@@ -135,28 +137,32 @@ class AuthRepositoryImpl implements AuthRepository {
       final authResponse = AuthResponseModel.fromJson(response.data);
 
       if (authResponse.isAuthenticated) {
-        AppLogger.info('✅ Registration successful - User: ${authResponse.user?.fullName}, Role: ${authResponse.user?.role.name}');
-        
+        AppLogger.info(
+          '✅ Registration successful - User: ${authResponse.user?.fullName}, Role: ${authResponse.user?.role.name}',
+        );
+
         await _saveAuthData(authResponse);
       } else {
         AppLogger.warning('❌ Registration failed: ${authResponse.message}');
       }
 
       final duration = stopwatch.elapsed;
-      AppLogger.debug('⏱️ Registration operation completed in ${duration.inMilliseconds}ms');
-      
+      AppLogger.debug(
+        '⏱️ Registration operation completed in ${duration.inMilliseconds}ms',
+      );
+
       return authResponse;
-      
     } on DioException catch (e) {
       AppLogger.error('🔥 Registration DioException: ${e.message}', e);
-      
+
       throw ServerException(
-        message: 'Đăng ký thất bại: ${e.response?.data?['message'] ?? e.message}',
+        message:
+            'Đăng ký thất bại: ${e.response?.data?['message'] ?? e.message}',
         statusCode: e.response?.statusCode ?? 400,
       );
     } catch (e) {
       AppLogger.error('💥 Registration unexpected error: ${e.toString()}', e);
-      
+
       throw ServerException(
         message: 'Đã xảy ra lỗi không xác định: ${e.toString()}',
         statusCode: 400,
@@ -170,13 +176,15 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> logout() async {
     try {
       AppLogger.info('🔐 Logout attempt');
-      
+
       // API logout không cần body theo Postman
       await _apiClient.post(ApiEndpoints.logout);
-      
+
       AppLogger.info('✅ Logout API call successful');
     } catch (e) {
-      AppLogger.warning('⚠️ Logout API call failed, but continuing with local cleanup: ${e.toString()}');
+      AppLogger.warning(
+        '⚠️ Logout API call failed, but continuing with local cleanup: ${e.toString()}',
+      );
     } finally {
       await clearAuthData();
       AppLogger.info('🧹 User logged out and auth data cleared');
@@ -184,12 +192,10 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<AuthResponseModel> refreshToken({
-    required String refreshToken,
-  }) async {
+  Future<AuthResponseModel> refreshToken({required String refreshToken}) async {
     try {
       AppLogger.info('🎫 Refreshing access token');
-      
+
       final token = await getAuthToken();
       final response = await _apiClient.post(
         ApiEndpoints.refreshToken,
@@ -206,16 +212,16 @@ class AuthRepositoryImpl implements AuthRepository {
       }
 
       return authResponse;
-      
     } on DioException catch (e) {
       AppLogger.error('🔥 Token refresh failed: ${e.message}', e);
-      
+
       // Clear auth data on refresh failure
       await clearAuthData();
       AppLogger.warning('🧹 Auth data cleared due to token refresh failure');
-      
+
       throw ServerException(
-        message: 'Làm mới token thất bại: ${e.response?.data?['message'] ?? e.message}',
+        message:
+            'Làm mới token thất bại: ${e.response?.data?['message'] ?? e.message}',
         statusCode: e.response?.statusCode ?? 401,
       );
     }
@@ -227,10 +233,11 @@ class AuthRepositoryImpl implements AuthRepository {
       final token = await getAuthToken();
       final user = await getCurrentUser();
       final authenticated = token != null && user != null;
-      
-      AppLogger.debug('🔍 Authentication check: ${authenticated ? 'authenticated' : 'not authenticated'}');
+
+      AppLogger.debug(
+        '🔍 Authentication check: ${authenticated ? 'authenticated' : 'not authenticated'}',
+      );
       return authenticated;
-      
     } catch (e) {
       AppLogger.error('💥 Authentication check error: ${e.toString()}', e);
       return false;
@@ -248,10 +255,11 @@ class AuthRepositoryImpl implements AuthRepository {
 
       final userMap = jsonDecode(userJson) as Map<String, dynamic>;
       final user = UserModel.fromJson(userMap);
-      
-      AppLogger.debug('👤 Retrieved user: ${user.fullName} (${user.role.name})');
+
+      AppLogger.debug(
+        '👤 Retrieved user: ${user.fullName} (${user.role.name})',
+      );
       return user;
-      
     } catch (e) {
       AppLogger.error('💥 Error retrieving user data: ${e.toString()}', e);
       return null;
@@ -282,7 +290,7 @@ class AuthRepositoryImpl implements AuthRepository {
         _prefs.remove(_keyAccessToken),
         _prefs.remove(_keyUserId),
       ]);
-      
+
       AppLogger.info('🧹 Auth data cleared from storage');
     } catch (e) {
       AppLogger.error('💥 Error clearing auth data: ${e.toString()}', e);
@@ -306,12 +314,13 @@ class AuthRepositoryImpl implements AuthRepository {
       }
 
       if (authResponse.user != null) {
-        futures.add(_prefs.setString(_keyUser, jsonEncode(authResponse.user!.toJson())));
+        futures.add(
+          _prefs.setString(_keyUser, jsonEncode(authResponse.user!.toJson())),
+        );
       }
-      
+
       await Future.wait(futures);
       AppLogger.info('💾 Auth data saved to storage');
-      
     } catch (e) {
       AppLogger.error('💥 Error saving auth data: ${e.toString()}', e);
     }
@@ -321,7 +330,7 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> _fetchAndSaveUserProfile(String token) async {
     try {
       AppLogger.debug('🔄 Fetching user profile from API');
-      
+
       final response = await _apiClient.get(
         ApiEndpoints.getProfile,
         options: Options(headers: {'Authorization': 'Bearer $token'}),
@@ -330,10 +339,14 @@ class AuthRepositoryImpl implements AuthRepository {
       if (response.data['success'] == true && response.data['data'] != null) {
         final user = UserModel.fromJson(response.data['data']);
         await _prefs.setString(_keyUser, jsonEncode(user.toJson()));
-        
-        AppLogger.info('✅ User profile updated: ${user.fullName} (${user.role.name})');
+
+        AppLogger.info(
+          '✅ User profile updated: ${user.fullName} (${user.role.name})',
+        );
       } else {
-        AppLogger.warning('⚠️ Failed to fetch user profile: Invalid response format');
+        AppLogger.warning(
+          '⚠️ Failed to fetch user profile: Invalid response format',
+        );
       }
     } catch (e) {
       AppLogger.warning('⚠️ Failed to fetch user profile: ${e.toString()}');
@@ -364,12 +377,12 @@ class AuthRepositoryImpl implements AuthRepository {
   }) async {
     try {
       AppLogger.info('💾 Saving auth data for user: ${user.fullName}');
-      
+
       await Future.wait([
         _prefs.setString(_keyUser, jsonEncode(user.toJson())),
         _prefs.setString(_keyAccessToken, accessToken),
       ]);
-      
+
       AppLogger.info('✅ Auth data saved successfully');
     } catch (e) {
       AppLogger.error('💥 Error in saveAuthData: ${e.toString()}', e);
@@ -382,7 +395,9 @@ class AuthRepositoryImpl implements AuthRepository {
     required String identifier,
     required AppType appType,
   }) async {
-    AppLogger.warning('⚠️ Forgot password requested but not implemented in API');
+    AppLogger.warning(
+      '⚠️ Forgot password requested but not implemented in API',
+    );
     throw UnimplementedError('Forgot password chưa được implement trong API');
   }
 
@@ -392,7 +407,9 @@ class AuthRepositoryImpl implements AuthRepository {
     required String identifier,
     String? resetToken,
   }) async {
-    AppLogger.warning('⚠️ OTP verification requested but not implemented in API');
+    AppLogger.warning(
+      '⚠️ OTP verification requested but not implemented in API',
+    );
     throw UnimplementedError('OTP verification chưa được implement trong API');
   }
 
@@ -478,25 +495,31 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> updateFcmToken({required String fcmToken}) async {
-    AppLogger.info('🔔 FCM token update requested: ${_maskIdentifier(fcmToken)}');
-    AppLogger.info('🚧 FCM token update not yet implemented - awaiting API endpoint');
+    AppLogger.info(
+      '🔔 FCM token update requested: ${_maskIdentifier(fcmToken)}',
+    );
+    AppLogger.info(
+      '🚧 FCM token update not yet implemented - awaiting API endpoint',
+    );
   }
 
   @override
   Future<List<String>> getUserPermissions({required AppType appType}) async {
     AppLogger.debug('🔑 Getting permissions for app type: ${appType.name}');
-    
-    AppLogger.debug('🚧 Using default role-based permissions - implement API-based permissions later');
+
+    AppLogger.debug(
+      '🚧 Using default role-based permissions - implement API-based permissions later',
+    );
     final permissions = <String>[];
-    
+
     switch (appType) {
       case AppType.customer:
         permissions.addAll([
           'view_products',
-          'create_order', 
+          'create_order',
           'view_orders',
           'write_reviews',
-          'update_profile'
+          'update_profile',
         ]);
         break;
       case AppType.store:
@@ -505,7 +528,7 @@ class AuthRepositoryImpl implements AuthRepository {
           'view_store_orders',
           'update_store',
           'manage_products',
-          'view_analytics'
+          'view_analytics',
         ]);
         break;
       case AppType.shipper:
@@ -514,21 +537,23 @@ class AuthRepositoryImpl implements AuthRepository {
           'accept_delivery',
           'update_delivery_status',
           'view_delivery_history',
-          'update_location'
+          'update_location',
         ]);
         break;
       case AppType.admin:
         permissions.addAll([
           'manage_users',
-          'manage_stores', 
+          'manage_stores',
           'view_analytics',
           'manage_categories',
-          'system_settings'
+          'system_settings',
         ]);
         break;
     }
-    
-    AppLogger.debug('🔑 Permissions for ${appType.name}: ${permissions.join(', ')}');
+
+    AppLogger.debug(
+      '🔑 Permissions for ${appType.name}: ${permissions.join(', ')}',
+    );
     return permissions;
   }
 }

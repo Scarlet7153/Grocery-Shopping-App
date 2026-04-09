@@ -7,10 +7,7 @@ class AuthLoginRequest {
   final String phoneNumber;
   final String password;
 
-  const AuthLoginRequest({
-    required this.phoneNumber,
-    required this.password,
-  });
+  const AuthLoginRequest({required this.phoneNumber, required this.password});
 
   factory AuthLoginRequest.fromJson(Map<String, dynamic> json) =>
       _$AuthLoginRequestFromJson(json);
@@ -46,13 +43,7 @@ class AuthUser {
   final String? email;
   final String? role;
 
-  const AuthUser({
-    this.id,
-    this.phoneNumber,
-    this.name,
-    this.email,
-    this.role,
-  });
+  const AuthUser({this.id, this.phoneNumber, this.name, this.email, this.role});
 
   factory AuthUser.fromJson(Map<String, dynamic> json) =>
       _$AuthUserFromJson(json);
@@ -65,11 +56,7 @@ class AuthResponse {
   final String? refreshToken;
   final AuthUser? user;
 
-  const AuthResponse({
-    required this.token,
-    this.refreshToken,
-    this.user,
-  });
+  const AuthResponse({required this.token, this.refreshToken, this.user});
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) =>
       _$AuthResponseFromJson(json);

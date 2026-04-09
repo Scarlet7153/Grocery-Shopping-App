@@ -95,10 +95,7 @@ class LoginRequestModel extends Equatable {
   final String phoneNumber; // API dùng phoneNumber thay vì identifier
   final String password;
 
-  const LoginRequestModel({
-    required this.phoneNumber,
-    required this.password,
-  });
+  const LoginRequestModel({required this.phoneNumber, required this.password});
 
   factory LoginRequestModel.fromJson(Map<String, dynamic> json) =>
       _$LoginRequestModelFromJson(json);
@@ -137,12 +134,12 @@ class RegisterRequestModel extends Equatable {
 
   @override
   List<Object?> get props => [
-        phoneNumber,
-        password,
-        fullName,
-        role,
-        address,
-        storeName,
-        storeAddress,
-      ];
+    phoneNumber,
+    password,
+    fullName,
+    role,
+    address,
+    storeName,
+    storeAddress,
+  ];
 }

@@ -5,6 +5,7 @@ import 'package:grocery_shopping_app/core/theme/shipper_theme.dart';
 import 'package:grocery_shopping_app/shared/widgets/custom_text_field.dart';
 import 'package:grocery_shopping_app/apps/shipper/bloc/shipper_auth_bloc.dart';
 import 'package:grocery_shopping_app/apps/shipper/screens/auth/shipper_register_screen.dart';
+import 'package:grocery_shopping_app/apps/shipper/screens/auth/shipper_splash_screen.dart';
 import 'package:grocery_shopping_app/apps/shipper/screens/dashboard/shipper_dashboard_screen.dart';
 
 class ShipperLoginScreen extends StatefulWidget {
@@ -51,12 +52,7 @@ class _ShipperLoginScreenState extends State<ShipperLoginScreen> {
         }
 
         if (state is ShipperAuthError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Đăng nhập thất bại: ${state.message}'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          _handleLoginError(state.message);
         }
       },
       child: Scaffold(
@@ -90,7 +86,6 @@ class _ShipperLoginScreenState extends State<ShipperLoginScreen> {
     );
   }
 
-
   Widget _buildHeader() => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
@@ -109,11 +104,7 @@ class _ShipperLoginScreenState extends State<ShipperLoginScreen> {
               ),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Icon(
-              Icons.delivery_dining,
-              size: 48,
-              color: ShipperTheme.primaryColor,
-            ),
+            child: const ShipperLogo(size: 128),
           ),
           // Speed indicator
           Positioned(
@@ -149,37 +140,35 @@ class _ShipperLoginScreenState extends State<ShipperLoginScreen> {
       const SizedBox(height: 8),
       Text(
         'Đăng nhập để bắt đầu nhận đơn và kiếm thu nhập hấp dẫn.',
-        style: TextStyle(
-          fontSize: 16,
-          color: Colors.grey[600],
-          height: 1.4,
-        ),
+        style: TextStyle(fontSize: 16, color: Colors.grey[600], height: 1.4),
       ),
     ],
   );
 
   Widget _buildLoginForm() => Column(
     children: [
-      CustomTextField(
-        label: 'Số điện thoại',
-        hint: 'Nhập số điện thoại đã đăng ký',
-        controller: _phoneController,
-        keyboardType: TextInputType.phone,
-        prefixIcon: Icons.phone,
-        validator: _validatePhone,
-        focusColor: ShipperTheme.primaryColor,
-      ),
+      _buildPhoneField(),
       const SizedBox(height: 20),
-      CustomTextField(
-        label: 'Mật khẩu',
-        hint: 'Nhập mật khẩu',
-        controller: _passwordController,
-        isPassword: true,
-        prefixIcon: Icons.lock,
-        validator: _validatePassword,
-        focusColor: ShipperTheme.primaryColor,
-      ),
+      _buildPasswordField(),
     ],
+  );
+
+  Widget _buildPhoneField() => CustomTextField(
+    label: 'Số điện thoại',
+    hint: 'Nhập số điện thoại đã đăng ký',
+    controller: _phoneController,
+    keyboardType: TextInputType.phone,
+    prefixIcon: Icons.phone,
+    focusColor: ShipperTheme.primaryColor,
+  );
+
+  Widget _buildPasswordField() => CustomTextField(
+    label: 'Mật khẩu',
+    hint: 'Nhập mật khẩu',
+    controller: _passwordController,
+    isPassword: true,
+    prefixIcon: Icons.lock,
+    focusColor: ShipperTheme.primaryColor,
   );
 
   Widget _buildLoginButton() => Container(
@@ -187,10 +176,7 @@ class _ShipperLoginScreenState extends State<ShipperLoginScreen> {
     height: 52,
     decoration: BoxDecoration(
       gradient: const LinearGradient(
-        colors: [
-          ShipperTheme.primaryColor,
-          ShipperTheme.secondaryColor,
-        ],
+        colors: [ShipperTheme.primaryColor, ShipperTheme.secondaryColor],
       ),
       borderRadius: BorderRadius.circular(12),
       boxShadow: [
@@ -207,33 +193,28 @@ class _ShipperLoginScreenState extends State<ShipperLoginScreen> {
         backgroundColor: Colors.transparent,
         shadowColor: Colors.transparent,
         foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
-      child: _isLoading 
-        ? const SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: Colors.white,
-            ),
-          )
-        : const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.motorcycle, size: 20),
-              SizedBox(width: 8),
-              Text(
-                'Bắt đầu giao hàng',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+      child: _isLoading
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
               ),
-            ],
-          ),
+            )
+          : const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.motorcycle, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'Bắt đầu giao hàng',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
     ),
   );
 
@@ -247,7 +228,9 @@ class _ShipperLoginScreenState extends State<ShipperLoginScreen> {
       GestureDetector(
         onTap: () => Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const ShipperRegisterScreen()),
+          MaterialPageRoute(
+            builder: (context) => const ShipperRegisterScreen(),
+          ),
         ),
         child: const Text(
           'Đăng ký ngay',
@@ -296,11 +279,7 @@ class _ShipperLoginScreenState extends State<ShipperLoginScreen> {
       children: [
         Row(
           children: [
-            const Icon(
-              Icons.star,
-              color: Colors.amber,
-              size: 20,
-            ),
+            const Icon(Icons.star, color: Colors.amber, size: 20),
             const SizedBox(width: 8),
             Text(
               'Lợi ích khi làm Shipper',
@@ -346,11 +325,7 @@ class _ShipperLoginScreenState extends State<ShipperLoginScreen> {
             color: ShipperTheme.primaryColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(
-            icon,
-            size: 16,
-            color: ShipperTheme.primaryColor,
-          ),
+          child: Icon(icon, size: 16, color: ShipperTheme.primaryColor),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -366,10 +341,7 @@ class _ShipperLoginScreenState extends State<ShipperLoginScreen> {
               ),
               Text(
                 description,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 13, color: Colors.grey[600]),
               ),
             ],
           ),
@@ -399,12 +371,88 @@ class _ShipperLoginScreenState extends State<ShipperLoginScreen> {
   }
 
   Future<void> _handleLogin() async {
-    if (!_formKey.currentState!.validate()) return;
-    // dispatch event
-    _authBloc.add(ShipperLoginRequested(
-      phone: _phoneController.text.trim(),
-      password: _passwordController.text,
-    ));
+    _authBloc.add(
+      ShipperLoginRequested(
+        phone: _phoneController.text.trim(),
+        password: _passwordController.text,
+      ),
+    );
+  }
+
+  void _handleLoginError(String message) {
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (message == 'null' || message.isEmpty) {
+      message = 'Thông tin đăng nhập không chính xác';
+    }
+
+    if (message.startsWith('Exception: ')) {
+      message = message.substring(11);
+    }
+
+    print('Login error: $message');
+
+    final lowerMessage = message.toLowerCase().trim();
+
+    IconData icon = Icons.error_outline;
+    Duration duration = const Duration(seconds: 3);
+
+    if (lowerMessage.contains('số điện thoại chưa được đăng ký') ||
+        lowerMessage.contains('không tìm thấy tài khoản') ||
+        lowerMessage.contains('not found')) {
+      message = 'Số điện thoại chưa được đăng ký';
+      icon = Icons.phone_android;
+    } else if (lowerMessage.contains('thông tin đăng nhập không hợp lệ') ||
+        lowerMessage.contains('sai số điện thoại hoặc mật khẩu') ||
+        lowerMessage.contains('sai mật khẩu') ||
+        lowerMessage.contains('bad credentials') ||
+        lowerMessage.contains('unauthorized')) {
+      message = 'Sai số điện thoại hoặc mật khẩu';
+      icon = Icons.lock_outline;
+    } else if (lowerMessage.contains('tài khoản chưa được kích hoạt') ||
+        lowerMessage.contains('inactive') ||
+        lowerMessage.contains('not activated')) {
+      message =
+          'Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email hoặc liên hệ hỗ trợ.';
+      icon = Icons.mail_outline;
+    } else if (lowerMessage.contains('tài khoản đã bị khóa') ||
+        lowerMessage.contains('banned') ||
+        lowerMessage.contains('blocked')) {
+      message = 'Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.';
+      icon = Icons.block;
+    }
+
+    _showErrorSnackBar(message: message, icon: icon, duration: duration);
+  }
+
+  void _showErrorSnackBar({
+    required String message,
+    required IconData icon,
+    Duration duration = const Duration(seconds: 3),
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(icon, color: Colors.white, size: 24),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.red.shade700,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: EdgeInsets.all(16),
+        duration: duration,
+      ),
+    );
   }
 
   @override

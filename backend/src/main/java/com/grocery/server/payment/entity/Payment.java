@@ -89,7 +89,8 @@ public class Payment {
 
     public enum PaymentMethod {
         COD,    // Tiền mặt
-        MOMO    // Ví Momo
+        MOMO,   // Ví Momo
+        VNPAY   // VNPay
     }
 
     public enum PaymentStatus {

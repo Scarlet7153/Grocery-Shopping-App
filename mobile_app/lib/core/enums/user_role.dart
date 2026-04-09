@@ -6,13 +6,13 @@ import '../theme/app_colors.dart';
 enum UserRole {
   /// Customer - End user who places orders
   customer('customer', 'Khách hàng', 'Đặt hàng và mua sắm'),
-  
+
   /// Store Owner - Manages store, products, and orders
   store('store', 'Chủ cửa hàng', 'Quản lý cửa hàng và sản phẩm'),
-  
+
   /// Shipper - Delivers orders to customers
   shipper('shipper', 'Shipper', 'Giao hàng cho khách hàng'),
-  
+
   /// Admin - System administrator with full access
   admin('admin', 'Quản trị viên', 'Quản trị hệ thống');
 
@@ -20,10 +20,10 @@ enum UserRole {
 
   /// Unique identifier for the role
   final String id;
-  
+
   /// Display name in Vietnamese
   final String displayName;
-  
+
   /// Role description
   final String description;
 
@@ -111,7 +111,7 @@ enum UserRole {
     }
   }
 
-  /// Get filled icon for this role  
+  /// Get filled icon for this role
   IconData get iconFilled {
     switch (this) {
       case UserRole.customer:
@@ -127,16 +127,18 @@ enum UserRole {
 
   /// Check if this role has administrative privileges
   bool get isAdmin => this == UserRole.admin;
-  
+
   /// Check if this role can manage products
-  bool get canManageProducts => this == UserRole.store || this == UserRole.admin;
-  
+  bool get canManageProducts =>
+      this == UserRole.store || this == UserRole.admin;
+
   /// Check if this role can process orders
   bool get canProcessOrders => this == UserRole.store || this == UserRole.admin;
-  
+
   /// Check if this role can deliver orders
-  bool get canDeliverOrders => this == UserRole.shipper || this == UserRole.admin;
-  
+  bool get canDeliverOrders =>
+      this == UserRole.shipper || this == UserRole.admin;
+
   /// Check if this role can place orders
   bool get canPlaceOrders => this == UserRole.customer;
 

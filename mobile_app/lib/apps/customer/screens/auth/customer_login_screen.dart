@@ -35,9 +35,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
 
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(
-              builder: (_) => const CustomerHomeScreen(),
-            ),
+            MaterialPageRoute(builder: (_) => const CustomerHomeScreen()),
           );
         }
 
@@ -45,10 +43,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
           setState(() => _isLoading = false);
 
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: Colors.red,
-            ),
+            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
           );
         }
       },
@@ -82,113 +77,104 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
   }
 
   Widget _buildHeader() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: CustomerTheme.primaryColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(
-              Icons.shopping_cart,
-              size: 48,
-              color: CustomerTheme.primaryColor,
-            ),
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            'Chào mừng trở lại!',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: CustomerTheme.primaryColor,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Đăng nhập để bắt đầu mua sắm.',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey[600],
-            ),
-          ),
-        ],
-      );
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: CustomerTheme.primaryColor.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Icon(
+          Icons.shopping_cart,
+          size: 48,
+          color: CustomerTheme.primaryColor,
+        ),
+      ),
+      const SizedBox(height: 24),
+      const Text(
+        'Chào mừng trở lại!',
+        style: TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: CustomerTheme.primaryColor,
+        ),
+      ),
+      const SizedBox(height: 8),
+      Text(
+        'Đăng nhập để bắt đầu mua sắm.',
+        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+      ),
+    ],
+  );
 
   Widget _buildLoginForm() => Column(
-        children: [
-          CustomTextField(
-            label: 'Số điện thoại',
-            hint: 'Nhập số điện thoại',
-            controller: _phoneController,
-            keyboardType: TextInputType.phone,
-            prefixIcon: Icons.phone,
-            validator: _validatePhone,
-            focusColor: CustomerTheme.primaryColor,
-          ),
-          const SizedBox(height: 20),
-          CustomTextField(
-            label: 'Mật khẩu',
-            hint: 'Nhập mật khẩu',
-            controller: _passwordController,
-            isPassword: true,
-            prefixIcon: Icons.lock,
-            validator: _validatePassword,
-            focusColor: CustomerTheme.primaryColor,
-          ),
-        ],
-      );
+    children: [
+      CustomTextField(
+        label: 'Số điện thoại',
+        hint: 'Nhập số điện thoại',
+        controller: _phoneController,
+        keyboardType: TextInputType.phone,
+        prefixIcon: Icons.phone,
+        validator: _validatePhone,
+        focusColor: CustomerTheme.primaryColor,
+      ),
+      const SizedBox(height: 20),
+      CustomTextField(
+        label: 'Mật khẩu',
+        hint: 'Nhập mật khẩu',
+        controller: _passwordController,
+        isPassword: true,
+        prefixIcon: Icons.lock,
+        validator: _validatePassword,
+        focusColor: CustomerTheme.primaryColor,
+      ),
+    ],
+  );
 
   Widget _buildLoginButton() => SizedBox(
-        width: double.infinity,
-        height: 52,
-        child: ElevatedButton(
-          onPressed: _isLoading ? null : _handleLogin,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: CustomerTheme.primaryColor,
-            foregroundColor: Colors.white,
-          ),
-          child: _isLoading
-              ? const CircularProgressIndicator(
-                  color: Colors.white,
-                )
-              : const Text("Đăng nhập"),
-        ),
-      );
+    width: double.infinity,
+    height: 52,
+    child: ElevatedButton(
+      onPressed: _isLoading ? null : _handleLogin,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: CustomerTheme.primaryColor,
+        foregroundColor: Colors.white,
+      ),
+      child: _isLoading
+          ? const CircularProgressIndicator(color: Colors.white)
+          : const Text("Đăng nhập"),
+    ),
+  );
 
   Widget _buildRegisterLink() => Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text("Chưa có tài khoản? "),
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const CustomerRegisterScreen(),
-                ),
-              );
-            },
-            child: const Text(
-              "Đăng ký",
-              style: TextStyle(
-                color: CustomerTheme.primaryColor,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      );
-
-  Widget _buildForgotPasswordLink() => const Center(
-        child: Text(
-          "Quên mật khẩu?",
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      const Text("Chưa có tài khoản? "),
+      GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const CustomerRegisterScreen()),
+          );
+        },
+        child: const Text(
+          "Đăng ký",
           style: TextStyle(
             color: CustomerTheme.primaryColor,
+            fontWeight: FontWeight.bold,
           ),
         ),
-      );
+      ),
+    ],
+  );
+
+  Widget _buildForgotPasswordLink() => const Center(
+    child: Text(
+      "Quên mật khẩu?",
+      style: TextStyle(color: CustomerTheme.primaryColor),
+    ),
+  );
 
   String? _validatePhone(String? value) {
     if (value == null || value.isEmpty) {
@@ -208,11 +194,8 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     context.read<CustomerAuthBloc>().add(
-          CustomerLoginEvent(
-            _phoneController.text,
-            _passwordController.text,
-          ),
-        );
+      CustomerLoginEvent(_phoneController.text, _passwordController.text),
+    );
   }
 
   @override

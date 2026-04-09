@@ -18,11 +18,20 @@ class ShipperLoginRequested extends ShipperAuthEvent {
 }
 
 class ShipperRegisterRequested extends ShipperAuthEvent {
-  final Map<String, dynamic> registrationInfo;
-  const ShipperRegisterRequested({required this.registrationInfo});
+  final String phoneNumber;
+  final String password;
+  final String fullName;
+  final String? address;
+
+  const ShipperRegisterRequested({
+    required this.phoneNumber,
+    required this.password,
+    required this.fullName,
+    this.address,
+  });
 
   @override
-  List<Object?> get props => [registrationInfo];
+  List<Object?> get props => [phoneNumber, password, fullName, address];
 }
 
 class ShipperLogoutRequested extends ShipperAuthEvent {}

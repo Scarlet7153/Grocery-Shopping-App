@@ -25,16 +25,19 @@ class StatsCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buildItem(
+              context: context,
               icon: Icons.list_alt,
               label: 'Đơn hôm nay',
               value: orders.toString(),
             ),
             _buildItem(
+              context: context,
               icon: Icons.attach_money,
               label: 'Thu nhập',
               value: '${earnings.toStringAsFixed(0)}₫',
             ),
             _buildItem(
+              context: context,
               icon: Icons.star,
               label: 'Đánh giá',
               value: rating.toStringAsFixed(1),
@@ -46,6 +49,7 @@ class StatsCard extends StatelessWidget {
   }
 
   Widget _buildItem({
+    required BuildContext context,
     required IconData icon,
     required String label,
     required String value,
@@ -53,19 +57,33 @@ class StatsCard extends StatelessWidget {
     return Column(
       children: [
         Icon(icon, color: ShipperTheme.primaryColor, size: 28),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: ShipperTheme.primaryColor,
-          ),
+          style:
+              Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: ShipperTheme.primaryColor,
+              ) ??
+              const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: ShipperTheme.primaryColor,
+              ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(fontSize: 12, color: ShipperTheme.textColor),
+          style:
+              Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ) ??
+              TextStyle(
+                fontSize: 12,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
         ),
       ],
     );

@@ -58,7 +58,8 @@ OrderStatusType _orderStatusFromApi(String? s) {
   if (u == 'PENDING' || u == 'NEW') return OrderStatusType.newOrder;
   if (u == 'PROCESSING') return OrderStatusType.processing;
   if (u == 'SHIPPING') return OrderStatusType.shipping;
-  if (u == 'DELIVERED' || u == 'DONE' || u == 'COMPLETED') return OrderStatusType.done;
+  if (u == 'DELIVERED' || u == 'DONE' || u == 'COMPLETED')
+    return OrderStatusType.done;
   return OrderStatusType.newOrder;
 }
 
@@ -137,7 +138,12 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
     super.initState();
     context.read<StoreOrdersBloc>().add(LoadStoreOrders());
     _orderSearchController.addListener(() {
-      if (mounted) setState(() => _orderSearchQuery = _orderSearchController.text.trim().toLowerCase());
+      if (mounted)
+        setState(
+          () => _orderSearchQuery = _orderSearchController.text
+              .trim()
+              .toLowerCase(),
+        );
     });
   }
 
@@ -177,7 +183,10 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
 
   Future<void> _runCardAccept(_OrderData o) async {
     if (_cardLoadingOrderId != null) return;
-    setState(() { _cardLoadingOrderId = o.id; _cardLoadingAction = 'accept'; });
+    setState(() {
+      _cardLoadingOrderId = o.id;
+      _cardLoadingAction = 'accept';
+    });
     try {
       _acceptOrder(o.id);
       if (mounted) _showToast('Đơn đã được chấp nhận');
@@ -192,12 +201,19 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
         );
       }
     }
-    if (mounted) setState(() { _cardLoadingOrderId = null; _cardLoadingAction = null; });
+    if (mounted)
+      setState(() {
+        _cardLoadingOrderId = null;
+        _cardLoadingAction = null;
+      });
   }
 
   Future<void> _runCardReject(_OrderData o) async {
     if (_cardLoadingOrderId != null) return;
-    setState(() { _cardLoadingOrderId = o.id; _cardLoadingAction = 'reject'; });
+    setState(() {
+      _cardLoadingOrderId = o.id;
+      _cardLoadingAction = 'reject';
+    });
     try {
       _rejectOrder(o.id);
       if (mounted) _showToast('Đơn đã bị từ chối');
@@ -212,12 +228,19 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
         );
       }
     }
-    if (mounted) setState(() { _cardLoadingOrderId = null; _cardLoadingAction = null; });
+    if (mounted)
+      setState(() {
+        _cardLoadingOrderId = null;
+        _cardLoadingAction = null;
+      });
   }
 
   Future<void> _runCardMarkReady(_OrderData o) async {
     if (_cardLoadingOrderId != null) return;
-    setState(() { _cardLoadingOrderId = o.id; _cardLoadingAction = 'markReady'; });
+    setState(() {
+      _cardLoadingOrderId = o.id;
+      _cardLoadingAction = 'markReady';
+    });
     try {
       _updateOrderStatus(o.id, OrderStatusType.shipping);
       if (mounted) _showToast('Đã cập nhật trạng thái');
@@ -232,7 +255,11 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
         );
       }
     }
-    if (mounted) setState(() { _cardLoadingOrderId = null; _cardLoadingAction = null; });
+    if (mounted)
+      setState(() {
+        _cardLoadingOrderId = null;
+        _cardLoadingAction = null;
+      });
   }
 
   void _showOrderDetailModal(BuildContext context, _OrderData order) {
@@ -286,11 +313,18 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
       builder: (ctx) => Container(
         decoration: const BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(kRadiusLarge + 4)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(kRadiusLarge + 4),
+          ),
         ),
         child: SafeArea(
           child: Padding(
-            padding: EdgeInsets.fromLTRB(kPaddingLarge, kPaddingMedium, kPaddingLarge, kPaddingLarge + 8),
+            padding: const EdgeInsets.fromLTRB(
+              kPaddingLarge,
+              kPaddingMedium,
+              kPaddingLarge,
+              kPaddingLarge + 8,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -308,7 +342,11 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
                 ),
                 Text(
                   'Cập nhật trạng thái đơn ${order.id}',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A)),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A1A1A),
+                  ),
                 ),
                 const SizedBox(height: kSectionSpacing),
                 _StatusOption(
@@ -353,13 +391,21 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
       case _FilterTab.all:
         return orders;
       case _FilterTab.newOrder:
-        return orders.where((o) => o.statusType == OrderStatusType.newOrder).toList();
+        return orders
+            .where((o) => o.statusType == OrderStatusType.newOrder)
+            .toList();
       case _FilterTab.processing:
-        return orders.where((o) => o.statusType == OrderStatusType.processing).toList();
+        return orders
+            .where((o) => o.statusType == OrderStatusType.processing)
+            .toList();
       case _FilterTab.shipping:
-        return orders.where((o) => o.statusType == OrderStatusType.shipping).toList();
+        return orders
+            .where((o) => o.statusType == OrderStatusType.shipping)
+            .toList();
       case _FilterTab.done:
-        return orders.where((o) => o.statusType == OrderStatusType.done).toList();
+        return orders
+            .where((o) => o.statusType == OrderStatusType.done)
+            .toList();
     }
   }
 
@@ -372,7 +418,13 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
       if (datePart.length < 2) return null;
       final day = int.tryParse(datePart[0]);
       final month = int.tryParse(datePart[1]);
-      if (day == null || month == null || month < 1 || month > 12 || day < 1 || day > 31) return null;
+      if (day == null ||
+          month == null ||
+          month < 1 ||
+          month > 12 ||
+          day < 1 ||
+          day > 31)
+        return null;
       final now = DateTime.now();
       return DateTime(now.year, month, day);
     } catch (_) {
@@ -406,12 +458,21 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
   List<_OrderData> _filteredOrders(List<_OrderData> orders) {
     var list = _ordersByTimeFilter(orders);
     if (_orderSearchQuery.isEmpty) return list;
-    return list.where((o) =>
-        o.id.toLowerCase().contains(_orderSearchQuery) ||
-        o.customerName.toLowerCase().contains(_orderSearchQuery)).toList();
+    return list
+        .where(
+          (o) =>
+              o.id.toLowerCase().contains(_orderSearchQuery) ||
+              o.customerName.toLowerCase().contains(_orderSearchQuery),
+        )
+        .toList();
   }
 
-  static const _statusOrder = [OrderStatusType.newOrder, OrderStatusType.processing, OrderStatusType.shipping, OrderStatusType.done];
+  static const _statusOrder = [
+    OrderStatusType.newOrder,
+    OrderStatusType.processing,
+    OrderStatusType.shipping,
+    OrderStatusType.done,
+  ];
   static const _statusLabels = {
     OrderStatusType.newOrder: 'Đơn mới',
     OrderStatusType.processing: 'Đang chuẩn bị',
@@ -423,10 +484,18 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
     final filtered = _filteredOrders(orders);
     if (filtered.isEmpty) return 1;
     final byStatus = <OrderStatusType, List<_OrderData>>{
-      OrderStatusType.newOrder: filtered.where((o) => o.statusType == OrderStatusType.newOrder).toList(),
-      OrderStatusType.processing: filtered.where((o) => o.statusType == OrderStatusType.processing).toList(),
-      OrderStatusType.shipping: filtered.where((o) => o.statusType == OrderStatusType.shipping).toList(),
-      OrderStatusType.done: filtered.where((o) => o.statusType == OrderStatusType.done).toList(),
+      OrderStatusType.newOrder: filtered
+          .where((o) => o.statusType == OrderStatusType.newOrder)
+          .toList(),
+      OrderStatusType.processing: filtered
+          .where((o) => o.statusType == OrderStatusType.processing)
+          .toList(),
+      OrderStatusType.shipping: filtered
+          .where((o) => o.statusType == OrderStatusType.shipping)
+          .toList(),
+      OrderStatusType.done: filtered
+          .where((o) => o.statusType == OrderStatusType.done)
+          .toList(),
     };
     int count = 0;
     for (final status in _statusOrder) {
@@ -439,21 +508,36 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
     return count > 0 ? count : 1;
   }
 
-  Widget _orderListItemAt(BuildContext context, int index, List<_OrderData> orders) {
+  Widget _orderListItemAt(
+    BuildContext context,
+    int index,
+    List<_OrderData> orders,
+  ) {
     final filtered = _filteredOrders(orders);
     if (filtered.isEmpty) {
       return const Padding(
         padding: EdgeInsets.only(top: 40),
         child: Center(
-          child: Text('Chưa có đơn hàng nào', style: TextStyle(fontSize: 15, color: Colors.grey)),
+          child: Text(
+            'Chưa có đơn hàng nào',
+            style: TextStyle(fontSize: 15, color: Colors.grey),
+          ),
         ),
       );
     }
     final byStatus = <OrderStatusType, List<_OrderData>>{
-      OrderStatusType.newOrder: filtered.where((o) => o.statusType == OrderStatusType.newOrder).toList(),
-      OrderStatusType.processing: filtered.where((o) => o.statusType == OrderStatusType.processing).toList(),
-      OrderStatusType.shipping: filtered.where((o) => o.statusType == OrderStatusType.shipping).toList(),
-      OrderStatusType.done: filtered.where((o) => o.statusType == OrderStatusType.done).toList(),
+      OrderStatusType.newOrder: filtered
+          .where((o) => o.statusType == OrderStatusType.newOrder)
+          .toList(),
+      OrderStatusType.processing: filtered
+          .where((o) => o.statusType == OrderStatusType.processing)
+          .toList(),
+      OrderStatusType.shipping: filtered
+          .where((o) => o.statusType == OrderStatusType.shipping)
+          .toList(),
+      OrderStatusType.done: filtered
+          .where((o) => o.statusType == OrderStatusType.done)
+          .toList(),
     };
     int idx = 0;
     for (final status in _statusOrder) {
@@ -462,7 +546,8 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
       if (_filter == _FilterTab.all && idx > 0) {
         if (index == idx) return const SizedBox(height: 24);
         idx++;
-        if (index == idx) return Divider(height: 1, color: Colors.grey.shade300);
+        if (index == idx)
+          return Divider(height: 1, color: Colors.grey.shade300);
         idx++;
         if (index == idx) return const SizedBox(height: 24);
         idx++;
@@ -473,7 +558,11 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
               _statusLabels[status]!,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF1A1A1A)),
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1A1A1A),
+              ),
             ),
           );
         }
@@ -482,23 +571,33 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
       for (var i = 0; i < group.length; i++) {
         final o = group[i];
         if (index == idx) {
-          final cardLoadingAccept = _cardLoadingOrderId == o.id && _cardLoadingAction == 'accept';
-          final cardLoadingReject = _cardLoadingOrderId == o.id && _cardLoadingAction == 'reject';
-          final cardLoadingMarkReady = _cardLoadingOrderId == o.id && _cardLoadingAction == 'markReady';
+          final cardLoadingAccept =
+              _cardLoadingOrderId == o.id && _cardLoadingAction == 'accept';
+          final cardLoadingReject =
+              _cardLoadingOrderId == o.id && _cardLoadingAction == 'reject';
+          final cardLoadingMarkReady =
+              _cardLoadingOrderId == o.id && _cardLoadingAction == 'markReady';
           return _OrderCard(
             order: o,
             onTap: () => _showOrderDetailModal(context, o),
             onUpdateStatus: () => _showUpdateStatusSheet(context, o),
-            onMarkReady: o.statusType == OrderStatusType.processing ? () => _runCardMarkReady(o) : null,
-            onAccept: o.statusType == OrderStatusType.newOrder ? () => _runCardAccept(o) : null,
-            onReject: o.statusType == OrderStatusType.newOrder ? () => _runCardReject(o) : null,
+            onMarkReady: o.statusType == OrderStatusType.processing
+                ? () => _runCardMarkReady(o)
+                : null,
+            onAccept: o.statusType == OrderStatusType.newOrder
+                ? () => _runCardAccept(o)
+                : null,
+            onReject: o.statusType == OrderStatusType.newOrder
+                ? () => _runCardReject(o)
+                : null,
             loadingAccept: cardLoadingAccept,
             loadingReject: cardLoadingReject,
             loadingMarkReady: cardLoadingMarkReady,
           );
         }
         idx++;
-        if (i < group.length - 1 && index == idx) return const SizedBox(height: kCardPadding);
+        if (i < group.length - 1 && index == idx)
+          return const SizedBox(height: kCardPadding);
         if (i < group.length - 1) idx++;
       }
     }
@@ -550,144 +649,186 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Padding(
-                      padding: EdgeInsets.fromLTRB(kPaddingLarge, kPaddingMedium, kPaddingLarge, 0),
+                      padding: const EdgeInsets.fromLTRB(
+                        kPaddingLarge,
+                        kPaddingMedium,
+                        kPaddingLarge,
+                        0,
+                      ),
                       child: TextField(
                         controller: _orderSearchController,
                         decoration: InputDecoration(
                           hintText: 'Tìm đơn hàng...',
-                          prefixIcon: const Icon(Icons.search_rounded, color: _kPrimary, size: kIconSizeMedium),
+                          prefixIcon: const Icon(
+                            Icons.search_rounded,
+                            color: _kPrimary,
+                            size: kIconSizeMedium,
+                          ),
                           filled: true,
                           fillColor: Colors.white,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(kRadiusMedium),
                             borderSide: BorderSide(color: Colors.grey.shade300),
                           ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                         ),
                       ),
                     ),
-              const SizedBox(height: 12),
-              Padding(
-                padding: EdgeInsets.fromLTRB(kPaddingLarge, 0, kPaddingLarge, 0),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _FilterChip(
-                        label: 'Tất cả',
-                        selected: _filter == _FilterTab.all,
-                        onTap: () => setState(() => _filter = _FilterTab.all),
+                    const SizedBox(height: 12),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        kPaddingLarge,
+                        0,
+                        kPaddingLarge,
+                        0,
                       ),
-                      const SizedBox(width: 10),
-                      _FilterChip(
-                        label: 'Đơn mới',
-                        selected: _filter == _FilterTab.newOrder,
-                        onTap: () => setState(() => _filter = _FilterTab.newOrder),
-                      ),
-                      const SizedBox(width: 10),
-                      _FilterChip(
-                        label: 'Đang chuẩn bị',
-                        selected: _filter == _FilterTab.processing,
-                        onTap: () => setState(() => _filter = _FilterTab.processing),
-                      ),
-                      const SizedBox(width: 10),
-                      _FilterChip(
-                        label: 'Đang giao',
-                        selected: _filter == _FilterTab.shipping,
-                        onTap: () => setState(() => _filter = _FilterTab.shipping),
-                      ),
-                      const SizedBox(width: 10),
-                      _FilterChip(
-                        label: 'Hoàn thành',
-                        selected: _filter == _FilterTab.done,
-                        onTap: () => setState(() => _filter = _FilterTab.done),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Padding(
-                padding: EdgeInsets.fromLTRB(kPaddingLarge, 0, kPaddingLarge, 0),
-                child: Row(
-                  children: [
-                    Text(
-                      'Thời gian: ',
-                      style: TextStyle(fontSize: 13, color: Colors.grey.shade700, fontWeight: FontWeight.w500),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
                       child: SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Row(
                           children: [
                             _FilterChip(
                               label: 'Tất cả',
-                              selected: _timeFilter == _TimeFilter.all,
-                              onTap: () => setState(() => _timeFilter = _TimeFilter.all),
+                              selected: _filter == _FilterTab.all,
+                              onTap: () =>
+                                  setState(() => _filter = _FilterTab.all),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 10),
                             _FilterChip(
-                              label: 'Hôm nay',
-                              selected: _timeFilter == _TimeFilter.today,
-                              onTap: () => setState(() => _timeFilter = _TimeFilter.today),
+                              label: 'Đơn mới',
+                              selected: _filter == _FilterTab.newOrder,
+                              onTap: () =>
+                                  setState(() => _filter = _FilterTab.newOrder),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 10),
                             _FilterChip(
-                              label: '7 ngày',
-                              selected: _timeFilter == _TimeFilter.last7,
-                              onTap: () => setState(() => _timeFilter = _TimeFilter.last7),
+                              label: 'Đang chuẩn bị',
+                              selected: _filter == _FilterTab.processing,
+                              onTap: () => setState(
+                                () => _filter = _FilterTab.processing,
+                              ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 10),
                             _FilterChip(
-                              label: '30 ngày',
-                              selected: _timeFilter == _TimeFilter.last30,
-                              onTap: () => setState(() => _timeFilter = _TimeFilter.last30),
+                              label: 'Đang giao',
+                              selected: _filter == _FilterTab.shipping,
+                              onTap: () =>
+                                  setState(() => _filter = _FilterTab.shipping),
+                            ),
+                            const SizedBox(width: 10),
+                            _FilterChip(
+                              label: 'Hoàn thành',
+                              selected: _filter == _FilterTab.done,
+                              onTap: () =>
+                                  setState(() => _filter = _FilterTab.done),
                             ),
                           ],
                         ),
                       ),
                     ),
+                    const SizedBox(height: 10),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        kPaddingLarge,
+                        0,
+                        kPaddingLarge,
+                        0,
+                      ),
+                      child: Row(
+                        children: [
+                          Text(
+                            'Thời gian: ',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey.shade700,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  _FilterChip(
+                                    label: 'Tất cả',
+                                    selected: _timeFilter == _TimeFilter.all,
+                                    onTap: () => setState(
+                                      () => _timeFilter = _TimeFilter.all,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _FilterChip(
+                                    label: 'Hôm nay',
+                                    selected: _timeFilter == _TimeFilter.today,
+                                    onTap: () => setState(
+                                      () => _timeFilter = _TimeFilter.today,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _FilterChip(
+                                    label: '7 ngày',
+                                    selected: _timeFilter == _TimeFilter.last7,
+                                    onTap: () => setState(
+                                      () => _timeFilter = _TimeFilter.last7,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _FilterChip(
+                                    label: '30 ngày',
+                                    selected: _timeFilter == _TimeFilter.last30,
+                                    onTap: () => setState(
+                                      () => _timeFilter = _TimeFilter.last30,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Expanded(
+                      child: isLoading
+                          ? ListView.builder(
+                              padding: EdgeInsets.fromLTRB(
+                                kPaddingLarge,
+                                0,
+                                kPaddingLarge,
+                                isWide ? 32 : 28,
+                              ),
+                              itemCount: 8,
+                              itemBuilder: (context, index) => Padding(
+                                padding: EdgeInsets.only(
+                                  bottom: index < 7 ? kCardPadding : 0,
+                                ),
+                                child: const _OrderCardSkeleton(),
+                              ),
+                            )
+                          : ListView.builder(
+                              padding: EdgeInsets.fromLTRB(
+                                kPaddingLarge,
+                                0,
+                                kPaddingLarge,
+                                isWide ? 32 : 28,
+                              ),
+                              itemCount: _orderListItemCount(orders),
+                              itemBuilder: (context, index) =>
+                                  _orderListItemAt(context, index, orders),
+                            ),
+                    ),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
-              Expanded(
-                child: isLoading
-                    ? ListView.builder(
-                        padding: EdgeInsets.fromLTRB(
-                          kPaddingLarge,
-                          0,
-                          kPaddingLarge,
-                          isWide ? 32 : 28,
-                        ),
-                        itemCount: 8,
-                        itemBuilder: (context, index) => Padding(
-                          padding: EdgeInsets.only(bottom: index < 7 ? kCardPadding : 0),
-                          child: const _OrderCardSkeleton(),
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: EdgeInsets.fromLTRB(
-                          kPaddingLarge,
-                          0,
-                          kPaddingLarge,
-                          isWide ? 32 : 28,
-                        ),
-                        itemCount: _orderListItemCount(orders),
-                        itemBuilder: (context, index) => _orderListItemAt(context, index, orders),
-                      ),
-              ),
-            ],
-          ),
-        ),
-      ),
-        );
+            ),
+          );
         },
       ),
     );
   }
-
 }
 
 class _FilterChip extends StatelessWidget {
@@ -695,7 +836,11 @@ class _FilterChip extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  const _FilterChip({required this.label, required this.selected, required this.onTap});
+  const _FilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -713,7 +858,15 @@ class _FilterChip extends StatelessWidget {
               color: selected ? _kPrimary : Colors.grey.shade300,
               width: 1,
             ),
-            boxShadow: selected ? null : [BoxShadow(color: _kCardShadow, blurRadius: 8, offset: const Offset(0, 2))],
+            boxShadow: selected
+                ? null
+                : [
+                    const BoxShadow(
+                      color: _kCardShadow,
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
           ),
           child: Text(
             label,
@@ -735,7 +888,12 @@ class _StatusOption extends StatelessWidget {
   final OrderStatusType current;
   final VoidCallback onTap;
 
-  const _StatusOption({required this.label, required this.type, required this.current, required this.onTap});
+  const _StatusOption({
+    required this.label,
+    required this.type,
+    required this.current,
+    required this.onTap,
+  });
 
   IconData get _icon {
     switch (type) {
@@ -773,9 +931,14 @@ class _StatusOption extends StatelessWidget {
         borderRadius: BorderRadius.circular(kRadiusMedium),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 120),
-          padding: const EdgeInsets.symmetric(horizontal: kCardPadding, vertical: 14),
+          padding: const EdgeInsets.symmetric(
+            horizontal: kCardPadding,
+            vertical: 14,
+          ),
           decoration: BoxDecoration(
-            color: isSelected ? _color.withValues(alpha: 0.1) : Colors.grey.shade50,
+            color: isSelected
+                ? _color.withValues(alpha: 0.1)
+                : Colors.grey.shade50,
             borderRadius: BorderRadius.circular(kRadiusMedium),
             border: Border.all(
               color: isSelected ? _color : Colors.grey.shade200,
@@ -819,7 +982,10 @@ class _OrderCardSkeleton extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(kRadiusLarge),
-        border: Border.all(color: Colors.grey.shade200.withValues(alpha: 0.6), width: 1),
+        border: Border.all(
+          color: Colors.grey.shade200.withValues(alpha: 0.6),
+          width: 1,
+        ),
       ),
       child: Row(
         children: [
@@ -939,7 +1105,9 @@ class _OrderCardState extends State<_OrderCard> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(kRadiusLarge),
         border: Border.all(
-          color: _hover ? _kPrimary.withValues(alpha: 0.25) : Colors.grey.shade200.withValues(alpha: 0.6),
+          color: _hover
+              ? _kPrimary.withValues(alpha: 0.25)
+              : Colors.grey.shade200.withValues(alpha: 0.6),
           width: 1,
         ),
         boxShadow: [
@@ -960,7 +1128,11 @@ class _OrderCardState extends State<_OrderCard> {
                     color: _statusColor(o.statusType).withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(kRadiusMedium),
                   ),
-                  child: Icon(_orderStatusIcon(o.statusType), color: _statusColor(o.statusType), size: kIconSizeMedium),
+                  child: Icon(
+                    _orderStatusIcon(o.statusType),
+                    color: _statusColor(o.statusType),
+                    size: kIconSizeMedium,
+                  ),
                 ),
                 const SizedBox(width: kCardPadding),
                 Expanded(
@@ -995,26 +1167,49 @@ class _OrderCardState extends State<_OrderCard> {
                 ),
                 _StatusChip(label: o.status, color: _statusColor(o.statusType)),
                 const SizedBox(width: 8),
-                if (o.statusType == OrderStatusType.processing && widget.onMarkReady != null)
+                if (o.statusType == OrderStatusType.processing &&
+                    widget.onMarkReady != null)
                   Padding(
                     padding: const EdgeInsets.only(right: 4),
                     child: TextButton(
-                      onPressed: widget.loadingMarkReady ? null : widget.onMarkReady,
+                      onPressed: widget.loadingMarkReady
+                          ? null
+                          : widget.onMarkReady,
                       style: TextButton.styleFrom(
                         backgroundColor: _kPrimary,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         minimumSize: Size.zero,
                       ),
                       child: widget.loadingMarkReady
-                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : const Text('Chuẩn bị xong', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'Chuẩn bị xong',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                     ),
                   ),
                 if (widget.onUpdateStatus != null)
                   IconButton(
                     onPressed: widget.onUpdateStatus,
-                    icon: const Icon(Icons.edit_rounded, size: kIconSizeSmall, color: _kPrimary),
+                    icon: const Icon(
+                      Icons.edit_rounded,
+                      size: kIconSizeSmall,
+                      color: _kPrimary,
+                    ),
                     tooltip: 'Cập nhật trạng thái',
                   ),
               ],
@@ -1027,10 +1222,7 @@ class _OrderCardState extends State<_OrderCard> {
         child: content,
       );
     }
-    return ScaleOnTap(
-      onTap: widget.onTap,
-      child: content,
-    );
+    return ScaleOnTap(onTap: widget.onTap, child: content);
   }
 
   /// Thẻ đơn mới: Mã đơn, Tên khách hàng, Tổng tiền, [Chấp nhận đơn] [Từ chối]
@@ -1048,7 +1240,11 @@ class _OrderCardState extends State<_OrderCard> {
                 color: color.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(kRadiusMedium),
               ),
-              child: Icon(_orderStatusIcon(OrderStatusType.newOrder), color: color, size: kIconSizeMedium),
+              child: Icon(
+                _orderStatusIcon(OrderStatusType.newOrder),
+                color: color,
+                size: kIconSizeMedium,
+              ),
             ),
             const SizedBox(width: kCardPadding),
             Expanded(
@@ -1072,7 +1268,11 @@ class _OrderCardState extends State<_OrderCard> {
                       const SizedBox(height: 4),
                       Text(
                         o.customerName,
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.grey.shade700),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey.shade700,
+                        ),
                       ),
                     ],
                     const SizedBox(height: 6),
@@ -1096,33 +1296,53 @@ class _OrderCardState extends State<_OrderCard> {
             if (widget.onAccept != null)
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: (widget.loadingAccept || widget.loadingReject) ? null : widget.onAccept,
+                  onPressed: (widget.loadingAccept || widget.loadingReject)
+                      ? null
+                      : widget.onAccept,
                   icon: widget.loadingAccept
-                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
                       : const Icon(Icons.check_circle_rounded, size: 18),
                   label: const Text('Chấp nhận đơn'),
                   style: FilledButton.styleFrom(
                     backgroundColor: _kPrimary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusMedium)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(kRadiusMedium),
+                    ),
                   ),
                 ),
               ),
-            if (widget.onAccept != null && widget.onReject != null) const SizedBox(width: 10),
+            if (widget.onAccept != null && widget.onReject != null)
+              const SizedBox(width: 10),
             if (widget.onReject != null)
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: (widget.loadingAccept || widget.loadingReject) ? null : widget.onReject,
+                  onPressed: (widget.loadingAccept || widget.loadingReject)
+                      ? null
+                      : widget.onReject,
                   icon: widget.loadingReject
-                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
                       : const Icon(Icons.cancel_rounded, size: 18),
                   label: const Text('Từ chối'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.grey.shade700,
                     side: BorderSide(color: Colors.grey.shade400),
                     padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusMedium)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(kRadiusMedium),
+                    ),
                   ),
                 ),
               ),
@@ -1251,10 +1471,14 @@ class _OrderDetailSheetState extends State<_OrderDetailSheet> {
     final order = widget.order;
     final statusColor = _statusColor(order.statusType);
     return Container(
-      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
+      ),
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(kRadiusLarge + 4)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(kRadiusLarge + 4),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1263,7 +1487,10 @@ class _OrderDetailSheetState extends State<_OrderDetailSheet> {
             child: Container(
               width: 40,
               height: 4,
-              margin: const EdgeInsets.only(top: kPaddingMedium, bottom: kCardPadding),
+              margin: const EdgeInsets.only(
+                top: kPaddingMedium,
+                bottom: kCardPadding,
+              ),
               decoration: BoxDecoration(
                 color: Colors.grey.shade300,
                 borderRadius: BorderRadius.circular(2),
@@ -1272,7 +1499,12 @@ class _OrderDetailSheetState extends State<_OrderDetailSheet> {
           ),
           Flexible(
             child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(kPaddingLarge, 0, kPaddingLarge, kPaddingLarge),
+              padding: const EdgeInsets.fromLTRB(
+                kPaddingLarge,
+                0,
+                kPaddingLarge,
+                kPaddingLarge,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1280,32 +1512,74 @@ class _OrderDetailSheetState extends State<_OrderDetailSheet> {
                     children: [
                       Text(
                         'Đơn ${order.id}',
-                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1A1A1A)),
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1A1A1A),
+                        ),
                       ),
                       const Spacer(),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: statusColor.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(kRadiusMedium),
-                          border: Border.all(color: statusColor.withValues(alpha: 0.4), width: 1),
+                          border: Border.all(
+                            color: statusColor.withValues(alpha: 0.4),
+                            width: 1,
+                          ),
                         ),
-                        child: Text(order.status, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: statusColor)),
+                        child: Text(
+                          order.status,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: statusColor,
+                          ),
+                        ),
                       ),
                     ],
                   ),
                   if (order.createdAt.isNotEmpty) ...[
                     const SizedBox(height: 6),
-                    _DetailRow(icon: Icons.schedule_rounded, label: 'Thời gian đặt: ${order.createdAt}'),
+                    _DetailRow(
+                      icon: Icons.schedule_rounded,
+                      label: 'Thời gian đặt: ${order.createdAt}',
+                    ),
                   ],
                   const SizedBox(height: kSectionSpacing),
-                  Text('Thông tin khách hàng', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+                  Text(
+                    'Thông tin khách hàng',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
                   const SizedBox(height: 8),
-                  _DetailRow(icon: Icons.person_rounded, label: order.customerName),
-                  if (order.phone.isNotEmpty) _DetailRow(icon: Icons.phone_rounded, label: order.phone),
-                  if (order.address.isNotEmpty) _DetailRow(icon: Icons.location_on_rounded, label: order.address),
+                  _DetailRow(
+                    icon: Icons.person_rounded,
+                    label: order.customerName,
+                  ),
+                  if (order.phone.isNotEmpty)
+                    _DetailRow(icon: Icons.phone_rounded, label: order.phone),
+                  if (order.address.isNotEmpty)
+                    _DetailRow(
+                      icon: Icons.location_on_rounded,
+                      label: order.address,
+                    ),
                   const SizedBox(height: kSectionSpacing),
-                  Text('Danh sách sản phẩm', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+                  Text(
+                    'Danh sách sản phẩm',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Container(
                     decoration: BoxDecoration(
@@ -1317,13 +1591,38 @@ class _OrderDetailSheetState extends State<_OrderDetailSheet> {
                       children: [
                         for (final item in order.items)
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: kCardPadding, vertical: 10),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: kCardPadding,
+                              vertical: 10,
+                            ),
                             child: Row(
                               children: [
-                                Expanded(child: Text(item.name, style: const TextStyle(fontSize: 14, color: Color(0xFF1A1A1A)))),
-                                Text('x${item.qty}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+                                Expanded(
+                                  child: Text(
+                                    item.name,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Color(0xFF1A1A1A),
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  'x${item.qty}',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey.shade700,
+                                  ),
+                                ),
                                 const SizedBox(width: 12),
-                                Text(item.price, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: _kPrimary)),
+                                Text(
+                                  item.price,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: _kPrimary,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -1334,27 +1633,69 @@ class _OrderDetailSheetState extends State<_OrderDetailSheet> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      const Text('Tổng tiền: ', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF1A1A1A))),
-                      Text(order.amount, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: _kPrimary)),
+                      const Text(
+                        'Tổng tiền: ',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1A1A1A),
+                        ),
+                      ),
+                      Text(
+                        order.amount,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: _kPrimary,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: kSectionSpacing),
-                  Text('Trạng thái đơn', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+                  Text(
+                    'Trạng thái đơn',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   for (int i = 0; i < order.statusHistory.length; i++) ...[
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(i == order.statusHistory.length - 1 ? Icons.check_circle_rounded : Icons.radio_button_checked_rounded,
-                            size: 18, color: _kPrimary),
+                        Icon(
+                          i == order.statusHistory.length - 1
+                              ? Icons.check_circle_rounded
+                              : Icons.radio_button_checked_rounded,
+                          size: 18,
+                          color: _kPrimary,
+                        ),
                         const SizedBox(width: 10),
-                        Expanded(child: Text(order.statusHistory[i], style: TextStyle(fontSize: 14, color: Colors.grey.shade800))),
+                        Expanded(
+                          child: Text(
+                            order.statusHistory[i],
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade800,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                    if (i < order.statusHistory.length - 1) const SizedBox(height: 6),
+                    if (i < order.statusHistory.length - 1)
+                      const SizedBox(height: 6),
                   ],
                   const SizedBox(height: kSectionSpacing),
-                  Text('Cập nhật trạng thái', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade700)),
+                  Text(
+                    'Cập nhật trạng thái',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
                   const SizedBox(height: 12),
                   _OrderDetailActions(
                     order: order,
@@ -1363,10 +1704,18 @@ class _OrderDetailSheetState extends State<_OrderDetailSheet> {
                     loadingMarkReady: _loadingMarkReady,
                     loadingMarkDelivered: _loadingMarkDelivered,
                     onClose: widget.onClose,
-                    onAccept: widget.onAccept != null ? () => _runAccept() : null,
-                    onReject: widget.onReject != null ? () => _runReject() : null,
-                    onMarkReady: widget.onMarkReady != null ? () => _runMarkReady() : null,
-                    onMarkDelivered: widget.onMarkDelivered != null ? () => _runMarkDelivered() : null,
+                    onAccept: widget.onAccept != null
+                        ? () => _runAccept()
+                        : null,
+                    onReject: widget.onReject != null
+                        ? () => _runReject()
+                        : null,
+                    onMarkReady: widget.onMarkReady != null
+                        ? () => _runMarkReady()
+                        : null,
+                    onMarkDelivered: widget.onMarkDelivered != null
+                        ? () => _runMarkDelivered()
+                        : null,
                   ),
                 ],
               ),
@@ -1409,7 +1758,11 @@ class _OrderDetailActions extends StatelessWidget {
     final isNewOrder = order.statusType == OrderStatusType.newOrder;
     final isProcessing = order.statusType == OrderStatusType.processing;
     final isShipping = order.statusType == OrderStatusType.shipping;
-    final anyLoading = loadingAccept || loadingReject || loadingMarkReady || loadingMarkDelivered;
+    final anyLoading =
+        loadingAccept ||
+        loadingReject ||
+        loadingMarkReady ||
+        loadingMarkDelivered;
 
     return Row(
       children: [
@@ -1419,7 +1772,9 @@ class _OrderDetailActions extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
               side: BorderSide(color: Colors.grey.shade400),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusMedium)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(kRadiusMedium),
+              ),
             ),
             child: const Text('Đóng'),
           ),
@@ -1430,13 +1785,19 @@ class _OrderDetailActions extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: anyLoading ? null : onReject,
               icon: loadingReject
-                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Icon(Icons.cancel_rounded, size: 18),
               label: const Text('Từ chối'),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 side: BorderSide(color: Colors.grey.shade400),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusMedium)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(kRadiusMedium),
+                ),
               ),
             ),
           ),
@@ -1445,14 +1806,23 @@ class _OrderDetailActions extends StatelessWidget {
             child: FilledButton.icon(
               onPressed: anyLoading ? null : onAccept,
               icon: loadingAccept
-                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
                   : const Icon(Icons.check_circle_rounded, size: 18),
               label: const Text('Chấp nhận đơn'),
               style: FilledButton.styleFrom(
                 backgroundColor: _kPrimary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusMedium)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(kRadiusMedium),
+                ),
               ),
             ),
           ),
@@ -1461,14 +1831,23 @@ class _OrderDetailActions extends StatelessWidget {
             child: FilledButton.icon(
               onPressed: anyLoading ? null : onMarkReady,
               icon: loadingMarkReady
-                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
                   : const Icon(Icons.check_rounded, size: 18),
               label: const Text('Chuẩn bị xong'),
               style: FilledButton.styleFrom(
                 backgroundColor: _kPrimary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusMedium)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(kRadiusMedium),
+                ),
               ),
             ),
           ),
@@ -1477,14 +1856,23 @@ class _OrderDetailActions extends StatelessWidget {
             child: FilledButton.icon(
               onPressed: anyLoading ? null : onMarkDelivered,
               icon: loadingMarkDelivered
-                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
                   : const Icon(Icons.local_shipping_rounded, size: 18),
               label: const Text('Đã giao thành công'),
               style: FilledButton.styleFrom(
                 backgroundColor: _kPrimary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusMedium)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(kRadiusMedium),
+                ),
               ),
             ),
           ),
@@ -1509,7 +1897,12 @@ class _DetailRow extends StatelessWidget {
         children: [
           Icon(icon, size: 18, color: Colors.grey.shade600),
           const SizedBox(width: 10),
-          Expanded(child: Text(label, style: const TextStyle(fontSize: 14, color: Color(0xFF1A1A1A)))),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 14, color: Color(0xFF1A1A1A)),
+            ),
+          ),
         ],
       ),
     );

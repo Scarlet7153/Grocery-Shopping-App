@@ -229,8 +229,8 @@ class RoleColorHelper {
 
   /// Get automatic text color based on background color
   static Color getTextColorForBackground(Color backgroundColor) {
-    return isDarkColor(backgroundColor) 
-        ? AppColors.textOnDark 
+    return isDarkColor(backgroundColor)
+        ? AppColors.textOnDark
         : AppColors.textPrimary;
   }
 }

@@ -23,16 +23,14 @@ class AuthAuthenticated extends AuthState {
   final UserModel user;
   final String token;
 
-  const AuthAuthenticated({
-    required this.user,
-    required this.token,
-  });
+  const AuthAuthenticated({required this.user, required this.token});
 
   @override
   List<Object> get props => [user, token];
 
   @override
-  String toString() => 'AuthAuthenticated { user: ${user.fullName}, role: ${user.role.name} }'; // Sửa từ user.name thành user.fullName
+  String toString() =>
+      'AuthAuthenticated { user: ${user.fullName}, role: ${user.role.name} }'; // Sửa từ user.name thành user.fullName
 
   /// Convenience getters
   String get userId => user.id;
@@ -50,11 +48,23 @@ class AuthAuthenticated extends AuthState {
     // Implementation based on user role
     switch (user.role) {
       case UserRole.customer:
-        return ['view_products', 'create_order', 'view_orders'].contains(permission);
+        return [
+          'view_products',
+          'create_order',
+          'view_orders',
+        ].contains(permission);
       case UserRole.store:
-        return ['manage_inventory', 'view_store_orders', 'manage_products'].contains(permission);
+        return [
+          'manage_inventory',
+          'view_store_orders',
+          'manage_products',
+        ].contains(permission);
       case UserRole.shipper:
-        return ['view_available_orders', 'accept_delivery', 'update_delivery_status'].contains(permission);
+        return [
+          'view_available_orders',
+          'accept_delivery',
+          'update_delivery_status',
+        ].contains(permission);
       case UserRole.admin:
         return true; // Admin has all permissions
     }
@@ -66,10 +76,7 @@ class AuthError extends AuthState {
   final String message;
   final String? errorCode;
 
-  const AuthError({
-    required this.message,
-    this.errorCode,
-  });
+  const AuthError({required this.message, this.errorCode});
 
   @override
   List<Object?> get props => [message, errorCode];
@@ -131,10 +138,7 @@ class AuthRegistrationError extends AuthState {
   final String message;
   final Map<String, dynamic>? validationErrors;
 
-  const AuthRegistrationError({
-    required this.message,
-    this.validationErrors,
-  });
+  const AuthRegistrationError({required this.message, this.validationErrors});
 
   @override
   List<Object?> get props => [message, validationErrors];
@@ -145,7 +149,8 @@ class AuthRegistrationError extends AuthState {
   }
 
   /// Check if has validation errors
-  bool get hasValidationErrors => validationErrors != null && validationErrors!.isNotEmpty;
+  bool get hasValidationErrors =>
+      validationErrors != null && validationErrors!.isNotEmpty;
 }
 
 /// Password reset states
@@ -198,7 +203,9 @@ class AuthOtpError extends AuthState {
 class AuthSessionExpired extends AuthState {
   final String message;
 
-  const AuthSessionExpired({this.message = 'Session expired. Please login again.'});
+  const AuthSessionExpired({
+    this.message = 'Session expired. Please login again.',
+  });
 
   @override
   List<Object> get props => [message];
@@ -236,19 +243,21 @@ extension AuthStateExtensions on AuthState {
   bool get isAuthenticated => this is AuthAuthenticated;
 
   /// Check if in loading state
-  bool get isLoading => this is AuthLoading || 
-                       this is AuthRegistering || 
-                       this is AuthTokenRefreshing ||
-                       this is AuthPasswordResetLoading ||
-                       this is AuthOtpVerifying ||
-                       this is AuthProfileUpdating;
+  bool get isLoading =>
+      this is AuthLoading ||
+      this is AuthRegistering ||
+      this is AuthTokenRefreshing ||
+      this is AuthPasswordResetLoading ||
+      this is AuthOtpVerifying ||
+      this is AuthProfileUpdating;
 
   /// Check if has error
-  bool get hasError => this is AuthError || 
-                      this is AuthRegistrationError ||
-                      this is AuthPasswordResetError ||
-                      this is AuthOtpError ||
-                      this is AuthProfileUpdateError;
+  bool get hasError =>
+      this is AuthError ||
+      this is AuthRegistrationError ||
+      this is AuthPasswordResetError ||
+      this is AuthOtpError ||
+      this is AuthProfileUpdateError;
 
   /// Get current user if authenticated
   UserModel? get currentUser {

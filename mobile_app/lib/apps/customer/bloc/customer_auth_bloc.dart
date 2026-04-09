@@ -1,4 +1,4 @@
-﻿import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../repository/customer_auth_repository.dart';
 
@@ -60,26 +60,15 @@ class CustomerAuthBloc extends Bloc<CustomerAuthEvent, CustomerAuthState> {
     emit(CustomerAuthLoading());
 
     try {
-      final result = await repository.login(
-        event.phone,
-        event.password,
-      );
+      final result = await repository.login(event.phone, event.password);
 
       if (result) {
         emit(CustomerAuthSuccess());
       } else {
-        emit(
-          CustomerAuthFailure(
-            'Sai số điện thoại hoặc mật khẩu',
-          ),
-        );
+        emit(CustomerAuthFailure('Sai số điện thoại hoặc mật khẩu'));
       }
     } catch (e) {
-      emit(
-        CustomerAuthFailure(
-          e.toString(),
-        ),
-      );
+      emit(CustomerAuthFailure(e.toString()));
     }
   }
 
@@ -100,18 +89,10 @@ class CustomerAuthBloc extends Bloc<CustomerAuthEvent, CustomerAuthState> {
       if (result) {
         emit(CustomerAuthSuccess());
       } else {
-        emit(
-          CustomerAuthFailure(
-            'Đăng ký thất bại',
-          ),
-        );
+        emit(CustomerAuthFailure('Đăng ký thất bại'));
       }
     } catch (e) {
-      emit(
-        CustomerAuthFailure(
-          e.toString(),
-        ),
-      );
+      emit(CustomerAuthFailure(e.toString()));
     }
   }
 }

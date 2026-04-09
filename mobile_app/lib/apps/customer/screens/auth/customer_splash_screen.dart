@@ -44,11 +44,7 @@ class _CustomerSplashScreenState extends State<CustomerSplashScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Logo riêng cho Customer
-            Icon(
-              Icons.shopping_cart_outlined,
-              size: 80,
-              color: Colors.white,
-            ),
+            Icon(Icons.shopping_cart_outlined, size: 80, color: Colors.white),
             SizedBox(height: 24),
             Text(
               'Đi Chợ Hộ',
@@ -61,15 +57,10 @@ class _CustomerSplashScreenState extends State<CustomerSplashScreen> {
             SizedBox(height: 8),
             Text(
               'Dành cho Khách hàng',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.white70,
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.white70),
             ),
             SizedBox(height: 48),
-            CircularProgressIndicator(
-              color: Colors.white,
-            ),
+            CircularProgressIndicator(color: Colors.white),
           ],
         ),
       ),

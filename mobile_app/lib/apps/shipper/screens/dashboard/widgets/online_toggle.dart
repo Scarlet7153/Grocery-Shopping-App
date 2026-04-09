@@ -5,7 +5,11 @@ class OnlineToggle extends StatefulWidget {
   final bool isOnline;
   final VoidCallback onToggle;
 
-  const OnlineToggle({super.key, required this.isOnline, required this.onToggle});
+  const OnlineToggle({
+    super.key,
+    required this.isOnline,
+    required this.onToggle,
+  });
 
   @override
   State<OnlineToggle> createState() => _OnlineToggleState();
@@ -45,9 +49,13 @@ class _OnlineToggleState extends State<OnlineToggle>
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text(
+        Text(
           'Trạng thái: ',
-          style: TextStyle(fontSize: 16, color: ShipperTheme.textColor),
+          style:
+              Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500) ??
+              const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
         ),
         Stack(
           alignment: Alignment.center,
@@ -61,7 +69,7 @@ class _OnlineToggleState extends State<OnlineToggle>
                     width: size,
                     height: size,
                     decoration: BoxDecoration(
-                      color: ShipperTheme.primaryColor.withOpacity(0.3),
+                      color: ShipperTheme.primaryColor.withValues(alpha: 0.3),
                       shape: BoxShape.circle,
                     ),
                   );
@@ -76,13 +84,20 @@ class _OnlineToggleState extends State<OnlineToggle>
         ),
         Text(
           widget.isOnline ? 'Online' : 'Offline',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: widget.isOnline
-                ? ShipperTheme.primaryColor
-                : Colors.grey[600],
-          ),
+          style:
+              Theme.of(context).textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: widget.isOnline
+                    ? ShipperTheme.primaryColor
+                    : Colors.grey[600],
+              ) ??
+              TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: widget.isOnline
+                    ? ShipperTheme.primaryColor
+                    : Colors.grey[600],
+              ),
         ),
       ],
     );

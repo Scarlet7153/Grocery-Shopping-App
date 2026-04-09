@@ -105,6 +105,13 @@ public class Order {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    /**
+     * Trạng thái thanh toán của đơn hàng (PENDING, SUCCESS, FAILED)
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status", nullable = false)
+    @Builder.Default
+    private Payment.PaymentStatus paymentStatus = Payment.PaymentStatus.PENDING;
     // ========== RELATIONSHIPS ==========
 
     /**

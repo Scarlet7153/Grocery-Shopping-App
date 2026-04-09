@@ -274,11 +274,13 @@ class OrderService {
       );
       final data = response.data;
       if (data == null) {
-        throw ApiException(message: 'Phản hồi trống');
+        throw const ApiException(message: 'Phản hồi trống');
       }
       final order = data['data'] ?? data;
       return OrderModel.fromJson(
-        order is Map<String, dynamic> ? order : Map<String, dynamic>.from(order as Map),
+        order is Map<String, dynamic>
+            ? order
+            : Map<String, dynamic>.from(order as Map),
       );
     } on DioException catch (e) {
       // If we are in simulated mode (e.g. 404/500 from backend), we just return the mock one if available

@@ -73,11 +73,7 @@ class _StoreRegisterScreenState extends State<StoreRegisterScreen> {
       const SizedBox(height: 8),
       Text(
         'Tạo tài khoản để bán hàng trên nền tảng của chúng tôi',
-        style: TextStyle(
-          fontSize: 16,
-          color: Colors.grey[600],
-          height: 1.5,
-        ),
+        style: TextStyle(fontSize: 16, color: Colors.grey[600], height: 1.5),
       ),
     ],
   );
@@ -219,26 +215,31 @@ class _StoreRegisterScreenState extends State<StoreRegisterScreen> {
                 color: Colors.grey[700],
                 height: 1.4,
               ),
-              children: const [  // Fixed - Added const to children array
-                TextSpan(text: 'Tôi đồng ý với '),  // Fixed - Added const
+              children: const [
+                // Fixed - Added const to children array
+                TextSpan(text: 'Tôi đồng ý với '), // Fixed - Added const
                 TextSpan(
                   text: 'Điều khoản sử dụng',
                   style: TextStyle(
-                    color: Color(0xFF4CAF50),  // Fixed - Use hardcoded color instead of StoreTheme.primaryColor
+                    color: Color(
+                      0xFF4CAF50,
+                    ), // Fixed - Use hardcoded color instead of StoreTheme.primaryColor
                     fontWeight: FontWeight.w500,
                     decoration: TextDecoration.underline,
                   ),
-                ),  // Fixed - Added const
-                TextSpan(text: ' và '),  // Fixed - Added const
+                ), // Fixed - Added const
+                TextSpan(text: ' và '), // Fixed - Added const
                 TextSpan(
                   text: 'Chính sách bán hàng',
                   style: TextStyle(
-                    color: Color(0xFF4CAF50),  // Fixed - Use hardcoded color instead of StoreTheme.primaryColor
+                    color: Color(
+                      0xFF4CAF50,
+                    ), // Fixed - Use hardcoded color instead of StoreTheme.primaryColor
                     fontWeight: FontWeight.w500,
                     decoration: TextDecoration.underline,
                   ),
-                ),  // Fixed - Added const
-                TextSpan(text: ' của ứng dụng.'),  // Fixed - Added const
+                ), // Fixed - Added const
+                TextSpan(text: ' của ứng dụng.'), // Fixed - Added const
               ],
             ),
           ),
@@ -255,36 +256,28 @@ class _StoreRegisterScreenState extends State<StoreRegisterScreen> {
       style: ElevatedButton.styleFrom(
         backgroundColor: StoreTheme.primaryColor,
         foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
-      child: _isLoading 
-        ? const SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: Colors.white,
+      child: _isLoading
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          : const Text(
+              'Đăng ký cửa hàng',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
-          )
-        : const Text(
-            'Đăng ký cửa hàng',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
     ),
   );
 
   Widget _buildLoginLink() => Row(
     mainAxisAlignment: MainAxisAlignment.center,
     children: [
-      Text(
-        'Đã có tài khoản? ',
-        style: TextStyle(color: Colors.grey[600]),
-      ),
+      Text('Đã có tài khoản? ', style: TextStyle(color: Colors.grey[600])),
       GestureDetector(
         onTap: () => Navigator.pop(context),
         child: const Text(
@@ -396,7 +389,7 @@ class _StoreRegisterScreenState extends State<StoreRegisterScreen> {
     try {
       // Mock store registration API call
       await Future.delayed(const Duration(seconds: 3));
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

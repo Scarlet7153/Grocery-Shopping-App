@@ -88,11 +88,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.diamond,
-                size: 12,
-                color: Colors.white,
-              ),
+              child: const Icon(Icons.diamond, size: 12, color: Colors.white),
             ),
           ),
         ],
@@ -109,11 +105,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       const SizedBox(height: 8),
       Text(
         'Chỉ dành cho quản trị viên được ủy quyền.',
-        style: TextStyle(
-          fontSize: 16,
-          color: Colors.grey[600],
-          height: 1.4,
-        ),
+        style: TextStyle(fontSize: 16, color: Colors.grey[600], height: 1.4),
       ),
     ],
   );
@@ -123,17 +115,11 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     decoration: BoxDecoration(
       color: Colors.amber.withValues(alpha: 0.1),
       borderRadius: BorderRadius.circular(12),
-      border: Border.all(
-        color: Colors.amber.withValues(alpha: 0.3),
-      ),
+      border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
     ),
     child: Row(
       children: [
-        const Icon(
-          Icons.security,
-          color: Colors.amber,
-          size: 20,
-        ),
+        const Icon(Icons.security, color: Colors.amber, size: 20),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -149,10 +135,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
               ),
               Text(
                 'Tài khoản Admin được cấp bởi Super Admin',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[700],
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey[700]),
               ),
             ],
           ),
@@ -190,10 +173,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     height: 52,
     decoration: BoxDecoration(
       gradient: const LinearGradient(
-        colors: [
-          AdminTheme.primaryColor,
-          AdminTheme.secondaryColor,
-        ],
+        colors: [AdminTheme.primaryColor, AdminTheme.secondaryColor],
       ),
       borderRadius: BorderRadius.circular(12),
       boxShadow: [
@@ -210,33 +190,28 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
         backgroundColor: Colors.transparent,
         shadowColor: Colors.transparent,
         foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
-      child: _isLoading 
-        ? const SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: Colors.white,
-            ),
-          )
-        : const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.login, size: 20),
-              SizedBox(width: 8),
-              Text(
-                'Truy cập Admin Panel',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+      child: _isLoading
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
               ),
-            ],
-          ),
+            )
+          : const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.login, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'Truy cập Admin Panel',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
     ),
   );
 
@@ -245,9 +220,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     decoration: BoxDecoration(
       color: AdminTheme.primaryColor.withValues(alpha: 0.05),
       borderRadius: BorderRadius.circular(12),
-      border: Border.all(
-        color: AdminTheme.primaryColor.withValues(alpha: 0.2),
-      ),
+      border: Border.all(color: AdminTheme.primaryColor.withValues(alpha: 0.2)),
     ),
     child: Column(
       children: [
@@ -272,11 +245,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
         const SizedBox(height: 8),
         Text(
           'Liên hệ Super Admin hoặc IT Department để được cấp tài khoản Admin',
-          style: TextStyle(
-            fontSize: 13,
-            color: Colors.grey[700],
-            height: 1.4,
-          ),
+          style: TextStyle(fontSize: 13, color: Colors.grey[700], height: 1.4),
         ),
         const SizedBox(height: 12),
         Row(
@@ -301,9 +270,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                 text: 'Email IT',
                 onTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Email: it@dichho.com'),
-                    ),
+                    const SnackBar(content: Text('Email: it@dichho.com')),
                   );
                 },
               ),
@@ -356,20 +323,14 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
         ],
       ),
       borderRadius: BorderRadius.circular(16),
-      border: Border.all(
-        color: AdminTheme.primaryColor.withValues(alpha: 0.2),
-      ),
+      border: Border.all(color: AdminTheme.primaryColor.withValues(alpha: 0.2)),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            const Icon(
-              Icons.diamond,
-              color: Colors.amber,
-              size: 20,
-            ),
+            const Icon(Icons.diamond, color: Colors.amber, size: 20),
             const SizedBox(width: 8),
             Text(
               'Admin Panel Features',
@@ -445,9 +406,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     decoration: BoxDecoration(
       color: color.withValues(alpha: 0.1),
       borderRadius: BorderRadius.circular(8),
-      border: Border.all(
-        color: color.withValues(alpha: 0.3),
-      ),
+      border: Border.all(color: color.withValues(alpha: 0.3)),
     ),
     child: Column(
       children: [
@@ -465,10 +424,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
         Text(
           description,
           textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 10,
-            color: Colors.grey[600],
-          ),
+          style: TextStyle(fontSize: 10, color: Colors.grey[600]),
         ),
       ],
     ),
@@ -482,7 +438,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       return 'Định dạng email không hợp lệ';
     }
     // Admin email validation - stricter rules
-    if (!value.toLowerCase().contains('admin') && 
+    if (!value.toLowerCase().contains('admin') &&
         !value.toLowerCase().contains('@dichho.com')) {
       return 'Email không phải tài khoản Admin hệ thống';
     }
@@ -507,19 +463,20 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     try {
       // Mock admin login API call với validation nghiêm ngặt
       await Future.delayed(const Duration(seconds: 2));
-      
+
       // Mock admin credentials check
       final email = _emailController.text.toLowerCase();
       final password = _passwordController.text;
-      
+
       // Demo admin accounts
       if ((email == 'admin@dichoho.com' && password == 'admin123') ||
           (email == 'superadmin@dichoho.com' && password == 'super123')) {
-        
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('✅ Đăng nhập Admin thành công! Chào mừng đến Admin Panel'),
+              content: Text(
+                '✅ Đăng nhập Admin thành công! Chào mừng đến Admin Panel',
+              ),
               backgroundColor: AdminTheme.primaryColor,
               duration: Duration(seconds: 3),
             ),

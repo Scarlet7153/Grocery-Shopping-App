@@ -8,10 +8,26 @@ void main() {
   const maxKB = 200;
   final dir = Directory('assets/products');
   final files = [
-    'tao_my.jpg', 'chuoi.jpg', 'cam.jpg', 'xoai.jpg', 'dua_hau.jpg',
-    'ca_chua.jpg', 'bap_cai.jpg', 'nho.jpg', 'le.jpg', 'thanh_long.jpg',
-    'oi.jpg', 'gung.jpg', 'toi.jpg', 'ca_basa.jpg', 'tom_tuoi.jpg',
-    'cai_thao.jpg', 'can_tay.jpg', 'bi_xanh.jpg', 'ca_tim.jpg', 'mi_goi.jpg',
+    'tao_my.jpg',
+    'chuoi.jpg',
+    'cam.jpg',
+    'xoai.jpg',
+    'dua_hau.jpg',
+    'ca_chua.jpg',
+    'bap_cai.jpg',
+    'nho.jpg',
+    'le.jpg',
+    'thanh_long.jpg',
+    'oi.jpg',
+    'gung.jpg',
+    'toi.jpg',
+    'ca_basa.jpg',
+    'tom_tuoi.jpg',
+    'cai_thao.jpg',
+    'can_tay.jpg',
+    'bi_xanh.jpg',
+    'ca_tim.jpg',
+    'mi_goi.jpg',
   ];
 
   for (final name in files) {

@@ -35,21 +35,13 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
 
-    _slideAnimation = Tween<double>(
-      begin: 50.0,
-      end: 0.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
+    _slideAnimation = Tween<double>(begin: 50.0, end: 0.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
+    );
 
     _animationController.forward();
   }
@@ -68,10 +60,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              AppColors.background,
-              AppColors.backgroundSecondary,
-            ],
+            colors: [AppColors.background, AppColors.backgroundSecondary],
           ),
         ),
         child: SafeArea(
@@ -135,7 +124,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
           ),
         ),
         const SizedBox(height: AppDimensions.spacing2Xl),
-        
+
         // Welcome Text
         Text(
           'Chào mừng đến với',
@@ -145,7 +134,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: AppDimensions.spacingS),
-        
+
         Text(
           'App Đi Chợ Hộ',
           style: AppTextStyles.headlineLarge.copyWith(
@@ -155,7 +144,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: AppDimensions.spacingM),
-        
+
         Text(
           'Vui lòng chọn vai trò của bạn để tiếp tục',
           style: AppTextStyles.bodyLarge.copyWith(
@@ -169,17 +158,15 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
 
   Widget _buildRoleSelection() {
     final mobileRoles = UserRole.mobileRoles;
-    
+
     return Column(
       children: mobileRoles.asMap().entries.map((entry) {
         final index = entry.key;
         final role = entry.value;
-        
+
         return Padding(
           padding: EdgeInsets.only(
-            bottom: index < mobileRoles.length - 1 
-                ? AppDimensions.spacingL 
-                : 0,
+            bottom: index < mobileRoles.length - 1 ? AppDimensions.spacingL : 0,
           ),
           child: RoleSelectionCard(
             role: role,
@@ -216,7 +203,6 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
           color: AppColors.divider,
         ),
         const SizedBox(height: AppDimensions.spacingL),
-        
         Text(
           'Quản trị viên?',
           style: AppTextStyles.titleSmall.copyWith(
@@ -224,7 +210,6 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
           ),
         ),
         const SizedBox(height: AppDimensions.spacingS),
-        
         TextButton.icon(
           onPressed: _navigateToAdminLogin,
           icon: const Icon(
@@ -232,9 +217,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
             size: AppDimensions.iconS,
           ),
           label: const Text('Đăng nhập Admin'),
-          style: TextButton.styleFrom(
-            foregroundColor: AppColors.adminPrimary,
-          ),
+          style: TextButton.styleFrom(foregroundColor: AppColors.adminPrimary),
         ),
       ],
     );
@@ -244,20 +227,16 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
     setState(() {
       selectedRole = role;
     });
-    
+
     // Haptic feedback
     HapticFeedback.lightImpact();
   }
 
   void _handleContinue() {
     if (selectedRole == null) return;
-    
+
     // Navigate to login screen for selected role
-    Navigator.pushNamed(
-      context, 
-      '/login',
-      arguments: selectedRole,
-    );
+    Navigator.pushNamed(context, '/login', arguments: selectedRole);
   }
 
   void _navigateToAdminLogin() {

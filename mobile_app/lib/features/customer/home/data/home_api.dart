@@ -1,4 +1,4 @@
-﻿import 'package:grocery_shopping_app/core/network/api_client.dart';
+import 'package:grocery_shopping_app/core/network/api_client.dart';
 
 import 'category_model.dart';
 import 'product_model.dart';
@@ -35,15 +35,12 @@ class HomeApi {
   Future<List<ProductModel>> searchProducts(String keyword) async {
     final response = await ApiClient.dio.get(
       '/products/search',
-      queryParameters: {
-        'keyword': keyword,
-      },
+      queryParameters: {'keyword': keyword},
     );
     final List data = _extractList(response.data);
     if (data.isEmpty) {
       return _mockProducts()
-          .where((p) =>
-              p.name.toLowerCase().contains(keyword.toLowerCase()))
+          .where((p) => p.name.toLowerCase().contains(keyword.toLowerCase()))
           .toList();
     }
     return data.map((e) => ProductModel.fromJson(e)).toList();
@@ -99,9 +96,8 @@ class HomeApi {
         id: 1,
         name: 'Thịt ba rọi',
         description: 'Thịt ba rọi tươi ngon',
-        imageUrl:
-            'assets/images/thit_ba_roi.png',
-        storeName: 'Tap hoa Co Ba',
+        imageUrl: 'assets/images/thit_ba_roi.png',
+        storeName: 'Sieu thi Mini B',
         categoryName: 'Thit',
         status: 'AVAILABLE',
         units: [
@@ -117,8 +113,7 @@ class HomeApi {
         id: 2,
         name: 'Cá hồi',
         description: 'Cá hồi nấu ăn',
-        imageUrl:
-            'assets/images/ca_hoi.png',
+        imageUrl: 'assets/images/ca_hoi.png',
         storeName: 'Sieu thi Mini B',
         categoryName: 'Ca',
         status: 'AVAILABLE',
@@ -135,9 +130,8 @@ class HomeApi {
         id: 3,
         name: 'Cam tươi',
         description: 'Cam ngọt nhập khẩu',
-        imageUrl:
-            'assets/images/cam_tuoi.png',
-        storeName: 'Cua hang Thuc pham Xanh',
+        imageUrl: 'assets/images/cam_tuoi.png',
+        storeName: 'Tap hoa Co Ba',
         categoryName: 'Trai cay',
         status: 'AVAILABLE',
         units: [
@@ -152,4 +146,3 @@ class HomeApi {
     ];
   }
 }
-

@@ -28,21 +28,17 @@ class _StoreSplashScreenState extends State<StoreSplashScreen>
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
 
     _animationController.forward();
   }
@@ -53,7 +49,7 @@ class _StoreSplashScreenState extends State<StoreSplashScreen>
       // ✅ Enable actual navigation
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => 
+          pageBuilder: (context, animation, secondaryAnimation) =>
               const StoreLoginScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
@@ -85,7 +81,7 @@ class _StoreSplashScreenState extends State<StoreSplashScreen>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Spacer(flex: 2),
-              
+
               // Animated Store Logo & Branding
               AnimatedBuilder(
                 animation: _animationController,
@@ -99,9 +95,9 @@ class _StoreSplashScreenState extends State<StoreSplashScreen>
                   );
                 },
               ),
-              
+
               const Spacer(flex: 1),
-              
+
               // Animated tagline
               AnimatedBuilder(
                 animation: _animationController,
@@ -112,9 +108,9 @@ class _StoreSplashScreenState extends State<StoreSplashScreen>
                   );
                 },
               ),
-              
+
               const SizedBox(height: 40),
-              
+
               // Loading indicator
               AnimatedBuilder(
                 animation: _animationController,
@@ -128,7 +124,7 @@ class _StoreSplashScreenState extends State<StoreSplashScreen>
                   );
                 },
               ),
-              
+
               const Spacer(flex: 2),
             ],
           ),
@@ -159,9 +155,9 @@ class _StoreSplashScreenState extends State<StoreSplashScreen>
           color: StoreTheme.primaryColor,
         ),
       ),
-      
+
       const SizedBox(height: 32),
-      
+
       // App Name cho Store
       const Text(
         'Đi Chợ Hộ',
@@ -172,9 +168,9 @@ class _StoreSplashScreenState extends State<StoreSplashScreen>
           letterSpacing: 1.2,
         ),
       ),
-      
+
       const SizedBox(height: 8),
-      
+
       // Store Subtitle
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -213,11 +209,7 @@ class _StoreSplashScreenState extends State<StoreSplashScreen>
         Text(
           'Bán hàng hiệu quả • Quản lý đơn hàng dễ dàng • Tăng doanh thu',
           textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey[600],
-            height: 1.4,
-          ),
+          style: TextStyle(fontSize: 14, color: Colors.grey[600], height: 1.4),
         ),
       ],
     ),

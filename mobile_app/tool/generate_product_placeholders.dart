@@ -58,9 +58,23 @@ void main() {
     final label = p.$2;
     final textColor = colorFromHex(0xFF333333);
     try {
-      img.drawString(image, p.$2, font: img.arial24, x: size ~/ 2 - 60, y: size ~/ 2 - 14, color: textColor);
+      img.drawString(
+        image,
+        p.$2,
+        font: img.arial24,
+        x: size ~/ 2 - 60,
+        y: size ~/ 2 - 14,
+        color: textColor,
+      );
     } catch (_) {
-      img.drawString(image, p.$1.replaceAll('.jpg', ''), font: img.arial24, x: size ~/ 2 - 50, y: size ~/ 2 - 14, color: textColor);
+      img.drawString(
+        image,
+        p.$1.replaceAll('.jpg', ''),
+        font: img.arial24,
+        x: size ~/ 2 - 50,
+        y: size ~/ 2 - 14,
+        color: textColor,
+      );
     }
     final jpg = img.encodeJpg(image, quality: 85);
     final file = File('${outDir.path}/${p.$1}');
@@ -71,8 +85,17 @@ void main() {
   // default.jpg
   final def = img.Image(width: size, height: size);
   img.fill(def, color: colorFromHex(lightBg));
-  img.drawString(def, 'San pham', font: img.arial24, x: size ~/ 2 - 50, y: size ~/ 2 - 14, color: colorFromHex(0xFF333333));
-  File('${outDir.path}/default.jpg').writeAsBytesSync(img.encodeJpg(def, quality: 85));
+  img.drawString(
+    def,
+    'San pham',
+    font: img.arial24,
+    x: size ~/ 2 - 50,
+    y: size ~/ 2 - 14,
+    color: colorFromHex(0xFF333333),
+  );
+  File(
+    '${outDir.path}/default.jpg',
+  ).writeAsBytesSync(img.encodeJpg(def, quality: 85));
   print('Created default.jpg');
   print('Done. Generated ${products.length + 1} images in assets/products/');
 }

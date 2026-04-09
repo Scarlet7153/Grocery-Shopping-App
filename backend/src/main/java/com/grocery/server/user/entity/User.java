@@ -91,6 +91,7 @@ public class User {
 
     public enum UserStatus {
         ACTIVE,    // Đang hoạt động
-        BANNED     // Bị khóa
+        BANNED,     // Bị khóa
+        PENDING     // Chờ kích hoạt
     }
 }

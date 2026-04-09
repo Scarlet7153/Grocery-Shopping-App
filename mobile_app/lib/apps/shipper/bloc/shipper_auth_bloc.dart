@@ -9,34 +9,48 @@ class ShipperAuthBloc extends Bloc<ShipperAuthEvent, ShipperAuthState> {
   final ShipperRepository _repository;
 
   ShipperAuthBloc({required ShipperRepository repository})
-      : _repository = repository,
-        super(ShipperAuthInitial()) {
+    : _repository = repository,
+      super(ShipperAuthInitial()) {
     on<ShipperLoginRequested>(_onLoginRequested);
     on<ShipperRegisterRequested>(_onRegisterRequested);
     on<ShipperLogoutRequested>(_onLogoutRequested);
   }
 
   Future<void> _onLoginRequested(
-      ShipperLoginRequested event, Emitter<ShipperAuthState> emit) async {
+    ShipperLoginRequested event,
+    Emitter<ShipperAuthState> emit,
+  ) async {
     emit(ShipperAuthLoading());
     try {
       final success = await _repository.login(
-          phone: event.phone, password: event.password);
+        phone: event.phone,
+        password: event.password,
+      );
       if (success) {
         emit(ShipperAuthAuthenticated());
-      } else {
-        emit(const ShipperAuthError(message: 'Thông tin đăng nhập không hợp lệ'));
       }
     } catch (e) {
-      emit(ShipperAuthError(message: e.toString()));
+      // Lấy message từ exception
+      String message = e.toString();
+      if (message.startsWith('Exception: ')) {
+        message = message.substring(11); // Bỏ "Exception: "
+      }
+      emit(ShipperAuthError(message: message));
     }
   }
 
   Future<void> _onRegisterRequested(
-      ShipperRegisterRequested event, Emitter<ShipperAuthState> emit) async {
+    ShipperRegisterRequested event,
+    Emitter<ShipperAuthState> emit,
+  ) async {
     emit(ShipperAuthLoading());
     try {
-      final success = await _repository.register(event.registrationInfo);
+      final success = await _repository.register(
+        phoneNumber: event.phoneNumber,
+        password: event.password,
+        fullName: event.fullName,
+        address: event.address,
+      );
       if (success) {
         emit(ShipperAuthAuthenticated());
       } else {
@@ -48,7 +62,9 @@ class ShipperAuthBloc extends Bloc<ShipperAuthEvent, ShipperAuthState> {
   }
 
   Future<void> _onLogoutRequested(
-      ShipperLogoutRequested event, Emitter<ShipperAuthState> emit) async {
+    ShipperLogoutRequested event,
+    Emitter<ShipperAuthState> emit,
+  ) async {
     await _repository.logout();
     emit(ShipperAuthInitial());
   }

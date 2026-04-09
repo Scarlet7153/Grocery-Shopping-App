@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:grocery_shopping_app/apps/shipper/models/shipper_order.dart';
@@ -11,58 +12,102 @@ class ShipperDashboardBloc
   final ShipperRepository _repository;
 
   ShipperDashboardBloc({required ShipperRepository repository})
-      : _repository = repository,
-        super(const ShipperDashboardState.initial()) {
-    on<LoadDashboardData>(_onLoadData);
-    on<RefreshDashboardData>(_onLoadData);
-    on<AcceptOrder>(_onAcceptOrder);
-    on<CompleteOrder>(_onCompleteOrder);
-    on<ToggleOnlineStatus>(_onToggleOnline);
+    : _repository = repository,
+      super(const ShipperDashboardState.initial()) {
+    on<LoadDashboardData>(onLoadData);
+    on<RefreshDashboardData>(onLoadData);
+    on<AcceptOrder>(onAcceptOrder);
+    on<CompleteOrder>(onCompleteOrder);
+    on<ToggleOnlineStatus>(onToggleOnline);
+    on<UpdateDistances>(onUpdateDistances);
   }
 
-  Future<void> _onLoadData(
-      ShipperDashboardEvent event, Emitter<ShipperDashboardState> emit) async {
+  void onUpdateDistances(
+    UpdateDistances event,
+    Emitter<ShipperDashboardState> emit,
+  ) {
+    emit(state.copyWith(distances: event.distances));
+  }
+
+  Future<void> onLoadData(
+    ShipperDashboardEvent event,
+    Emitter<ShipperDashboardState> emit,
+  ) async {
     emit(state.copyWith(status: DashboardStatus.loading));
     try {
       final data = await _repository.fetchDashboardData();
-      emit(state.copyWith(
-        status: DashboardStatus.loaded,
-        isOnline: data['isOnline'] as bool,
-        earnings: data['earnings'] as double,
-        availableOrders: data['availableOrders'] as List<ShipperOrder>,
-        deliveries: data['deliveries'] as List<ShipperOrder>,
-        completedCount: data['completedCount'] as int,
-        acceptanceRate: data['acceptanceRate'] as double,
-      ));
+      emit(
+        state.copyWith(
+          status: DashboardStatus.loaded,
+          isOnline: data['isOnline'] as bool,
+          earnings: data['earnings'] as double,
+          availableOrders: List<ShipperOrder>.from(
+            data['availableOrders'] as List,
+          ),
+          deliveries: List<ShipperOrder>.from(data['deliveries'] as List),
+          completedCount: data['completedCount'] as int,
+          acceptanceRate: data['acceptanceRate'] as double,
+          distances: state.distances.isNotEmpty ? state.distances : const {},
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(
-          status: DashboardStatus.error, error: e.toString()));
+      emit(state.copyWith(status: DashboardStatus.error, error: e.toString()));
     }
   }
 
-  Future<void> _onAcceptOrder(
-      AcceptOrder event, Emitter<ShipperDashboardState> emit) async {
+  Future<ShipperOrder?> onAcceptOrder(
+    AcceptOrder event,
+    Emitter<ShipperDashboardState> emit,
+  ) async {
     try {
-      await _repository.assignOrder(event.orderId);
-      add(RefreshDashboardData());
-    } catch (_) {
-      // keep current state
+      final order = await _repository.assignOrder(event.orderId);
+      if (order != null) {
+        add(RefreshDashboardData());
+      }
+      event.completer.complete(order);
+      return order;
+    } catch (e) {
+      event.completer.complete(null);
+      return null;
     }
   }
 
-  Future<void> _onCompleteOrder(
-      CompleteOrder event, Emitter<ShipperDashboardState> emit) async {
+  Future<ShipperOrder?> onCompleteOrder(
+    CompleteOrder event,
+    Emitter<ShipperDashboardState> emit,
+  ) async {
     try {
-      await _repository.updateOrderStatus(event.orderId, 'DELIVERED');
-      add(RefreshDashboardData());
-    } catch (_) {
-      // keep current state
+      final order = await _repository.updateOrderStatus(
+        event.orderId,
+        'DELIVERED',
+      );
+      if (order != null) {
+        add(RefreshDashboardData());
+      }
+      event.completer.complete(order);
+      return order;
+    } catch (e) {
+      event.completer.complete(null);
+      return null;
     }
   }
 
-  void _onToggleOnline(
-      ToggleOnlineStatus event, Emitter<ShipperDashboardState> emit) {
+  void onToggleOnline(
+    ToggleOnlineStatus event,
+    Emitter<ShipperDashboardState> emit,
+  ) {
     emit(state.copyWith(isOnline: !state.isOnline));
   }
-}
 
+  Future<ShipperOrder?> acceptOrder(int orderId) async {
+    final completer = Completer<ShipperOrder?>();
+    add(AcceptOrder(orderId, completer));
+    return completer.future;
+  }
+
+  Future<ShipperOrder?> completeOrder(int orderId) async {
+    final completer = Completer<ShipperOrder?>();
+    add(CompleteOrder(orderId, completer));
+    return completer.future;
+  }
+}

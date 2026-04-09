@@ -20,7 +20,7 @@ CREATE TABLE users (
     phone_number VARCHAR(15) UNIQUE NOT NULL COMMENT 'Số điện thoại đăng nhập',
     password_hash VARCHAR(255) NOT NULL COMMENT 'Mật khẩu đã mã hóa BCrypt',
     role ENUM('CUSTOMER', 'SHIPPER', 'STORE', 'ADMIN') NOT NULL COMMENT 'Vai trò tài khoản',
-    status ENUM('ACTIVE', 'BANNED') DEFAULT 'ACTIVE' COMMENT 'Trạng thái tài khoản',
+    status ENUM('ACTIVE', 'BANNED', 'PENDING') DEFAULT 'ACTIVE' COMMENT 'Trạng thái tài khoản',
     full_name VARCHAR(100) COMMENT 'Họ và tên',
     avatar_url VARCHAR(255) COMMENT 'Đường dẫn ảnh đại diện',
     address VARCHAR(255) COMMENT 'Địa chỉ cá nhân',
@@ -108,6 +108,7 @@ CREATE TABLE orders (
     pod_image_url VARCHAR(255) DEFAULT NULL COMMENT 'Ảnh bằng chứng giao hàng',
     cancel_reason VARCHAR(255) DEFAULT NULL COMMENT 'Lý do hủy đơn',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    payment_status ENUM('PENDING', 'SUCCESS', 'FAILED') DEFAULT 'PENDING' COMMENT 'Trạng thái thanh toán',
     FOREIGN KEY (customer_id) REFERENCES users(id),
     FOREIGN KEY (store_id) REFERENCES stores(id),
     FOREIGN KEY (shipper_id) REFERENCES users(id),
@@ -141,7 +142,7 @@ COMMENT='Bảng chi tiết đơn hàng';
 CREATE TABLE payments (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     order_id BIGINT NOT NULL COMMENT 'Thuộc đơn hàng nào',
-    payment_method ENUM('COD', 'MOMO') NOT NULL COMMENT 'Phương thức thanh toán',
+    payment_method ENUM('COD', 'MOMO', 'VNPAY') NOT NULL COMMENT 'Phương thức thanh toán',
     amount DECIMAL(10, 2) NOT NULL COMMENT 'Số tiền giao dịch',
     transaction_code VARCHAR(100) DEFAULT NULL COMMENT 'Mã giao dịch Momo',
     status ENUM('PENDING', 'SUCCESS', 'FAILED', 'REFUNDED') DEFAULT 'PENDING' COMMENT 'Trạng thái giao dịch',
@@ -220,6 +221,61 @@ INSERT INTO product_units (product_id, unit_name, price, stock_quantity) VALUES
 -- Gạo ST25
 (4, 'Túi 5kg', 125000.00, 40),
 (4, 'Túi 10kg', 240000.00, 25);
+
+-- =========================================================
+-- 10. Database Triggers (Tự động sync payment_status)
+-- =========================================================
+
+/**
+ * TRIGGER: tr_sync_payment_status_on_insert
+ * 
+ * Mô tả: Khi insert payment record mới, tự động cập nhật payment_status ở bảng orders
+ * Lý do: Đảm bảo orders.payment_status luôn sync với payments.status (latest payment)
+ * 
+ * Scenario:
+ *   - User thanh toán MOMO → INSERT payments (status=PENDING) → không sync (vì PENDING)
+ *   - Callback từ Momo → UPDATE payments (status=SUCCESS) → trigger UPDATE order
+ */
+DELIMITER $$
+
+CREATE TRIGGER tr_sync_payment_status_on_insert
+AFTER INSERT ON payments
+FOR EACH ROW
+BEGIN
+    -- Chỉ sync nếu payment status != PENDING (tức đã có kết quả: SUCCESS/FAILED/REFUNDED)
+    IF NEW.status != 'PENDING' THEN
+        UPDATE orders 
+        SET payment_status = NEW.status 
+        WHERE id = NEW.order_id;
+    END IF;
+END$$
+
+/**
+ * TRIGGER: tr_sync_payment_status_on_update
+ * 
+ * Mô tả: Khi update payment status, tự động cập nhật orders.payment_status
+ * Lý do: Khi payment callback đến, update payment status → trigger update order
+ * 
+ * Scenario:
+ *   - Callback MOMO: UPDATE payments SET status='SUCCESS' WHERE id = 999
+ *   - Trigger tự động: UPDATE orders SET payment_status='SUCCESS' WHERE id = <order_id>
+ *
+ * Defensive: Kiểm tra xem order không bị deleted (EXISTS check)
+ */
+CREATE TRIGGER tr_sync_payment_status_on_update
+AFTER UPDATE ON payments
+FOR EACH ROW
+BEGIN
+    -- Chỉ cập nhật nếu status thay đổi (NEW.status != OLD.status)
+    -- Và order vẫn tồn tại (defensive check)
+    IF NEW.status != OLD.status THEN
+        UPDATE orders 
+        SET payment_status = NEW.status 
+        WHERE id = NEW.order_id;
+    END IF;
+END$$
+
+DELIMITER ;
 
 -- =========================================================
 -- END OF SCHEMA

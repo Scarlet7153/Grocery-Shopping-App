@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/cart/cart_session.dart';
+
 class HomeBottomBar extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
@@ -23,29 +25,71 @@ class HomeBottomBar extends StatelessWidget {
 
       type: BottomNavigationBarType.fixed,
 
-      items: const [
+      items: [
+        const BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
 
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: "Home",
-        ),
+        BottomNavigationBarItem(icon: _CartBadgeIcon(), label: "Cart"),
 
-        BottomNavigationBarItem(
-          icon: Icon(Icons.shopping_cart),
-          label: "Cart",
-        ),
-
-        BottomNavigationBarItem(
+        const BottomNavigationBarItem(
           icon: Icon(Icons.receipt),
           label: "Orders",
         ),
 
-        BottomNavigationBarItem(
+        const BottomNavigationBarItem(
           icon: Icon(Icons.person),
           label: "Profile",
         ),
-
       ],
+    );
+  }
+}
+
+class _CartBadgeIcon extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<List<CartItem>>(
+      valueListenable: CartSession.items,
+      builder: (context, items, child) {
+        final totalQuantity = items.fold<int>(
+          0,
+          (sum, item) => sum + item.quantity,
+        );
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            const Icon(Icons.shopping_cart),
+            if (totalQuantity > 0)
+              Positioned(
+                right: -6,
+                top: -6,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 2,
+                  ),
+                  decoration: const BoxDecoration(
+                    color: Colors.green,
+                    shape: BoxShape.circle,
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 18,
+                    minHeight: 18,
+                  ),
+                  child: Center(
+                    child: Text(
+                      totalQuantity > 99 ? '99+' : totalQuantity.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

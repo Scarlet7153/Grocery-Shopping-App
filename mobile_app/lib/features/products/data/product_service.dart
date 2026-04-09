@@ -35,14 +35,26 @@ class ProductService {
 
       if (data is List) {
         return data
-            .map((e) => ProductModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e as Map)))
+            .map(
+              (e) => ProductModel.fromJson(
+                e is Map<String, dynamic>
+                    ? e
+                    : Map<String, dynamic>.from(e as Map),
+              ),
+            )
             .toList();
       }
       if (data is Map<String, dynamic>) {
         final list = data['data'] ?? data['products'];
         if (list is List) {
           return list
-              .map((e) => ProductModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e as Map)))
+              .map(
+                (e) => ProductModel.fromJson(
+                  e is Map<String, dynamic>
+                      ? e
+                      : Map<String, dynamic>.from(e as Map),
+                ),
+              )
               .toList();
         }
       }
@@ -88,19 +100,26 @@ class ProductService {
       );
       final data = response.data;
       if (data == null) {
-        throw ApiException(message: 'Phản hồi trống');
+        throw const ApiException(message: 'Phản hồi trống');
       }
       final product = data['data'] ?? data;
       return ProductModel.fromJson(
-        product is Map<String, dynamic> ? product : Map<String, dynamic>.from(product as Map),
+        product is Map<String, dynamic>
+            ? product
+            : Map<String, dynamic>.from(product as Map),
       );
     } on DioException catch (e) {
-      throw e.error is ApiException ? e.error as ApiException : ApiException(message: e.message ?? 'Lỗi tạo sản phẩm');
+      throw e.error is ApiException
+          ? e.error as ApiException
+          : ApiException(message: e.message ?? 'Lỗi tạo sản phẩm');
     }
   }
 
   /// Update product by id (requires auth).
-  Future<ProductModel> updateProduct(String id, UpdateProductRequest request) async {
+  Future<ProductModel> updateProduct(
+    String id,
+    UpdateProductRequest request,
+  ) async {
     try {
       final response = await _client.put<Map<String, dynamic>>(
         ApiRoutes.productById(id),
@@ -108,14 +127,18 @@ class ProductService {
       );
       final data = response.data;
       if (data == null) {
-        throw ApiException(message: 'Phản hồi trống');
+        throw const ApiException(message: 'Phản hồi trống');
       }
       final product = data['data'] ?? data;
       return ProductModel.fromJson(
-        product is Map<String, dynamic> ? product : Map<String, dynamic>.from(product as Map),
+        product is Map<String, dynamic>
+            ? product
+            : Map<String, dynamic>.from(product as Map),
       );
     } on DioException catch (e) {
-      throw e.error is ApiException ? e.error as ApiException : ApiException(message: e.message ?? 'Lỗi cập nhật sản phẩm');
+      throw e.error is ApiException
+          ? e.error as ApiException
+          : ApiException(message: e.message ?? 'Lỗi cập nhật sản phẩm');
     }
   }
 
@@ -124,7 +147,9 @@ class ProductService {
     try {
       await _client.delete(ApiRoutes.productById(id));
     } on DioException catch (e) {
-      throw e.error is ApiException ? e.error as ApiException : ApiException(message: e.message ?? 'Lỗi xóa sản phẩm');
+      throw e.error is ApiException
+          ? e.error as ApiException
+          : ApiException(message: e.message ?? 'Lỗi xóa sản phẩm');
     }
   }
 }

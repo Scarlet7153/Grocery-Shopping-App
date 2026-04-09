@@ -1,4 +1,4 @@
-﻿import 'package:dio/dio.dart';
+import 'package:dio/dio.dart';
 
 import '../../../core/auth/auth_session.dart';
 import '../../../core/network/api_client.dart';
@@ -13,17 +13,11 @@ class AuthException implements Exception {
 }
 
 class CustomerAuthRepository {
-  Future<bool> login(
-    String phone,
-    String password,
-  ) async {
+  Future<bool> login(String phone, String password) async {
     try {
       final response = await ApiClient.dio.post(
         '/auth/login',
-        data: {
-          'phoneNumber': phone,
-          'password': password,
-        },
+        data: {'phoneNumber': phone, 'password': password},
       );
 
       final data = response.data;

@@ -38,8 +38,7 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? queryParameters,
     Options? options,
-  }) =>
-      _dio.get<T>(path, queryParameters: queryParameters, options: options);
+  }) => _dio.get<T>(path, queryParameters: queryParameters, options: options);
 
   /// POST request.
   Future<Response<T>> post<T>(
@@ -47,8 +46,12 @@ class ApiClient {
     dynamic data,
     Map<String, dynamic>? queryParameters,
     Options? options,
-  }) =>
-      _dio.post<T>(path, data: data, queryParameters: queryParameters, options: options);
+  }) => _dio.post<T>(
+    path,
+    data: data,
+    queryParameters: queryParameters,
+    options: options,
+  );
 
   /// PUT request.
   Future<Response<T>> put<T>(
@@ -56,8 +59,12 @@ class ApiClient {
     dynamic data,
     Map<String, dynamic>? queryParameters,
     Options? options,
-  }) =>
-      _dio.put<T>(path, data: data, queryParameters: queryParameters, options: options);
+  }) => _dio.put<T>(
+    path,
+    data: data,
+    queryParameters: queryParameters,
+    options: options,
+  );
 
   /// PATCH request.
   Future<Response<T>> patch<T>(
@@ -65,8 +72,12 @@ class ApiClient {
     dynamic data,
     Map<String, dynamic>? queryParameters,
     Options? options,
-  }) =>
-      _dio.patch<T>(path, data: data, queryParameters: queryParameters, options: options);
+  }) => _dio.patch<T>(
+    path,
+    data: data,
+    queryParameters: queryParameters,
+    options: options,
+  );
 
   /// DELETE request.
   Future<Response<T>> delete<T>(
@@ -74,8 +85,12 @@ class ApiClient {
     dynamic data,
     Map<String, dynamic>? queryParameters,
     Options? options,
-  }) =>
-      _dio.delete<T>(path, data: data, queryParameters: queryParameters, options: options);
+  }) => _dio.delete<T>(
+    path,
+    data: data,
+    queryParameters: queryParameters,
+    options: options,
+  );
 }
 
 /// Attaches JWT from [TokenStorage] to outgoing requests.
@@ -123,9 +138,12 @@ class _ErrorInterceptor extends Interceptor {
     }
 
     if (statusCode != null) {
-      if (statusCode == 401) message = 'Phiên đăng nhập hết hạn';
-      else if (statusCode == 403) message = 'Không có quyền truy cập';
-      else if (statusCode >= 500) message = 'Lỗi máy chủ, vui lòng thử lại';
+      if (statusCode == 401) {
+        message = 'Phiên đăng nhập hết hạn';
+      } else if (statusCode == 403)
+        message = 'Không có quyền truy cập';
+      else if (statusCode >= 500)
+        message = 'Lỗi máy chủ, vui lòng thử lại';
     }
 
     return ApiException(

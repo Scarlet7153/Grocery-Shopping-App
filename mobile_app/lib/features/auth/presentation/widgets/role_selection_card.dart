@@ -50,29 +50,17 @@ class _RoleSelectionCardState extends State<RoleSelectionCard>
       vsync: this,
     );
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutBack,
-    ));
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack),
+    );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
 
-    _selectionAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _selectionController,
-      curve: Curves.easeInOut,
-    ));
+    _selectionAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _selectionController, curve: Curves.easeInOut),
+    );
   }
 
   void _startEntryAnimation() {
@@ -86,7 +74,7 @@ class _RoleSelectionCardState extends State<RoleSelectionCard>
   @override
   void didUpdateWidget(RoleSelectionCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     if (widget.isSelected != oldWidget.isSelected) {
       if (widget.isSelected) {
         _selectionController.forward();
@@ -110,10 +98,7 @@ class _RoleSelectionCardState extends State<RoleSelectionCard>
       builder: (context, child) {
         return Transform.scale(
           scale: _scaleAnimation.value,
-          child: Opacity(
-            opacity: _fadeAnimation.value,
-            child: _buildCard(),
-          ),
+          child: Opacity(opacity: _fadeAnimation.value, child: _buildCard()),
         );
       },
     );
@@ -129,7 +114,9 @@ class _RoleSelectionCardState extends State<RoleSelectionCard>
             widget.onTap();
           },
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: AppDimensions.animationNormal),
+            duration: const Duration(
+              milliseconds: AppDimensions.animationNormal,
+            ),
             curve: Curves.easeInOut,
             padding: const EdgeInsets.all(AppDimensions.spacingL),
             decoration: _buildCardDecoration(),
@@ -143,7 +130,7 @@ class _RoleSelectionCardState extends State<RoleSelectionCard>
   BoxDecoration _buildCardDecoration() {
     final baseColor = widget.role.primaryColor;
     final selectionProgress = _selectionAnimation.value;
-    
+
     return BoxDecoration(
       color: widget.isSelected
           ? baseColor.withValues(alpha: 0.1 + 0.05 * selectionProgress)
@@ -187,7 +174,7 @@ class _RoleSelectionCardState extends State<RoleSelectionCard>
   Widget _buildRoleIcon() {
     final baseColor = widget.role.primaryColor;
     final selectionProgress = _selectionAnimation.value;
-    
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: AppDimensions.animationNormal),
       width: AppDimensions.iconXl + 8,
@@ -201,9 +188,7 @@ class _RoleSelectionCardState extends State<RoleSelectionCard>
       child: Icon(
         widget.isSelected ? widget.role.iconFilled : widget.role.icon,
         size: AppDimensions.iconL,
-        color: widget.isSelected
-            ? baseColor
-            : baseColor.withValues(alpha: 0.8),
+        color: widget.isSelected ? baseColor : baseColor.withValues(alpha: 0.8),
       ),
     );
   }
@@ -219,9 +204,7 @@ class _RoleSelectionCardState extends State<RoleSelectionCard>
             color: widget.isSelected
                 ? widget.role.primaryColor
                 : AppColors.textPrimary,
-            fontWeight: widget.isSelected
-                ? FontWeight.w600
-                : FontWeight.w500,
+            fontWeight: widget.isSelected ? FontWeight.w600 : FontWeight.w500,
           ),
         ),
         const SizedBox(height: AppDimensions.spacingXs),
@@ -246,7 +229,7 @@ class _RoleSelectionCardState extends State<RoleSelectionCard>
         if (!widget.isSelected && _selectionAnimation.value == 0.0) {
           return const SizedBox.shrink();
         }
-        
+
         return Transform.scale(
           scale: _selectionAnimation.value,
           child: Container(

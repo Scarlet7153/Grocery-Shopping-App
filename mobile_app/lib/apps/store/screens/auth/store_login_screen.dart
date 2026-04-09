@@ -15,7 +15,6 @@ class StoreLoginScreen extends StatefulWidget {
 }
 
 class _StoreLoginScreenState extends State<StoreLoginScreen> {
-
   final _formKey = GlobalKey<FormState>();
 
   final _phoneController = TextEditingController();
@@ -25,61 +24,43 @@ class _StoreLoginScreenState extends State<StoreLoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     return BlocListener<StoreAuthBloc, StoreAuthState>(
-
       listener: (context, state) {
+        if (state is StoreAuthLoading) {
+          setState(() {
+            _isLoading = true;
+          });
+        }
 
-  if (state is StoreAuthLoading) {
+        if (state is StoreAuthSuccess) {
+          setState(() {
+            _isLoading = false;
+          });
 
-    setState(() {
-      _isLoading = true;
-    });
+          final token = state.data["token"];
 
-  }
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => StoreHomeScreen(token: token)),
+          );
+        }
 
-  if (state is StoreAuthSuccess) {
+        if (state is StoreAuthError) {
+          setState(() {
+            _isLoading = false;
+          });
 
-    setState(() {
-      _isLoading = false;
-    });
-
-    final token = state.data["token"];
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => StoreHomeScreen(
-          token: token,
-        ),
-      ),
-    );
-
-  }
-
-  if (state is StoreAuthError) {
-
-    setState(() {
-      _isLoading = false;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(state.message),
-        backgroundColor: Colors.red,
-      ),
-    );
-
-  }
-
-},
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+          );
+        }
+      },
 
       child: Scaffold(
         backgroundColor: StoreTheme.backgroundColor,
 
         body: SafeArea(
           child: SingleChildScrollView(
-
             padding: const EdgeInsets.all(24),
 
             child: Form(
@@ -89,7 +70,6 @@ class _StoreLoginScreenState extends State<StoreLoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
 
                 children: [
-
                   const SizedBox(height: 40),
 
                   _buildHeader(),
@@ -109,7 +89,6 @@ class _StoreLoginScreenState extends State<StoreLoginScreen> {
                   const SizedBox(height: 16),
 
                   _buildForgotPasswordLink(),
-
                 ],
               ),
             ),
@@ -120,12 +99,10 @@ class _StoreLoginScreenState extends State<StoreLoginScreen> {
   }
 
   Widget _buildHeader() {
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
 
       children: [
-
         Container(
           padding: const EdgeInsets.all(16),
 
@@ -156,21 +133,15 @@ class _StoreLoginScreenState extends State<StoreLoginScreen> {
 
         Text(
           'Đăng nhập để quản lý cửa hàng và bán hàng hiệu quả.',
-          style: TextStyle(
-            fontSize: 16,
-            color: Colors.grey[600],
-            height: 1.4,
-          ),
+          style: TextStyle(fontSize: 16, color: Colors.grey[600], height: 1.4),
         ),
       ],
     );
   }
 
   Widget _buildLoginForm() {
-
     return Column(
       children: [
-
         CustomTextField(
           label: 'Số điện thoại',
           hint: 'Nhập số điện thoại của cửa hàng',
@@ -192,19 +163,16 @@ class _StoreLoginScreenState extends State<StoreLoginScreen> {
           validator: _validatePassword,
           focusColor: StoreTheme.primaryColor,
         ),
-
       ],
     );
   }
 
   Widget _buildLoginButton() {
-
     return SizedBox(
       width: double.infinity,
       height: 52,
 
       child: ElevatedButton(
-
         onPressed: _isLoading ? null : _handleLogin,
 
         style: ElevatedButton.styleFrom(
@@ -226,34 +194,26 @@ class _StoreLoginScreenState extends State<StoreLoginScreen> {
               )
             : const Text(
                 'Đăng nhập',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
       ),
     );
   }
 
   Widget _buildRegisterLink() {
-
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
 
       children: [
-
         Text(
           'Chưa có tài khoản cửa hàng? ',
           style: TextStyle(color: Colors.grey[600]),
         ),
 
         GestureDetector(
-
           onTap: () => Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (_) => const StoreRegisterScreen(),
-            ),
+            MaterialPageRoute(builder: (_) => const StoreRegisterScreen()),
           ),
 
           child: const Text(
@@ -264,22 +224,16 @@ class _StoreLoginScreenState extends State<StoreLoginScreen> {
             ),
           ),
         ),
-
       ],
     );
   }
 
   Widget _buildForgotPasswordLink() {
-
     return Center(
       child: GestureDetector(
-
         onTap: () {
-
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Tính năng đang phát triển'),
-            ),
+            const SnackBar(content: Text('Tính năng đang phát triển')),
           );
         },
 
@@ -295,7 +249,6 @@ class _StoreLoginScreenState extends State<StoreLoginScreen> {
   }
 
   String? _validatePhone(String? value) {
-
     if (value == null || value.isEmpty) {
       return 'Vui lòng nhập số điện thoại';
     }
@@ -308,7 +261,6 @@ class _StoreLoginScreenState extends State<StoreLoginScreen> {
   }
 
   String? _validatePassword(String? value) {
-
     if (value == null || value.isEmpty) {
       return 'Vui lòng nhập mật khẩu';
     }
@@ -321,22 +273,18 @@ class _StoreLoginScreenState extends State<StoreLoginScreen> {
   }
 
   void _handleLogin() {
-
     if (!_formKey.currentState!.validate()) return;
 
     context.read<StoreAuthBloc>().add(
-
       LoginStoreEvent(
         phoneNumber: _phoneController.text,
         password: _passwordController.text,
       ),
-
     );
   }
 
   @override
   void dispose() {
-
     _phoneController.dispose();
     _passwordController.dispose();
 

@@ -66,7 +66,10 @@ class StoreProductsBloc extends Bloc<StoreProductsEvent, StoreProductsState> {
 
   final ProductService _productService;
 
-  Future<void> _onLoad(LoadStoreProducts event, Emitter<StoreProductsState> emit) async {
+  Future<void> _onLoad(
+    LoadStoreProducts event,
+    Emitter<StoreProductsState> emit,
+  ) async {
     emit(StoreProductsLoading());
     try {
       final list = await _productService.getProducts(
@@ -82,7 +85,10 @@ class StoreProductsBloc extends Bloc<StoreProductsEvent, StoreProductsState> {
     }
   }
 
-  Future<void> _onCreate(CreateStoreProduct event, Emitter<StoreProductsState> emit) async {
+  Future<void> _onCreate(
+    CreateStoreProduct event,
+    Emitter<StoreProductsState> emit,
+  ) async {
     final current = state;
     if (current is! StoreProductsLoaded) return;
     try {
@@ -96,7 +102,10 @@ class StoreProductsBloc extends Bloc<StoreProductsEvent, StoreProductsState> {
     }
   }
 
-  Future<void> _onUpdate(UpdateStoreProduct event, Emitter<StoreProductsState> emit) async {
+  Future<void> _onUpdate(
+    UpdateStoreProduct event,
+    Emitter<StoreProductsState> emit,
+  ) async {
     final current = state;
     if (current is! StoreProductsLoaded) return;
     try {
@@ -110,12 +119,17 @@ class StoreProductsBloc extends Bloc<StoreProductsEvent, StoreProductsState> {
     }
   }
 
-  Future<void> _onDelete(DeleteStoreProduct event, Emitter<StoreProductsState> emit) async {
+  Future<void> _onDelete(
+    DeleteStoreProduct event,
+    Emitter<StoreProductsState> emit,
+  ) async {
     final current = state;
     if (current is! StoreProductsLoaded) return;
     try {
       await _productService.deleteProduct(event.productId);
-      final list = current.products.where((p) => p.id != event.productId).toList();
+      final list = current.products
+          .where((p) => p.id != event.productId)
+          .toList();
       emit(StoreProductsLoaded(list));
     } catch (e) {
       final message = e.toString().replaceFirst(RegExp(r'^Exception: '), '');

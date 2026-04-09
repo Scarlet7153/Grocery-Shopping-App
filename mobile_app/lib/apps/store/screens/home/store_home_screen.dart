@@ -11,10 +11,7 @@ const Color _kPrimary = Color(0xFF00B14F);
 class StoreHomeScreen extends StatefulWidget {
   final String token;
 
-  const StoreHomeScreen({
-    super.key,
-    required this.token,
-  });
+  const StoreHomeScreen({super.key, required this.token});
 
   @override
   State<StoreHomeScreen> createState() => _StoreHomeScreenState();
@@ -40,10 +37,7 @@ class _StoreHomeScreenState extends State<StoreHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: currentIndex,
-        children: pages,
-      ),
+      body: IndexedStack(index: currentIndex, children: pages),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -156,12 +150,18 @@ class _NavItem extends StatelessWidget {
                     top: -4,
                     right: -8,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFD32F2F),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                      constraints: const BoxConstraints(
+                        minWidth: 18,
+                        minHeight: 18,
+                      ),
                       alignment: Alignment.center,
                       child: Text(
                         unreadCount! > 99 ? '99+' : '$unreadCount',

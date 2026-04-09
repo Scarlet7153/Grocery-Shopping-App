@@ -53,17 +53,17 @@ CreateProductRequest _$CreateProductRequestFromJson(
     );
 
 Map<String, dynamic> _$CreateProductRequestToJson(
-        CreateProductRequest instance) =>
-    <String, dynamic>{
-      'name': instance.name,
-      'description': instance.description,
-      'price': instance.price,
-      'imageUrl': instance.imageUrl,
-      'category': instance.category,
-      'stock': instance.stock,
-      'unit': instance.unit,
-      'isActive': instance.isActive,
-    };
+  CreateProductRequest instance,
+) => <String, dynamic>{
+  'name': instance.name,
+  'description': instance.description,
+  'price': instance.price,
+  'imageUrl': instance.imageUrl,
+  'category': instance.category,
+  'stock': instance.stock,
+  'unit': instance.unit,
+  'isActive': instance.isActive,
+};
 
 UpdateProductRequest _$UpdateProductRequestFromJson(
         Map<String, dynamic> json) =>
@@ -79,14 +79,14 @@ UpdateProductRequest _$UpdateProductRequestFromJson(
     );
 
 Map<String, dynamic> _$UpdateProductRequestToJson(
-        UpdateProductRequest instance) =>
-    <String, dynamic>{
-      'name': instance.name,
-      'description': instance.description,
-      'price': instance.price,
-      'imageUrl': instance.imageUrl,
-      'category': instance.category,
-      'stock': instance.stock,
-      'unit': instance.unit,
-      'isActive': instance.isActive,
-    };
+  UpdateProductRequest instance,
+) => <String, dynamic>{
+  'name': instance.name,
+  'description': instance.description,
+  'price': instance.price,
+  'imageUrl': instance.imageUrl,
+  'category': instance.category,
+  'stock': instance.stock,
+  'unit': instance.unit,
+  'isActive': instance.isActive,
+};

@@ -125,11 +125,16 @@ public class AuthService {
         // Kiểm tra user tồn tại
         User user = userRepository.findByPhoneNumber(request.getPhoneNumber())
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Không tìm thấy tài khoản với số điện thoại: " + request.getPhoneNumber()));
+                        "Số điện thoại chưa được đăng ký"));
         
         // Kiểm tra trạng thái tài khoản
         if (user.getStatus() == User.UserStatus.BANNED) {
-            throw new BadRequestException("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ admin.");
+            throw new BadRequestException("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.");
+        }
+        
+        // Kiểm tra trạng thái tài khoản ACTIVE
+        if (user.getStatus() == User.UserStatus.PENDING) {
+            throw new BadRequestException("Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email để kích hoạt.");
         }
         
         // Authenticate user
@@ -145,7 +150,7 @@ public class AuthService {
             
         } catch (BadCredentialsException e) {
             log.error("Bad credentials for user: {}", request.getPhoneNumber());
-            throw new BadCredentialsException("Số điện thoại hoặc mật khẩu không đúng");
+            throw new BadCredentialsException("Thông tin đăng nhập không hợp lệ (sai số điện thoại hoặc mật khẩu)");
         }
         
         // Tạo JWT token

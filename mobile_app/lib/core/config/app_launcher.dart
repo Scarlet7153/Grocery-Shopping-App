@@ -5,16 +5,15 @@ import 'app_config.dart';
 class AppLauncher extends StatelessWidget {
   const AppLauncher({super.key});
 
-  /// Helper cung cấp màu và tên riêng cho Launcher 
-  /// (Vì AppConfig hiện tại chỉ chứa thông tin của App đang build)
+  /// Helper cung cấp màu và tên riêng cho Launcher
   Map<String, dynamic> _getAppUIInfo(AppType type) {
     switch (type) {
       case AppType.customer:
         return {'name': 'Khách Hàng', 'color': 0xFF2E7D32}; // Màu xanh lá
       case AppType.store:
-        return {'name': 'Cửa Hàng', 'color': 0xFF1565C0};   // Màu xanh dương
+        return {'name': 'Cửa Hàng', 'color': 0xFF1565C0}; // Màu xanh dương
       case AppType.shipper:
-        return {'name': 'Giao Hàng', 'color': 0xFFE65100};  // Màu cam
+        return {'name': 'Giao Hàng', 'color': 0xFFE65100}; // Màu cam
       case AppType.admin:
         return {'name': 'Quản Trị Viên', 'color': 0xFF6A1B9A}; // Màu tím
     }
@@ -36,7 +35,7 @@ class AppLauncher extends StatelessWidget {
           childAspectRatio: 1.15,
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
-          children: apps.map((appType) {
+          children: AppType.values.map((appType) {
             final uiInfo = _getAppUIInfo(appType);
             return _buildAppCard(context, appType, uiInfo);
           }).toList(),
@@ -45,39 +44,45 @@ class AppLauncher extends StatelessWidget {
     );
   }
 
-  Widget _buildAppCard(BuildContext context, AppType appType, Map<String, dynamic> uiInfo) {
-    final Color primaryColor = Color(uiInfo['color']);
-    final String appName = uiInfo['name'];
+  Widget _buildAppCard(
+    BuildContext context,
+    AppType appType,
+    Map<String, dynamic> uiInfo,
+  ) {
+    final Color primaryColor = Color(uiInfo['color'] as int);
+    final String appName = uiInfo['name'] as String;
 
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      clipBehavior: Clip.hardEdge,
+      clipBehavior: Clip.hardEdge, // Cắt mọi thứ bên trong theo bo góc của Card
       child: InkWell(
         onTap: () => _launchApp(context, appType, appName, primaryColor),
+        // borderRadius này giúp hiệu ứng Ripple (loang nước) bo tròn theo Card
+        borderRadius: BorderRadius.circular(12), 
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
           decoration: BoxDecoration(
+            // Không cần borderRadius ở đây vì Card đã có clipBehavior
+            // Nhưng nếu muốn chắc chắn thì nên để cho đồng bộ
+            borderRadius: BorderRadius.circular(12),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
                 primaryColor,
-                primaryColor.withValues(alpha: 0.7),
+                primaryColor.withAlpha(179), // Độ trong suốt ~0.7
               ],
             ),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                _getAppIcon(appType),
-                size: 42,
-                color: Colors.white,
-              ),
+              Icon(_getIconForApp(appType), size: 40, color: Colors.white),
               const SizedBox(height: 12),
               Text(
                 appName,
+                textAlign: TextAlign.center,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
@@ -100,10 +105,10 @@ class AppLauncher extends StatelessWidget {
     );
   }
 
-  IconData _getAppIcon(AppType appType) {
-    switch (appType) {
+  IconData _getIconForApp(AppType type) {
+    switch (type) {
       case AppType.customer:
-        return Icons.shopping_cart;
+        return Icons.shopping_bag;
       case AppType.store:
         return Icons.store;
       case AppType.shipper:
@@ -113,13 +118,19 @@ class AppLauncher extends StatelessWidget {
     }
   }
 
-  void _launchApp(BuildContext context, AppType appType, String appName, Color color) {
+void _launchApp(
+    BuildContext context, 
+    AppType appType, 
+    String appName, 
+    Color primaryColor, // Dùng tên biến rõ ràng từ nhánh main
+  ) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('App đã build cho: ${AppConfig.appName}. Tham số môi trường: APP=${AppConfig.app}'),
-        backgroundColor: color,
-        behavior: SnackBarBehavior.floating,
+        content: Text('Khởi động app: $appName'), // Nội dung thân thiện với người dùng
+        backgroundColor: primaryColor,
+        behavior: SnackBarBehavior.floating, // Giữ giao diện hiện đại từ Admin_app
+        duration: const Duration(seconds: 2), // Nên thêm thời gian hiển thị
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), // Bo góc cho đồng bộ với Card
       ),
     );
   }
-}

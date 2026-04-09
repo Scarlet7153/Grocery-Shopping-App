@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/auth/auth_session.dart';
-import '../../../../core/format/formatters.dart';
 import '../auth/customer_login_screen.dart';
+import 'recipient_info_screen.dart';
 
 class CustomerProfileScreen extends StatelessWidget {
   const CustomerProfileScreen({super.key});
@@ -14,10 +14,10 @@ class CustomerProfileScreen extends StatelessWidget {
         : AuthSession.fullName!;
     final address =
         (AuthSession.address == null || AuthSession.address!.isEmpty)
-            ? 'Ch\u01b0a c\u00f3 \u0111\u1ecba ch\u1ec9'
-            : AuthSession.address!;
-    final phone = (AuthSession.phoneNumber == null ||
-            AuthSession.phoneNumber!.isEmpty)
+        ? 'Ch\u01b0a c\u00f3 \u0111\u1ecba ch\u1ec9'
+        : AuthSession.address!;
+    final phone =
+        (AuthSession.phoneNumber == null || AuthSession.phoneNumber!.isEmpty)
         ? 'Ch\u01b0a c\u00f3 s\u1ed1 \u0111i\u1ec7n tho\u1ea1i'
         : AuthSession.phoneNumber!;
 
@@ -29,42 +29,36 @@ class CustomerProfileScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF2F80ED), Color(0xFF56CCF2)],
-              ),
+              color: Colors.white,
               borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.black12),
             ),
-            child: Row(
+            child: Column(
               children: [
                 const CircleAvatar(
-                  radius: 26,
-                  backgroundColor: Colors.white,
-                  child: Icon(Icons.person, color: Color(0xFF2F80ED)),
+                  radius: 32,
+                  backgroundColor: Color(0xFFEAF2FF),
+                  child: Icon(Icons.person, color: Color(0xFF2F80ED), size: 32),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        phone,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
+                const SizedBox(height: 12),
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
-                )
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  phone,
+                  style: const TextStyle(color: Colors.black54, fontSize: 12),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  address,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.black54, fontSize: 12),
+                ),
               ],
             ),
           ),
@@ -73,39 +67,42 @@ class CustomerProfileScreen extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
             ),
-            child: ListTile(
-              leading: const Icon(Icons.location_on),
-              title: const Text('\u0110\u1ecba ch\u1ec9'),
-              subtitle: Text(address),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.location_on),
+                  title: const Text('\u0110\u1ecba ch\u1ec9 c\u1ee7a t\u00f4i'),
+                  subtitle: Text(address),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const RecipientInfoScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.payment),
+                  title: const Text(
+                    'Ph\u01b0\u01a1ng th\u1ee9c thanh to\u00e1n',
+                  ),
+                  onTap: () {},
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.history),
+                  title: const Text(
+                    'L\u1ecbch s\u1eed \u0111\u01a1n h\u00e0ng',
+                  ),
+                  onTap: () {},
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: ListTile(
-              leading: const Icon(Icons.receipt_long),
-              title: const Text('T\u1ed5ng chi ti\u00eau (mock)'),
-              subtitle: Text(formatVnd(320000)),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: ListTile(
-              leading: const Icon(Icons.notifications_none),
-              title: const Text('Th\u00f4ng b\u00e1o'),
-              subtitle: const Text('B\u1eadt nh\u1eadn th\u00f4ng b\u00e1o khuy\u1ebfn m\u00e3i'),
-              trailing: Switch(
-                value: true,
-                onChanged: (_) {},
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Container(
             decoration: BoxDecoration(
               color: Colors.white,

@@ -4,11 +4,7 @@ class ServerException implements Exception {
   final int? statusCode;
   final dynamic data;
 
-  const ServerException({
-    required this.message,
-    this.statusCode,
-    this.data,
-  });
+  const ServerException({required this.message, this.statusCode, this.data});
 
   @override
   String toString() => 'ServerException: $message (Status: $statusCode)';
@@ -39,10 +35,7 @@ class ValidationException implements Exception {
   final String message;
   final Map<String, List<String>>? errors;
 
-  const ValidationException({
-    required this.message,
-    this.errors,
-  });
+  const ValidationException({required this.message, this.errors});
 
   @override
   String toString() => 'ValidationException: $message';
@@ -53,10 +46,7 @@ class AuthException implements Exception {
   final String message;
   final String? errorCode;
 
-  const AuthException({
-    required this.message,
-    this.errorCode,
-  });
+  const AuthException({required this.message, this.errorCode});
 
   @override
   String toString() => 'AuthException: $message (Code: $errorCode)';

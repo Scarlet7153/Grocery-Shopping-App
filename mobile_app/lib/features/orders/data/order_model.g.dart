@@ -80,13 +80,9 @@ Map<String, dynamic> _$OrderItemModelToJson(OrderItemModel instance) =>
     };
 
 UpdateOrderStatusRequest _$UpdateOrderStatusRequestFromJson(
-        Map<String, dynamic> json) =>
-    UpdateOrderStatusRequest(
-      status: json['status'] as String,
-    );
+  Map<String, dynamic> json,
+) => UpdateOrderStatusRequest(status: json['status'] as String);
 
 Map<String, dynamic> _$UpdateOrderStatusRequestToJson(
-        UpdateOrderStatusRequest instance) =>
-    <String, dynamic>{
-      'status': instance.status,
-    };
+  UpdateOrderStatusRequest instance,
+) => <String, dynamic>{'status': instance.status};

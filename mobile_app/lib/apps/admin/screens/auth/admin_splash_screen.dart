@@ -29,29 +29,21 @@ class _AdminSplashScreenState extends State<AdminSplashScreen>
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
 
-    _rotateAnimation = Tween<double>(
-      begin: 0.0,
-      end: 0.1,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.elasticOut,
-    ));
+    _rotateAnimation = Tween<double>(begin: 0.0, end: 0.1).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.elasticOut),
+    );
 
     _animationController.forward();
   }
@@ -86,7 +78,7 @@ class _AdminSplashScreenState extends State<AdminSplashScreen>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Spacer(flex: 2),
-              
+
               // Animated Admin Logo & Branding
               AnimatedBuilder(
                 animation: _animationController,
@@ -103,9 +95,9 @@ class _AdminSplashScreenState extends State<AdminSplashScreen>
                   );
                 },
               ),
-              
+
               const Spacer(flex: 1),
-              
+
               // Animated tagline & features
               AnimatedBuilder(
                 animation: _animationController,
@@ -116,9 +108,9 @@ class _AdminSplashScreenState extends State<AdminSplashScreen>
                   );
                 },
               ),
-              
+
               const SizedBox(height: 40),
-              
+
               // Loading indicator
               AnimatedBuilder(
                 animation: _animationController,
@@ -145,7 +137,7 @@ class _AdminSplashScreenState extends State<AdminSplashScreen>
                   );
                 },
               ),
-              
+
               const Spacer(flex: 2),
             ],
           ),
@@ -183,10 +175,7 @@ class _AdminSplashScreenState extends State<AdminSplashScreen>
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  Colors.white,
-                  AdminTheme.backgroundColor,
-                ],
+                colors: [Colors.white, AdminTheme.backgroundColor],
               ),
               borderRadius: BorderRadius.circular(70),
               border: Border.all(
@@ -216,18 +205,14 @@ class _AdminSplashScreenState extends State<AdminSplashScreen>
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.diamond,
-                size: 16,
-                color: Colors.white,
-              ),
+              child: const Icon(Icons.diamond, size: 16, color: Colors.white),
             ),
           ),
         ],
       ),
-      
+
       const SizedBox(height: 32),
-      
+
       // App Name cho Admin
       const Text(
         'Đi Chợ Hộ',
@@ -238,9 +223,9 @@ class _AdminSplashScreenState extends State<AdminSplashScreen>
           letterSpacing: 1.2,
         ),
       ),
-      
+
       const SizedBox(height: 8),
-      
+
       // Admin Subtitle với Premium Design
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 12),
@@ -260,11 +245,7 @@ class _AdminSplashScreenState extends State<AdminSplashScreen>
         child: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.security,
-              size: 18,
-              color: AdminTheme.primaryColor,
-            ),
+            Icon(Icons.security, size: 18, color: AdminTheme.primaryColor),
             SizedBox(width: 8),
             Text(
               'ADMIN PANEL',
@@ -296,10 +277,10 @@ class _AdminSplashScreenState extends State<AdminSplashScreen>
           ),
         ),
         const SizedBox(height: 16),
-        
+
         // Admin feature highlights
         _buildAdminFeatures(),
-        
+
         const SizedBox(height: 20),
         Text(
           'Trung tâm điều khiển toàn diện cho nền tảng Đi Chợ Hộ',
@@ -372,16 +353,9 @@ class _AdminSplashScreenState extends State<AdminSplashScreen>
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: color.withValues(alpha: 0.3),
-            width: 1,
-          ),
+          border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
         ),
-        child: Icon(
-          icon,
-          color: color,
-          size: 20,
-        ),
+        child: Icon(icon, color: color, size: 20),
       ),
       const SizedBox(height: 6),
       Text(

@@ -6,20 +6,21 @@ import 'package:dio/dio.dart';
 class ApiClient {
   final Dio _dio;
 
-  ApiClient({
-    Dio? dio,
-    String? baseUrl,
-    Map<String, dynamic>? defaultHeaders,
-  }) : _dio = dio ?? Dio(BaseOptions(baseUrl: baseUrl ?? '', headers: defaultHeaders)) {
+  ApiClient({Dio? dio, String? baseUrl, Map<String, dynamic>? defaultHeaders})
+    : _dio =
+          dio ??
+          Dio(BaseOptions(baseUrl: baseUrl ?? '', headers: defaultHeaders)) {
     // add simple logging interceptor (optional)
-    _dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) {
-        // Optionally modify headers here
-        return handler.next(options);
-      },
-      onResponse: (response, handler) => handler.next(response),
-      onError: (err, handler) => handler.next(err),
-    ));
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          // Optionally modify headers here
+          return handler.next(options);
+        },
+        onResponse: (response, handler) => handler.next(response),
+        onError: (err, handler) => handler.next(err),
+      ),
+    );
   }
 
   Future<Response<dynamic>> get(
@@ -127,15 +128,14 @@ class ApiTester {
   Future<void> testValidAuth() async {
     try {
       AppLogger.info('Testing auth with sample data...');
-      
-      final loginData = {
-        'phoneNumber': '0901234567',
-        'password': '123456',
-      };
-      
-      final response = await _apiClient.post(ApiEndpoints.login, data: loginData);
+
+      final loginData = {'phoneNumber': '0901234567', 'password': '123456'};
+
+      final response = await _apiClient.post(
+        ApiEndpoints.login,
+        data: loginData,
+      );
       AppLogger.info('Login test successful: ${response.statusCode}');
-      
     } catch (e) {
       AppLogger.error('Login test failed', e);
     }

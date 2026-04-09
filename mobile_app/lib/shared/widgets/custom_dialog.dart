@@ -34,7 +34,11 @@ class CustomDialog extends StatelessWidget {
     this.onConfirm,
     this.onCancel,
     this.barrierDismissible = true,
-  }) : icon = const Icon(Icons.help_outline, size: 48, color: Color(0xFF2196F3));
+  }) : icon = const Icon(
+         Icons.help_outline,
+         size: 48,
+         color: Color(0xFF2196F3),
+       );
 
   const CustomDialog.warning({
     super.key,
@@ -45,7 +49,11 @@ class CustomDialog extends StatelessWidget {
     this.onConfirm,
     this.onCancel,
     this.barrierDismissible = true,
-  }) : icon = const Icon(Icons.warning_amber, size: 48, color: Color(0xFFFF9800));
+  }) : icon = const Icon(
+         Icons.warning_amber,
+         size: 48,
+         color: Color(0xFFFF9800),
+       );
 
   const CustomDialog.error({
     super.key,
@@ -56,7 +64,11 @@ class CustomDialog extends StatelessWidget {
     this.onConfirm,
     this.onCancel,
     this.barrierDismissible = true,
-  }) : icon = const Icon(Icons.error_outline, size: 48, color: Color(0xFFD32F2F));
+  }) : icon = const Icon(
+         Icons.error_outline,
+         size: 48,
+         color: Color(0xFFD32F2F),
+       );
 
   const CustomDialog.success({
     super.key,
@@ -67,7 +79,11 @@ class CustomDialog extends StatelessWidget {
     this.onConfirm,
     this.onCancel,
     this.barrierDismissible = true,
-  }) : icon = const Icon(Icons.check_circle_outline, size: 48, color: Color(0xFF4CAF50));
+  }) : icon = const Icon(
+         Icons.check_circle_outline,
+         size: 48,
+         color: Color(0xFF4CAF50),
+       );
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +123,8 @@ class CustomDialog extends StatelessWidget {
                     child: CustomButton(
                       text: cancelText!,
                       onPressed: onCancel,
-                      type: ButtonType.secondary,  // Fixed - Use ButtonType.secondary instead of outlined
+                      type: ButtonType
+                          .secondary, // Fixed - Use ButtonType.secondary instead of outlined
                     ),
                   ),
                   const SizedBox(width: 12.0),
@@ -117,8 +134,11 @@ class CustomDialog extends StatelessWidget {
                     child: CustomButton(
                       text: confirmText!,
                       onPressed: onConfirm ?? () => Navigator.of(context).pop(),
-                      type: ButtonType.primary,  // Fixed - Use ButtonType.primary
-                      customColor: const Color(0xFF4CAF50), // Fixed - Use customColor instead of backgroundColor
+                      type:
+                          ButtonType.primary, // Fixed - Use ButtonType.primary
+                      customColor: const Color(
+                        0xFF4CAF50,
+                      ), // Fixed - Use customColor instead of backgroundColor
                     ),
                   ),
                 ],

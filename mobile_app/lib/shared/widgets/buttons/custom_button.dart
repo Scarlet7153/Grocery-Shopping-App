@@ -5,20 +5,10 @@ import '../../../core/theme/app_dimensions.dart';
 import '../loading_widget.dart';
 
 /// Button types for different visual styles
-enum ButtonType {
-  primary,
-  secondary,
-  outline,
-  ghost,
-  text,
-}
+enum ButtonType { primary, secondary, outline, ghost, text }
 
 /// Button sizes for different contexts
-enum ButtonSize {
-  small,
-  medium,
-  large,
-}
+enum ButtonSize { small, medium, large }
 
 /// Custom button widget with consistent styling across the app
 /// Supports multiple types, sizes, and loading states
@@ -95,9 +85,7 @@ class CustomButton extends StatelessWidget {
       style: OutlinedButton.styleFrom(
         foregroundColor: _getOutlineColor(),
         side: BorderSide(
-          color: isLoading 
-              ? AppColors.textHint 
-              : _getOutlineColor(),
+          color: isLoading ? AppColors.textHint : _getOutlineColor(),
           width: 1.5,
         ),
         shape: RoundedRectangleBorder(
@@ -114,7 +102,7 @@ class CustomButton extends StatelessWidget {
       onPressed: isLoading ? null : onPressed,
       style: TextButton.styleFrom(
         foregroundColor: _getTextButtonColor(),
-        backgroundColor: isGhost 
+        backgroundColor: isGhost
             ? _getBackgroundColor().withValues(alpha: 0.1)
             : null,
         shape: RoundedRectangleBorder(
@@ -161,11 +149,11 @@ class CustomButton extends StatelessWidget {
 
   Color _getBackgroundColor({bool isSecondary = false}) {
     if (customColor != null) return customColor!;
-    
+
     if (isSecondary) {
       return AppColors.warning; // Use warning color as secondary
     }
-    
+
     return AppColors.storePrimary; // Default to store green
   }
 
@@ -185,8 +173,8 @@ class CustomButton extends StatelessWidget {
   }
 
   double _getElevation() {
-    return isLoading 
-        ? AppDimensions.elevationNone 
+    return isLoading
+        ? AppDimensions.elevationNone
         : AppDimensions.elevationMedium;
   }
 

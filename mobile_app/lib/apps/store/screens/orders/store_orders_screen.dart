@@ -21,133 +21,7 @@ class _OrderItem {
   _OrderItem({required this.name, required this.qty, required this.price});
 }
 
-/// Demo đơn hàng — gồm cả đơn mới (chỉ UI)
-final List<_OrderData> _kAllOrders = [
-  _OrderData(
-    id: '#1240',
-    amount: '185.000đ',
-    status: 'Đơn mới',
-    statusType: OrderStatusType.newOrder,
-    customerName: 'Nguyễn Thị G',
-    phone: '0902 111 333',
-    address: '100 Pasteur, Q1, TP.HCM',
-    items: [
-      _OrderItem(name: 'Thịt bò', qty: 1, price: '180.000đ'),
-      _OrderItem(name: 'Rau cải', qty: 1, price: '12.000đ'),
-    ],
-    createdAt: '14/03 12:00',
-    statusHistory: ['Đặt đơn'],
-  ),
-  _OrderData(
-    id: '#1241',
-    amount: '72.000đ',
-    status: 'Đơn mới',
-    statusType: OrderStatusType.newOrder,
-    customerName: 'Trần Văn H',
-    phone: '0915 444 555',
-    address: '88 Nguyễn Du, Q1, TP.HCM',
-    items: [
-      _OrderItem(name: 'Chuối', qty: 3, price: '12.000đ'),
-      _OrderItem(name: 'Sữa tươi', qty: 1, price: '28.000đ'),
-      _OrderItem(name: 'Nước suối', qty: 2, price: '5.000đ'),
-    ],
-    createdAt: '14/03 12:15',
-    statusHistory: ['Đặt đơn'],
-  ),
-  _OrderData(
-    id: '#1234',
-    amount: '150.000đ',
-    status: 'Đang chuẩn bị',
-    statusType: OrderStatusType.processing,
-    customerName: 'Nguyễn Văn A',
-    phone: '0901 234 567',
-    address: '123 Nguyễn Huệ, Q1, TP.HCM',
-    items: [
-      _OrderItem(name: 'Táo Mỹ', qty: 2, price: '25.000đ'),
-      _OrderItem(name: 'Sữa tươi', qty: 1, price: '28.000đ'),
-      _OrderItem(name: 'Bánh mì', qty: 3, price: '22.000đ'),
-    ],
-    createdAt: '14/03 08:30',
-    statusHistory: ['Đặt đơn', 'Đang chuẩn bị'],
-  ),
-  _OrderData(
-    id: '#1235',
-    amount: '80.000đ',
-    status: 'Đang giao',
-    statusType: OrderStatusType.shipping,
-    customerName: 'Trần Thị B',
-    phone: '0912 345 678',
-    address: '456 Lê Lợi, Q3, TP.HCM',
-    items: [
-      _OrderItem(name: 'Nước suối', qty: 4, price: '5.000đ'),
-      _OrderItem(name: 'Chuối', qty: 2, price: '12.000đ'),
-    ],
-    createdAt: '14/03 09:15',
-    statusHistory: ['Đặt đơn', 'Đang chuẩn bị', 'Đang giao'],
-  ),
-  _OrderData(
-    id: '#1236',
-    amount: '120.000đ',
-    status: 'Hoàn thành',
-    statusType: OrderStatusType.done,
-    customerName: 'Lê Văn C',
-    phone: '0987 654 321',
-    address: '789 Hai Bà Trưng, Q1, TP.HCM',
-    items: [
-      _OrderItem(name: 'Cà chua', qty: 2, price: '18.000đ'),
-      _OrderItem(name: 'Thịt gà', qty: 1, price: '95.000đ'),
-    ],
-    createdAt: '13/03 16:00',
-    statusHistory: ['Đặt đơn', 'Đang chuẩn bị', 'Đang giao', 'Hoàn thành'],
-  ),
-  _OrderData(
-    id: '#1237',
-    amount: '95.000đ',
-    status: 'Đang chuẩn bị',
-    statusType: OrderStatusType.processing,
-    customerName: 'Phạm Thị D',
-    phone: '0909 888 777',
-    address: '321 Cách Mạng Tháng 8, Q10, TP.HCM',
-    items: [
-      _OrderItem(name: 'Gạo ST25', qty: 1, price: '45.000đ'),
-      _OrderItem(name: 'Trứng gà', qty: 1, price: '32.000đ'),
-      _OrderItem(name: 'Rau cải', qty: 2, price: '12.000đ'),
-    ],
-    createdAt: '14/03 10:00',
-    statusHistory: ['Đặt đơn', 'Đang chuẩn bị'],
-  ),
-  _OrderData(
-    id: '#1238',
-    amount: '210.000đ',
-    status: 'Đang giao',
-    statusType: OrderStatusType.shipping,
-    customerName: 'Hoàng Văn E',
-    phone: '0933 111 222',
-    address: '555 Nguyễn Văn Linh, Q7, TP.HCM',
-    items: [
-      _OrderItem(name: 'Thịt bò', qty: 1, price: '180.000đ'),
-      _OrderItem(name: 'Cà rốt', qty: 2, price: '16.000đ'),
-    ],
-    createdAt: '14/03 11:20',
-    statusHistory: ['Đặt đơn', 'Đang chuẩn bị', 'Đang giao'],
-  ),
-  _OrderData(
-    id: '#1239',
-    amount: '65.000đ',
-    status: 'Hoàn thành',
-    statusType: OrderStatusType.done,
-    customerName: 'Võ Thị F',
-    phone: '0977 555 666',
-    address: '99 Lý Tự Trọng, Q1, TP.HCM',
-    items: [
-      _OrderItem(name: 'Cam', qty: 1, price: '35.000đ'),
-      _OrderItem(name: 'Chanh', qty: 1, price: '20.000đ'),
-      _OrderItem(name: 'Nước cam', qty: 1, price: '25.000đ'),
-    ],
-    createdAt: '13/03 18:30',
-    statusHistory: ['Đặt đơn', 'Đang chuẩn bị', 'Đang giao', 'Hoàn thành'],
-  ),
-];
+// Demo data removed as per user request
 
 class _OrderData {
   final String id;
@@ -215,22 +89,17 @@ _OrderData _orderDataFromModel(OrderModel o) {
     OrderStatusType.shipping: 'Đang giao',
     OrderStatusType.done: 'Hoàn thành',
   };
-  final items = (o.items ?? [])
-      .map(
-        (i) => _OrderItem(
-          name: i.productName ?? '',
-          qty: i.quantity ?? 0,
-          price: _formatAmount(i.price),
-        ),
-      )
-      .toList();
+  final items = (o.items ?? []).map((i) => _OrderItem(
+    name: i.productName ?? '',
+    qty: i.quantity ?? 0,
+    price: _formatAmount(i.unitPrice),
+  )).toList();
   final history = <String>['Đặt đơn'];
   if (statusType.index >= 1) history.add('Đang chuẩn bị');
   if (statusType.index >= 2) history.add('Đang giao');
   if (statusType.index >= 3) history.add('Hoàn thành');
-  final displayId = o.id != null
-      ? (o.id!.startsWith('#') ? o.id! : '#${o.id}')
-      : '';
+  final String idStr = o.id?.toString() ?? '';
+  final displayId = idStr.isNotEmpty ? (idStr.startsWith('#') ? idStr : '#$idStr') : '';
   return _OrderData(
     id: displayId,
     amount: _formatAmount(o.totalAmount),
@@ -298,8 +167,8 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
 
   void _updateOrderStatus(String orderId, OrderStatusType newType) {
     context.read<StoreOrdersBloc>().add(
-      UpdateStoreOrderStatus(_rawOrderId(orderId), _orderStatusToApi(newType)),
-    );
+          UpdateStoreOrderStatus(int.parse(_rawOrderId(orderId)), _orderStatusToApi(newType)),
+        );
   }
 
   void _acceptOrder(String orderId) {
@@ -308,8 +177,8 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
 
   void _rejectOrder(String orderId) {
     context.read<StoreOrdersBloc>().add(
-      UpdateStoreOrderStatus(_rawOrderId(orderId), 'CANCELLED'),
-    );
+          UpdateStoreOrderStatus(int.parse(_rawOrderId(orderId)), 'CANCELLED'),
+        );
   }
 
   Future<void> _runCardAccept(_OrderData o) async {

@@ -1,107 +1,26 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// import '../../../core/network/api_client.dart';
+import '../../../core/api/api_client.dart';
 import '../../../core/network/api_endpoints.dart';
-// import '../../../core/config/app_config.dart';
 import '../../../core/errors/exceptions.dart';
 import '../../../core/utils/logger.dart';
 import '../../../core/enums/app_type.dart';
 import '../models/auth_response_model.dart';
 import '../models/user_model.dart';
 import 'auth_repository.dart';
-import '../../../core/enums/app_type.dart';
+import '../../../core/constants/app_constants.dart';
 
-class ApiClient {
-  final Dio _dio;
-
-  ApiClient({Dio? dio, String? baseUrl})
-    : _dio = dio ?? Dio(BaseOptions(baseUrl: baseUrl ?? '')) {
-    // Optional: add interceptors, logging, auth interceptors, etc.
-    _dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) {
-          // Add global headers if needed
-          return handler.next(options);
-        },
-        onResponse: (response, handler) {
-          return handler.next(response);
-        },
-        onError: (e, handler) {
-          return handler.next(e);
-        },
-      ),
-    );
-  }
-
-  Future<Response> get(
-    String path, {
-    Map<String, dynamic>? queryParameters,
-    Options? options,
-    CancelToken? cancelToken,
-  }) {
-    return _dio.get(
-      path,
-      queryParameters: queryParameters,
-      options: options,
-      cancelToken: cancelToken,
-    );
-  }
-
-  Future<Response> post(
-    String path, {
-    dynamic data,
-    Options? options,
-    CancelToken? cancelToken,
-  }) {
-    return _dio.post(
-      path,
-      data: data,
-      options: options,
-      cancelToken: cancelToken,
-    );
-  }
-
-  Future<Response> put(
-    String path, {
-    dynamic data,
-    Options? options,
-    CancelToken? cancelToken,
-  }) {
-    return _dio.put(
-      path,
-      data: data,
-      options: options,
-      cancelToken: cancelToken,
-    );
-  }
-
-  Future<Response> delete(
-    String path, {
-    dynamic data,
-    Options? options,
-    CancelToken? cancelToken,
-  }) {
-    return _dio.delete(
-      path,
-      data: data,
-      options: options,
-      cancelToken: cancelToken,
-    );
-  }
-
-  // Expose underlying Dio if needed
-  Dio get dio => _dio;
-}
+// ApiClient class was removed from here. Using global one.
 
 class AuthRepositoryImpl implements AuthRepository {
   final ApiClient _apiClient;
   final SharedPreferences _prefs;
 
-  // Storage keys
-  static const String _keyUser = 'auth_user';
-  static const String _keyAccessToken = 'auth_access_token';
-  static const String _keyUserId = 'auth_user_id';
+  // Storage keys - Using AppConstants for synchronization with ApiClient/TokenStorage
+  static const String _keyUser = AppConstants.userDataKey;
+  static const String _keyAccessToken = AppConstants.accessTokenKey;
+  static const String _keyUserId = 'auth_user_id'; // This one is local to this repo for now
 
   AuthRepositoryImpl({
     required ApiClient apiClient,
@@ -109,6 +28,16 @@ class AuthRepositoryImpl implements AuthRepository {
   }) : _apiClient = apiClient,
        _prefs = prefs {
     AppLogger.debug('AuthRepositoryImpl initialized');
+    _syncTokenWithApiClient();
+  }
+
+  /// Sync token với ApiClient ngay khi khởi tạo
+  void _syncTokenWithApiClient() {
+    final token = _prefs.getString(_keyAccessToken);
+    if (token != null && token.isNotEmpty) {
+      _apiClient.setAccessToken(token);
+      AppLogger.debug('🎫 Initial token synchronized with ApiClient from storage');
+    }
   }
 
   @override
@@ -138,12 +67,10 @@ class AuthRepositoryImpl implements AuthRepository {
       final authResponse = AuthResponseModel.fromJson(response.data);
 
       if (authResponse.isAuthenticated) {
-        AppLogger.info(
-          '✅ Login successful - User: ${authResponse.user?.fullName}, Role: ${authResponse.user?.role.name}',
-        );
-
+        AppLogger.info('✅ Login successful - User: ${authResponse.user?.fullName}, Role: ${authResponse.user?.role.name}');
+        
         await _saveAuthData(authResponse);
-
+        
         // Lấy thông tin user chi tiết nếu cần
         if (authResponse.data?.token != null) {
           await _fetchAndSaveUserProfile(authResponse.data!.token!);
@@ -154,27 +81,23 @@ class AuthRepositoryImpl implements AuthRepository {
 
       final duration = stopwatch.elapsed;
       if (duration.inMilliseconds > 2000) {
-        AppLogger.warning(
-          '⏱️ Login operation took ${duration.inMilliseconds}ms (slow)',
-        );
+        AppLogger.warning('⏱️ Login operation took ${duration.inMilliseconds}ms (slow)');
       } else {
-        AppLogger.debug(
-          '⏱️ Login operation completed in ${duration.inMilliseconds}ms',
-        );
+        AppLogger.debug('⏱️ Login operation completed in ${duration.inMilliseconds}ms');
       }
-
+      
       return authResponse;
+      
     } on DioException catch (e) {
       AppLogger.error('🔥 Login DioException: ${e.message}', e);
-
+      
       throw ServerException(
-        message:
-            'Đăng nhập thất bại: ${e.response?.data?['message'] ?? e.message}',
+        message: 'Đăng nhập thất bại: ${e.response?.data?['message'] ?? e.message}',
         statusCode: e.response?.statusCode ?? 400,
       );
     } catch (e) {
       AppLogger.error('💥 Login unexpected error: ${e.toString()}', e);
-
+      
       throw ServerException(
         message: 'Đã xảy ra lỗi không xác định: ${e.toString()}',
         statusCode: 400,
@@ -377,17 +300,17 @@ class AuthRepositoryImpl implements AuthRepository {
   /// Save authentication data từ response
   Future<void> _saveAuthData(AuthResponseModel authResponse) async {
     try {
-      final futures = <Future>[];
-
-      if (authResponse.data?.token != null) {
-        futures.add(
-          _prefs.setString(_keyAccessToken, authResponse.data!.token!),
-        );
-        AppLogger.debug('🎫 Access token saved to storage');
+      final token = authResponse.data?.token;
+      if (token != null) {
+        // Đồng bộ token cho ApiClient (Interceptor)
+        await _apiClient.setAccessToken(token);
+        AppLogger.debug('🎫 Access token synchronized with ApiClient');
       }
-
+      
+      final futures = <Future>[];
+      
       if (authResponse.data?.userId != null) {
-        futures.add(_prefs.setString(_keyUserId, authResponse.data!.userId!));
+        futures.add(_prefs.setString(_keyUserId, authResponse.data!.userId!.toString()));
       }
 
       if (authResponse.user != null) {
@@ -488,6 +411,76 @@ class AuthRepositoryImpl implements AuthRepository {
       '⚠️ OTP verification requested but not implemented in API',
     );
     throw UnimplementedError('OTP verification chưa được implement trong API');
+  }
+
+  @override
+  Future<UserModel> updateProfile({
+    required Map<String, dynamic> userData,
+  }) async {
+    try {
+      AppLogger.info('👤 Profile update attempt for: ${userData['fullName']}');
+      
+      final response = await _apiClient.put(
+        ApiEndpoints.updateProfile,
+        data: userData,
+      );
+
+      if (response.data['success'] == true && response.data['data'] != null) {
+        final updatedUser = UserModel.fromJson(response.data['data']);
+        
+        // Cập nhật local storage
+        await _prefs.setString(_keyUser, jsonEncode(updatedUser.toJson()));
+        
+        AppLogger.info('✅ Profile updated and saved locally: ${updatedUser.fullName}');
+        return updatedUser;
+      } else {
+        throw ServerException(
+          message: response.data['message'] ?? 'Cập nhật profile thất bại',
+          statusCode: response.statusCode ?? 400,
+        );
+      }
+    } on DioException catch (e) {
+      AppLogger.error('🔥 Profile update DioException: ${e.message}', e);
+      throw ServerException(
+        message: e.response?.data?['message'] ?? 'Lỗi server khi cập nhật profile',
+        statusCode: e.response?.statusCode ?? 500,
+      );
+    }
+  }
+
+  @override
+  Future<void> changePassword({
+    required String oldPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    try {
+      AppLogger.info('🔐 Change password attempt');
+      
+      final response = await _apiClient.post(
+        ApiEndpoints.changePassword,
+        data: {
+          'oldPassword': oldPassword,
+          'newPassword': newPassword,
+          'confirmPassword': confirmPassword,
+        },
+      );
+
+      if (response.data['success'] == true) {
+        AppLogger.info('✅ Password changed successfully');
+      } else {
+        throw ServerException(
+          message: response.data['message'] ?? 'Đổi mật khẩu thất bại',
+          statusCode: response.statusCode ?? 400,
+        );
+      }
+    } on DioException catch (e) {
+      AppLogger.error('🔥 Change password DioException: ${e.message}', e);
+      throw ServerException(
+        message: e.response?.data?['message'] ?? 'Lỗi server khi đổi mật khẩu',
+        statusCode: e.response?.statusCode ?? 500,
+      );
+    }
   }
 
   @override

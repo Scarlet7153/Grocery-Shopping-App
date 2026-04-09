@@ -25,17 +25,23 @@ Map<String, dynamic> _$AuthResponseModelToJson(AuthResponseModel instance) =>
 AuthDataModel _$AuthDataModelFromJson(Map<String, dynamic> json) =>
     AuthDataModel(
       token: json['token'] as String?,
-      userId: json['userId'] as String?,
-      user: json['user'] == null
-          ? null
-          : UserModel.fromJson(json['user'] as Map<String, dynamic>),
+      type: json['type'] as String?,
+      userId: (json['userId'] as num?)?.toInt(),
+      phoneNumber: json['phoneNumber'] as String?,
+      fullName: json['fullName'] as String?,
+      role: json['role'] as String?,
+      avatarUrl: json['avatarUrl'] as String?,
     );
 
 Map<String, dynamic> _$AuthDataModelToJson(AuthDataModel instance) =>
     <String, dynamic>{
       'token': instance.token,
+      'type': instance.type,
       'userId': instance.userId,
-      'user': instance.user,
+      'phoneNumber': instance.phoneNumber,
+      'fullName': instance.fullName,
+      'role': instance.role,
+      'avatarUrl': instance.avatarUrl,
     };
 
 LoginRequestModel _$LoginRequestModelFromJson(Map<String, dynamic> json) =>

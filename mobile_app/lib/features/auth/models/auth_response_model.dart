@@ -25,27 +25,60 @@ class AuthResponseModel extends Equatable {
   /// Check if response contains valid authentication data
   bool get isAuthenticated => success && data != null && data!.token != null;
 
-  /// Get user from nested data
-  UserModel? get user => data?.user;
+  /// Get user derived from auth data
+  UserModel? get user {
+    if (data == null) return null;
+    return UserModel(
+      id: data!.userId?.toString() ?? '',
+      phoneNumber: data!.phoneNumber ?? '',
+      fullName: data!.fullName ?? 'Quản Trị Viên',
+      role: _parseRole(data!.role),
+      status: UserStatus.active, // Default to active on login
+      createdAt: DateTime.now(), // Fallback if not in response
+      updatedAt: DateTime.now(),
+      avatarUrl: data!.avatarUrl,
+    );
+  }
+
+  UserRole _parseRole(String? roleName) {
+    if (roleName == null) return UserRole.customer;
+    final normalized = roleName.toUpperCase();
+    if (normalized == 'ADMIN') return UserRole.admin;
+    if (normalized == 'STORE') return UserRole.store;
+    if (normalized == 'SHIPPER') return UserRole.shipper;
+    return UserRole.customer;
+  }
 
   /// Get token from nested data
   String? get accessToken => data?.token;
 
   /// Get user ID
-  String? get userId => data?.userId;
+  String? get userId => data?.userId?.toString();
 
   @override
   List<Object?> get props => [success, message, data];
 }
 
-/// Nested data model for auth response
+/// Nested data model for auth response - Phẳng hóa theo thực tế API
 @JsonSerializable()
 class AuthDataModel extends Equatable {
   final String? token;
-  final String? userId;
-  final UserModel? user; // Optional user data
+  final String? type;
+  final int? userId; // Chuyển sang int? theo thực tế
+  final String? phoneNumber;
+  final String? fullName;
+  final String? role;
+  final String? avatarUrl;
 
-  const AuthDataModel({this.token, this.userId, this.user});
+  const AuthDataModel({
+    this.token,
+    this.type,
+    this.userId,
+    this.phoneNumber,
+    this.fullName,
+    this.role,
+    this.avatarUrl,
+  });
 
   factory AuthDataModel.fromJson(Map<String, dynamic> json) =>
       _$AuthDataModelFromJson(json);
@@ -53,7 +86,7 @@ class AuthDataModel extends Equatable {
   Map<String, dynamic> toJson() => _$AuthDataModelToJson(this);
 
   @override
-  List<Object?> get props => [token, userId, user];
+  List<Object?> get props => [token, type, userId, phoneNumber, fullName, role, avatarUrl];
 }
 
 /// Login request model theo format API

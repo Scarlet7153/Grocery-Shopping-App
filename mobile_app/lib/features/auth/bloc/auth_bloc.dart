@@ -26,6 +26,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<OtpVerificationRequested>(_onOtpVerificationRequested);
     on<PasswordResetRequested>(_onPasswordResetRequested);
     on<ProfileUpdateRequested>(_onProfileUpdateRequested);
+    on<ChangePasswordRequested>(_onChangePasswordRequested);
 
     // Check authentication status on bloc initialization
     add(const CheckStatusRequested());
@@ -335,28 +336,60 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(const AuthProfileUpdating());
       AppLogger.info('👤 Profile update attempt');
 
-      // TODOhehe: Implement profile update API call
-      // final updatedUser = await _authRepository.updateProfile(event.userData);
-
-      // Temporary mock response
-      final updatedUser = currentState.user.copyWith(
-        fullName: event.userData['fullName'] ?? currentState.user.fullName,
-        address: event.userData['address'] ?? currentState.user.address,
+      final updatedUser = await _authRepository.updateProfile(
+        userData: event.userData,
       );
 
       AppLogger.info('✅ Profile updated successfully');
       emit(AuthProfileUpdated(updatedUser: updatedUser));
 
       // Return to authenticated state with updated user
-      await Future.delayed(const Duration(seconds: 1));
-      emit(AuthAuthenticated(user: updatedUser, token: currentState.token));
+      emit(AuthAuthenticated(
+        user: updatedUser,
+        token: currentState.token,
+      ));
     } catch (e) {
       AppLogger.error('🔥 Profile update error: ${e.toString()}', e);
-      emit(
-        AuthProfileUpdateError(
-          message: 'Không thể cập nhật thông tin: ${e.toString()}',
-        ),
+      emit(AuthProfileUpdateError(
+        message: e is ServerException ? e.message : 'Không thể cập nhật thông tin',
+      ));
+
+      // Return to previous authenticated state
+      emit(currentState);
+    }
+  }
+
+  /// Handle change password request
+  Future<void> _onChangePasswordRequested(
+    ChangePasswordRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is! AuthAuthenticated) return;
+
+    try {
+      emit(const AuthPasswordResetLoading()); // Reusing loading state
+      AppLogger.info('🔐 Change password attempt');
+
+      await _authRepository.changePassword(
+        oldPassword: event.oldPassword,
+        newPassword: event.newPassword,
+        confirmPassword: event.confirmPassword,
       );
+
+      AppLogger.info('✅ Password changed successfully');
+      emit(const AuthPasswordResetSent(
+        message: 'Đổi mật khẩu thành công',
+      ));
+      
+      // Return to authenticated state
+      emit(currentState);
+      
+    } catch (e) {
+      AppLogger.error('🔥 Change password error: ${e.toString()}', e);
+      emit(AuthPasswordResetError(
+        message: e is ServerException ? e.message : 'Không thể đổi mật khẩu',
+      ));
 
       // Return to previous authenticated state
       emit(currentState);

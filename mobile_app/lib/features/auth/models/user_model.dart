@@ -19,7 +19,7 @@ enum UserRole {
 enum UserStatus {
   @JsonValue('ACTIVE')
   active,
-  @JsonValue('INACTIVE')
+  @JsonValue('BANNED')
   inactive,
   @JsonValue('SUSPENDED')
   suspended,
@@ -56,8 +56,49 @@ class UserModel extends Equatable {
     this.storeAddress,
   });
 
-  factory UserModel.fromJson(Map<String, dynamic> json) =>
-      _$UserModelFromJson(json);
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    // Xử lý id từ backend (đôi khi trả về int thay vì String)
+    final idValue = json['id'] ?? json['userId'];
+    final idStr = idValue?.toString() ?? '';
+    
+    return UserModel(
+      id: idStr,
+      phoneNumber: json['phoneNumber'] ?? '',
+      fullName: json['fullName'] ?? '',
+      role: _parseRole(json['role']),
+      status: _parseStatus(json['status']),
+      address: json['address'],
+      avatarUrl: json['avatarUrl'],
+      createdAt: json['createdAt'] != null 
+          ? DateTime.parse(json['createdAt']) 
+          : DateTime.now(),
+      updatedAt: json['updatedAt'] != null 
+          ? DateTime.parse(json['updatedAt']) 
+          : DateTime.now(),
+      storeName: json['storeName'],
+      storeAddress: json['storeAddress'],
+    );
+  }
+
+  static UserRole _parseRole(dynamic role) {
+    if (role == null) return UserRole.customer;
+    if (role is UserRole) return role;
+    final roleStr = role.toString().toUpperCase();
+    if (roleStr == 'ADMIN') return UserRole.admin;
+    if (roleStr == 'STORE') return UserRole.store;
+    if (roleStr == 'SHIPPER') return UserRole.shipper;
+    return UserRole.customer;
+  }
+
+  static UserStatus _parseStatus(dynamic status) {
+    if (status == null) return UserStatus.active;
+    if (status is UserStatus) return status;
+    final statusStr = status.toString().toUpperCase();
+    if (statusStr == 'ACTIVE') return UserStatus.active;
+    if (statusStr == 'BANNED' || statusStr == 'INACTIVE') return UserStatus.inactive;
+    if (statusStr == 'SUSPENDED') return UserStatus.suspended;
+    return UserStatus.active;
+  }
 
   Map<String, dynamic> toJson() => _$UserModelToJson(this);
 

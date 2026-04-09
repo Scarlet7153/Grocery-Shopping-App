@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../enums/app_type.dart';
+import '../enums/app_type.dart'; 
+import 'app_config.dart';
 
 class AppLauncher extends StatelessWidget {
   const AppLauncher({super.key});
@@ -20,6 +21,7 @@ class AppLauncher extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const apps = AppType.values; 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dev Menu: Khởi động App'),
@@ -53,19 +55,23 @@ class AppLauncher extends StatelessWidget {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      clipBehavior: Clip.hardEdge, // Cắt mọi thứ bên trong theo bo góc của Card
       child: InkWell(
         onTap: () => _launchApp(context, appType, appName, primaryColor),
-        borderRadius: BorderRadius.circular(12),
+        // borderRadius này giúp hiệu ứng Ripple (loang nước) bo tròn theo Card
+        borderRadius: BorderRadius.circular(12), 
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
           decoration: BoxDecoration(
+            // Không cần borderRadius ở đây vì Card đã có clipBehavior
+            // Nhưng nếu muốn chắc chắn thì nên để cho đồng bộ
             borderRadius: BorderRadius.circular(12),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
                 primaryColor,
-                primaryColor.withAlpha(179), // 0.7 * 255
+                primaryColor.withAlpha(179), // Độ trong suốt ~0.7
               ],
             ),
           ),
@@ -81,6 +87,15 @@ class AppLauncher extends StatelessWidget {
                   color: Colors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                appType.displayName,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12,
                 ),
               ),
             ],
@@ -103,17 +118,19 @@ class AppLauncher extends StatelessWidget {
     }
   }
 
-  void _launchApp(
-    BuildContext context,
-    AppType appType,
-    String appName,
-    Color primaryColor,
+void _launchApp(
+    BuildContext context, 
+    AppType appType, 
+    String appName, 
+    Color primaryColor, // Dùng tên biến rõ ràng từ nhánh main
   ) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Khởi động app: $appName'),
+        content: Text('Khởi động app: $appName'), // Nội dung thân thiện với người dùng
         backgroundColor: primaryColor,
+        behavior: SnackBarBehavior.floating, // Giữ giao diện hiện đại từ Admin_app
+        duration: const Duration(seconds: 2), // Nên thêm thời gian hiển thị
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), // Bo góc cho đồng bộ với Card
       ),
     );
   }
-}

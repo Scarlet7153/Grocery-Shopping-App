@@ -59,4 +59,21 @@ class StoreService {
       return null;
     }
   }
+
+  /// Get all stores (Admin/Public).
+  Future<List<StoreModel>> getAllStores() async {
+    try {
+      final response = await _client.get<dynamic>('/stores');
+      final raw = response.data;
+      if (raw == null) return [];
+      final dynamic data = raw is Map<String, dynamic> ? (raw['data'] ?? raw) : raw;
+      if (data is List) {
+        return data.map((e) => StoreModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e as Map))).toList();
+      }
+      return [];
+    } on DioException catch (e) {
+      debugPrint('getAllStores failed: $e');
+      return [];
+    }
+  }
 }

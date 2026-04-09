@@ -143,6 +143,25 @@ class ProfileUpdateRequested extends AuthEvent {
   String toString() => 'ProfileUpdateRequested { userData: $userData }';
 }
 
+/// Change password event
+class ChangePasswordRequested extends AuthEvent {
+  final String oldPassword;
+  final String newPassword;
+  final String confirmPassword;
+
+  const ChangePasswordRequested({
+    required this.oldPassword,
+    required this.newPassword,
+    required this.confirmPassword,
+  });
+
+  @override
+  List<Object> get props => [oldPassword, newPassword, confirmPassword];
+
+  @override
+  String toString() => 'ChangePasswordRequested';
+}
+
 /// FCM token update event
 class FcmTokenUpdateRequested extends AuthEvent {
   final String fcmToken;

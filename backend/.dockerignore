@@ -1,0 +1,6 @@
+target/
+.git/
+.idea/
+*.iml
+server_log.txt
+README*.md

@@ -16,7 +16,7 @@ class LoadStoreOrders extends StoreOrdersEvent {
 }
 
 class UpdateStoreOrderStatus extends StoreOrdersEvent {
-  final String orderId;
+  final int orderId;
   final String status;
 
   UpdateStoreOrderStatus(this.orderId, this.status);

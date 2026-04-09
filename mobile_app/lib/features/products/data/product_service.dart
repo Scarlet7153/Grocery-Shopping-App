@@ -68,6 +68,29 @@ class ProductService {
     }
   }
 
+  /// Get products by store ID.
+  Future<List<ProductModel>> getProductsByStore(String storeId) async {
+    try {
+      final response = await _client.get<dynamic>('/products/store/$storeId');
+      final data = response.data;
+      if (data == null) return [];
+
+      final list = data is List ? data : (data is Map<String, dynamic> ? (data['data'] ?? []) : []);
+      if (list is List) {
+        return list
+            .map((e) => ProductModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e as Map)))
+            .toList();
+      }
+      return [];
+    } on DioException catch (e) {
+      debugPrint('getProductsByStore failed: $e');
+      return [];
+    } catch (e) {
+      debugPrint('getProductsByStore unexpected error: $e');
+      return [];
+    }
+  }
+
   /// Create a new product (requires auth).
   Future<ProductModel> createProduct(CreateProductRequest request) async {
     try {

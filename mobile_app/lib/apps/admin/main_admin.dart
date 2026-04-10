@@ -146,8 +146,8 @@ class AdminApp extends StatelessWidget {
               themeMode: settingsState.themeMode,
               locale: settingsState.locale,
               supportedLocales: const [Locale('vi'), Locale('en')],
-              localizationsDelegates: [
-                const AppLocalizationsDelegate(),
+              localizationsDelegates: const [
+                AppLocalizationsDelegate(),
                 GlobalMaterialLocalizations.delegate,
                 GlobalWidgetsLocalizations.delegate,
                 GlobalCupertinoLocalizations.delegate,

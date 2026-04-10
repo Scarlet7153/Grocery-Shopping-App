@@ -49,20 +49,6 @@ class OrderService {
   // Cache để tránh quét lại nhiều lần trong cùng một phiên làm việc
   static List<OrderModel>? _cachedDiscoveredOrders;
 
-  /// Lấy thông tin một đơn hàng (không gây lỗi UI nếu không tìm thấy)
-  Future<OrderModel?> _fetchSingleOrderSilently(int id) async {
-    try {
-      final response = await _client.get<dynamic>('/orders/$id');
-      final data = response.data;
-      if (data != null && data['data'] != null) {
-        return OrderModel.fromJson(Map<String, dynamic>.from(data['data']));
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
-  }
-
   /// Cơ chế Khám phá Đơn hàng dựa trên danh sách User (Theo gợi ý: Check Users -> Load Orders)
   /// Không quét mù quáng dải ID rộng, tập trung vào các ID có khả năng tồn tại cao.
   /// Lấy đơn hàng của một User bất kỳ (API mới dành riêng cho Admin)
@@ -110,10 +96,8 @@ class OrderService {
       }
 
       final results = await Future.wait(futures);
-      int count = 0;
       for (var list in results) {
         allFoundOrders.addAll(list);
-        count += list.length;
         if (onProgress != null) onProgress(allFoundOrders.length);
       }
 

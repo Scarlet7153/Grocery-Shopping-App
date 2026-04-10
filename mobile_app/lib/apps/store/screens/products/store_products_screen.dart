@@ -24,8 +24,6 @@ const int _kCacheHeight = 280;
 
 /// Stock badge: >20 Còn hàng (green), 10–20 Sắp hết (orange), 0 Hết hàng (red). 1–9 cũng Sắp hết (orange).
 const int _kStockHighThreshold = 20; // above = Còn hàng
-const int _kStockLowThreshold =
-    10; // 10–20 = Sắp hết; 1–9 = Sắp hết; 0 = Hết hàng
 const int _kLowStockThreshold = 5; // filter chip
 const int _kHighStockThreshold = 20; // filter chip
 const int _kSearchDebounceMs = 300;
@@ -62,8 +60,9 @@ const Map<String, String> productImages = {
 String productImageAsset(String name) {
   if (productImages.containsKey(name)) return productImages[name]!;
   for (final entry in productImages.entries) {
-    if (name.startsWith(entry.key) || name.contains(entry.key))
+    if (name.startsWith(entry.key) || name.contains(entry.key)) {
       return entry.value;
+    }
   }
   return kDefaultProductImage;
 }

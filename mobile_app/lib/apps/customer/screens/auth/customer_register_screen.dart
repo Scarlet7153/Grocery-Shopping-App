@@ -455,7 +455,7 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
     ValueChanged<LocationItem?>? onChanged,
   }) {
     return DropdownButtonFormField<LocationItem>(
-      value: value,
+      initialValue: value,
       items: items
           .map(
             (item) => DropdownMenuItem<LocationItem>(

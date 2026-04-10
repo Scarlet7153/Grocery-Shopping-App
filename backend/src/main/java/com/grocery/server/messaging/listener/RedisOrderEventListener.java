@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.grocery.server.messaging.dto.OrderAcceptedEvent;
 import com.grocery.server.messaging.dto.OrderCreatedEvent;
 import com.grocery.server.messaging.dto.OrderStatusChangedEvent;
+import com.grocery.server.messaging.dto.UserProfileUpdatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.Message;
@@ -44,6 +45,8 @@ public class RedisOrderEventListener implements MessageListener {
                 handleOrderStatusChanged(body);
             } else if (channel.startsWith("location:order:")) {
                 handleLocationUpdate(channel, body);
+            } else if (channel.startsWith("user:profile:")) {
+                handleUserProfileUpdated(body);
             }
         } catch (Exception e) {
             log.error("Error processing message from channel [{}]: {}", channel, e.getMessage());
@@ -73,6 +76,9 @@ public class RedisOrderEventListener implements MessageListener {
         
         // Broadcast đến tất cả clients theo dõi đơn hàng này
         messagingTemplate.convertAndSend("/topic/orders/" + event.getOrderId(), event);
+
+        // Broadcast kênh chung để client có thể refresh danh sách đơn theo thời gian thực
+        messagingTemplate.convertAndSend("/topic/orders/accepted", event);
         
         // Thông báo đến customer cụ thể
         messagingTemplate.convertAndSendToUser(
@@ -92,6 +98,9 @@ public class RedisOrderEventListener implements MessageListener {
         
         // Broadcast đến tất cả clients theo dõi đơn hàng
         messagingTemplate.convertAndSend("/topic/orders/" + event.getOrderId() + "/status", event);
+
+        // Broadcast kênh chung để dashboard shipper refresh real-time
+        messagingTemplate.convertAndSend("/topic/orders/status", event);
     }
     
     /**
@@ -107,6 +116,24 @@ public class RedisOrderEventListener implements MessageListener {
             // Broadcast location đến tất cả clients theo dõi
             messagingTemplate.convertAndSend("/topic/location/" + orderId, body);
         }
+    }
+
+    /**
+     * Xử lý user profile updated event
+     */
+    private void handleUserProfileUpdated(String body) throws Exception {
+        UserProfileUpdatedEvent event = objectMapper.readValue(body, UserProfileUpdatedEvent.class);
+        log.info("User profile updated event: userId={}", event.getUserId());
+
+        // User-specific queue (khuyến nghị cho dữ liệu cá nhân)
+        messagingTemplate.convertAndSendToUser(
+            event.getPhoneNumber(),
+            "/queue/profile",
+            event
+        );
+
+        // Topic theo userId để hỗ trợ các client tự quản lý subscribe
+        messagingTemplate.convertAndSend("/topic/users/profile/" + event.getUserId(), event);
     }
     
     /**

@@ -34,7 +34,7 @@ class UserListItem extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 28,
-                  backgroundColor: _getRoleColor(user.role).withOpacity(0.2),
+                  backgroundColor: _getRoleColor(user.role).withValues(alpha: 0.2),
                   child: Text(
                     user.fullName.substring(0, 1).toUpperCase(),
                     style: TextStyle(
@@ -91,7 +91,7 @@ class UserListItem extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: isActive ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                    color: isActive ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: isActive ? Colors.green : Colors.red,

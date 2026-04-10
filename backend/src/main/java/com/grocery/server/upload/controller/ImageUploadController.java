@@ -1,5 +1,7 @@
 package com.grocery.server.upload.controller;
 
+import com.grocery.server.messaging.dto.UserProfileUpdatedEvent;
+import com.grocery.server.messaging.publisher.RedisMessagePublisher;
 import com.grocery.server.order.entity.Order;
 import com.grocery.server.order.repository.OrderRepository;
 import com.grocery.server.product.entity.Product;
@@ -21,6 +23,9 @@ import org.springframework.web.server.ResponseStatusException;
 import com.grocery.server.user.service.UserService;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Controller: ImageUploadController
@@ -55,6 +60,7 @@ public class ImageUploadController {
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
     private final UserService userService;
+    private final RedisMessagePublisher messagePublisher;
 
     /**
      * Upload ảnh sản phẩm tạm thời (trước khi tạo product)
@@ -172,6 +178,70 @@ public class ImageUploadController {
     }
 
     /**
+     * Lấy chữ ký Cloudinary để client upload avatar trực tiếp.
+     */
+    @PostMapping("/avatar/signature")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getAvatarUploadSignature() {
+        Long currentUserId = userService.getCurrentUserId();
+        log.info("Generating avatar upload signature for user {}", currentUserId);
+
+        Map<String, Object> payload = uploadService.generateSignedAvatarUploadParams(currentUserId);
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Lấy chữ ký upload avatar thành công", payload)
+        );
+    }
+
+    /**
+     * Lưu avatar URL sau khi client đã upload trực tiếp lên Cloudinary.
+     */
+    @PutMapping("/avatar")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<String>> saveAvatarUrl(
+            @RequestBody Map<String, String> request) {
+
+        Long currentUserId = userService.getCurrentUserId();
+        String imageUrl = request.get("imageUrl");
+
+        if (imageUrl == null || imageUrl.isBlank()) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("imageUrl không được để trống"));
+        }
+
+        log.info("Saving uploaded avatar URL for user {}", currentUserId);
+
+        try {
+            User user = userRepository.findById(currentUserId)
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND, "User not found: " + currentUserId));
+
+            final String oldAvatarUrl = user.getAvatarUrl();
+
+            user.setAvatarUrl(imageUrl);
+            User updatedUser = userRepository.save(user);
+            publishUserProfileUpdatedEvent(updatedUser);
+
+            if (oldAvatarUrl != null && !oldAvatarUrl.isBlank() && !oldAvatarUrl.equals(imageUrl)) {
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        uploadService.deleteImage(oldAvatarUrl);
+                    } catch (Exception ex) {
+                        log.warn("Failed to delete old avatar {}: {}", oldAvatarUrl, ex.getMessage());
+                    }
+                });
+            }
+
+            return ResponseEntity.ok(
+                    ApiResponse.success("Lưu avatar URL thành công", imageUrl)
+            );
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    /**
      * Upload avatar user
      * User nào cũng có thể upload avatar của mình
      */
@@ -189,17 +259,26 @@ public class ImageUploadController {
                     .orElseThrow(() -> new ResponseStatusException(
                             HttpStatus.NOT_FOUND, "User not found: " + currentUserId));
             
-            // Xóa ảnh cũ nếu có
-            if (user.getAvatarUrl() != null) {
-                uploadService.deleteImage(user.getAvatarUrl());
-            }
+            final String oldAvatarUrl = user.getAvatarUrl();
             
             // Upload ảnh mới
             String imageUrl = uploadService.uploadUserAvatar(file);
             
             // Cập nhật URL vào database
             user.setAvatarUrl(imageUrl);
-            userRepository.save(user);
+            User updatedUser = userRepository.save(user);
+            publishUserProfileUpdatedEvent(updatedUser);
+
+            // Xóa ảnh cũ ở background để không block request upload avatar
+            if (oldAvatarUrl != null && !oldAvatarUrl.isBlank()) {
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        uploadService.deleteImage(oldAvatarUrl);
+                    } catch (Exception ex) {
+                        log.warn("Failed to delete old avatar {}: {}", oldAvatarUrl, ex.getMessage());
+                    }
+                });
+            }
             
             return ResponseEntity.ok(
                     ApiResponse.success("Upload avatar thành công", imageUrl)
@@ -275,5 +354,20 @@ public class ImageUploadController {
         return ResponseEntity.ok(
                 ApiResponse.success("Xóa ảnh thành công", null)
         );
+    }
+
+    private void publishUserProfileUpdatedEvent(User user) {
+        UserProfileUpdatedEvent event = UserProfileUpdatedEvent.builder()
+                .eventType("USER_PROFILE_UPDATED")
+                .timestamp(System.currentTimeMillis())
+                .userId(user.getId())
+                .phoneNumber(user.getPhoneNumber())
+                .fullName(user.getFullName())
+                .avatarUrl(user.getAvatarUrl())
+                .address(user.getAddress())
+                .updatedAt(user.getUpdatedAt() != null ? user.getUpdatedAt() : LocalDateTime.now())
+                .build();
+
+        messagePublisher.publish("user:profile:" + user.getId(), event);
     }
 }

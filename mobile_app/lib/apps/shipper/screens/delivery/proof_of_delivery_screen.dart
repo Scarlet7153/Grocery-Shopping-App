@@ -1,10 +1,12 @@
-import 'dart:io';
+import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../bloc/shipper_dashboard_bloc.dart';
 import '../../models/shipper_order.dart';
 import '../../repository/shipper_repository.dart';
+import '../../services/shipper_realtime_stomp_service.dart';
 import '../../../../core/theme/shipper_theme.dart';
 
 class ProofOfDeliveryScreen extends StatefulWidget {
@@ -17,15 +19,83 @@ class ProofOfDeliveryScreen extends StatefulWidget {
 }
 
 class _ProofOfDeliveryScreenState extends State<ProofOfDeliveryScreen> {
-  File? _imageFile;
+  XFile? _imageFile;
+  Uint8List? _imageBytes;
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
   String? _errorMessage;
+  bool _isRealtimeSyncing = false;
+  StreamSubscription<ShipperRealtimeEvent>? _realtimeSubscription;
+  final ShipperRealtimeStompService _realtimeService =
+      ShipperRealtimeStompService();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _initRealtimeStreaming();
+      }
+    });
+  }
+
+  Future<void> _initRealtimeStreaming() async {
+    _realtimeSubscription?.cancel();
+    _realtimeSubscription = _realtimeService.events.listen((event) {
+      if (!_isEventForCurrentOrder(event)) return;
+
+      switch (event.type) {
+        case ShipperRealtimeEventType.orderStatusChanged:
+          _handleRealtimeStatusChanged(event);
+          break;
+        case ShipperRealtimeEventType.error:
+          debugPrint('ProofOfDelivery STOMP error: ${event.message}');
+          break;
+        case ShipperRealtimeEventType.connected:
+        case ShipperRealtimeEventType.disconnected:
+        case ShipperRealtimeEventType.orderCreated:
+        case ShipperRealtimeEventType.orderAccepted:
+        case ShipperRealtimeEventType.profileUpdated:
+          break;
+      }
+    });
+
+    await _realtimeService.connect();
+  }
+
+  bool _isEventForCurrentOrder(ShipperRealtimeEvent event) {
+    final payload = event.payload;
+    if (payload == null) return false;
+
+    final rawOrderId = payload['orderId'] ?? payload['id'];
+    final eventOrderId = rawOrderId is int
+        ? rawOrderId
+        : int.tryParse(rawOrderId?.toString() ?? '');
+
+    return eventOrderId == widget.order.id;
+  }
+
+  void _handleRealtimeStatusChanged(ShipperRealtimeEvent event) {
+    if (!mounted || _isRealtimeSyncing) return;
+
+    final newStatus = event.payload?['newStatus']?.toString();
+    if (newStatus != 'DELIVERED') return;
+
+    _isRealtimeSyncing = true;
+    Navigator.of(context).pop(true);
+  }
+
+  @override
+  void dispose() {
+    _realtimeSubscription?.cancel();
+    _realtimeService.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ShipperTheme.backgroundColor,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
       appBar: AppBar(
         title: const Text('Xác nhận giao hàng'),
         backgroundColor: ShipperTheme.primaryColor,
@@ -183,12 +253,21 @@ class _ProofOfDeliveryScreenState extends State<ProofOfDeliveryScreen> {
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(12),
-          child: Image.file(
-            _imageFile!,
-            width: double.infinity,
-            height: 250,
-            fit: BoxFit.cover,
-          ),
+          child: _imageBytes != null
+              ? Image.memory(
+                  _imageBytes!,
+                  width: double.infinity,
+                  height: 250,
+                  fit: BoxFit.cover,
+                )
+              : SizedBox(
+                  width: double.infinity,
+                  height: 250,
+                  child: Container(
+                    color: Colors.grey[300],
+                    child: const Icon(Icons.image, size: 50, color: Colors.grey),
+                  ),
+                ),
         ),
         const SizedBox(height: 12),
         Row(
@@ -367,8 +446,10 @@ class _ProofOfDeliveryScreenState extends State<ProofOfDeliveryScreen> {
         imageQuality: 85,
       );
       if (photo != null) {
+        final bytes = await photo.readAsBytes();
         setState(() {
-          _imageFile = File(photo.path);
+          _imageFile = photo;
+          _imageBytes = bytes;
           _errorMessage = null;
         });
       }
@@ -386,8 +467,10 @@ class _ProofOfDeliveryScreenState extends State<ProofOfDeliveryScreen> {
         imageQuality: 85,
       );
       if (image != null) {
+        final bytes = await image.readAsBytes();
         setState(() {
-          _imageFile = File(image.path);
+          _imageFile = image;
+          _imageBytes = bytes;
           _errorMessage = null;
         });
       }
@@ -399,6 +482,7 @@ class _ProofOfDeliveryScreenState extends State<ProofOfDeliveryScreen> {
   void _removeImage() {
     setState(() {
       _imageFile = null;
+      _imageBytes = null;
       _errorMessage = null;
     });
   }
@@ -412,11 +496,20 @@ class _ProofOfDeliveryScreenState extends State<ProofOfDeliveryScreen> {
     });
 
     try {
-      // TODO: Upload ảnh lên server khi có endpoint upload
-      // Tạm thời dùng path local làm placeholder
-      final podImageUrl = _imageFile!.path;
-
       final repository = context.read<ShipperRepository>();
+      
+      // Upload POD ảnh lên backend
+      final xFile = XFile(_imageFile!.path);
+      final podImageUrl = await repository.uploadPOD(xFile, widget.order.id);
+      
+      if (podImageUrl == null) {
+        setState(
+          () => _errorMessage = 'Không thể upload ảnh chứng minh giao hàng',
+        );
+        return;
+      }
+
+      // Update order status với imageUrl
       final updated = await repository.updateOrderStatus(
         widget.order.id,
         'DELIVERED',

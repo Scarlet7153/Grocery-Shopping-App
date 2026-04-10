@@ -134,22 +134,26 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
             title: const Text('Ngôn ngữ'),
             content: StatefulBuilder(
               builder: (context, setStateBuilder) {
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    RadioListTile<String>(
-                      title: const Text('Tiếng Việt'),
-                      value: 'Tiếng Việt',
-                      groupValue: _selectedLanguage,
-                      onChanged: (val) => setStateBuilder(() => _selectedLanguage = val!),
-                    ),
-                    RadioListTile<String>(
-                      title: const Text('English'),
-                      value: 'English',
-                      groupValue: _selectedLanguage,
-                      onChanged: (val) => setStateBuilder(() => _selectedLanguage = val!),
-                    ),
-                  ],
+                return RadioGroup<String>(
+                  groupValue: _selectedLanguage,
+                  onChanged: (val) {
+                    if (val != null) {
+                      setStateBuilder(() => _selectedLanguage = val);
+                    }
+                  },
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: const [
+                      RadioListTile<String>(
+                        title: Text('Tiếng Việt'),
+                        value: 'Tiếng Việt',
+                      ),
+                      RadioListTile<String>(
+                        title: Text('English'),
+                        value: 'English',
+                      ),
+                    ],
+                  ),
                 );
               }
             ),
@@ -279,7 +283,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Colors.blue.withOpacity(0.1),
+          color: Colors.blue.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Icon(icon, color: Colors.blue[700]),

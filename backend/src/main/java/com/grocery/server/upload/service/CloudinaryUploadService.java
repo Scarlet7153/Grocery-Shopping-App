@@ -4,10 +4,13 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -26,6 +29,46 @@ import java.util.Map;
 public class CloudinaryUploadService {
 
     private final Cloudinary cloudinary;
+
+    @Value("${cloudinary.cloud-name}")
+    private String cloudName;
+
+    @Value("${cloudinary.api-key}")
+    private String apiKey;
+
+    @Value("${cloudinary.api-secret}")
+    private String apiSecret;
+
+    /**
+     * Tạo chữ ký upload trực tiếp Cloudinary cho avatar.
+     *
+     * Flow client:
+     * 1. Gọi endpoint lấy signature params
+     * 2. Upload trực tiếp lên Cloudinary từ mobile
+     * 3. Gọi endpoint save avatar URL vào DB
+     */
+    public Map<String, Object> generateSignedAvatarUploadParams(Long userId) {
+        long timestamp = Instant.now().getEpochSecond();
+        String folder = "grocery-app/avatars";
+        String publicId = "user-" + userId + "-" + timestamp;
+
+        Map<String, Object> paramsToSign = new HashMap<>();
+        paramsToSign.put("folder", folder);
+        paramsToSign.put("public_id", publicId);
+        paramsToSign.put("timestamp", timestamp);
+
+        String signature = cloudinary.apiSignRequest(paramsToSign, apiSecret);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("cloudName", cloudName);
+        response.put("apiKey", apiKey);
+        response.put("timestamp", timestamp);
+        response.put("folder", folder);
+        response.put("publicId", publicId);
+        response.put("signature", signature);
+        response.put("uploadUrl", "https://api.cloudinary.com/v1_1/" + cloudName + "/image/upload");
+        return response;
+    }
 
     /**
      * Upload ảnh lên Cloudinary

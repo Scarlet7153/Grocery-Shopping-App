@@ -3,19 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:grocery_shopping_app/core/theme/shipper_theme.dart';
+import 'package:grocery_shopping_app/core/utils/app_localizations.dart';
 import 'package:grocery_shopping_app/apps/shipper/bloc/shipper_dashboard_bloc.dart';
-import 'package:grocery_shopping_app/apps/shipper/bloc/order_filter_bloc.dart';
 import 'package:grocery_shopping_app/apps/shipper/models/shipper_order.dart';
-import 'package:grocery_shopping_app/apps/shipper/models/order_filter.dart';
 import 'package:grocery_shopping_app/apps/shipper/repository/shipper_repository.dart';
 import 'package:grocery_shopping_app/apps/shipper/screens/dashboard/widgets/available_orders.dart';
 import 'package:grocery_shopping_app/apps/shipper/screens/dashboard/widgets/dashboard_stats.dart';
 import 'package:grocery_shopping_app/apps/shipper/screens/dashboard/widgets/online_toggle.dart';
-import 'package:grocery_shopping_app/apps/shipper/screens/orders/filter_button_widget.dart';
 import 'package:grocery_shopping_app/apps/shipper/screens/profile/shipper_profile_screen.dart';
 import 'package:grocery_shopping_app/apps/shipper/screens/delivery/delivery_flow_screen.dart';
 import 'package:grocery_shopping_app/apps/shipper/screens/delivery/order_map_screen.dart';
 import 'package:grocery_shopping_app/apps/shipper/screens/order_detail/order_detail_screen.dart';
+import 'package:grocery_shopping_app/apps/shipper/services/shipper_realtime_stomp_service.dart';
 
 /// A tiny fake repository that returns sample data immediately. Used by the
 /// preview constructor so we can open the dashboard without a backend/token.
@@ -129,8 +128,19 @@ class ShipperDashboardScreen extends StatefulWidget {
 class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
   int _currentIndex = 0;
   HistoryFilter _historyFilter = HistoryFilter.all;
+  BuildContext? _dashboardBlocContext;
   Timer? _autoRefreshTimer;
+  Timer? _realtimeRefreshDebounce;
+  StreamSubscription<ShipperRealtimeEvent>? _realtimeSubscription;
+  final ShipperRealtimeStompService _realtimeService =
+      ShipperRealtimeStompService();
   Map<String, dynamic>? _userData;
+
+  String _tr(BuildContext context, String vi, String en) {
+    final l = AppLocalizations.of(context);
+    if (l == null) return vi;
+    return l.byLocale(vi: vi, en: en);
+  }
 
   @override
   void initState() {
@@ -141,6 +151,47 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
     );
     _loadUserProfile();
     _requestLocationPermission();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _initRealtimeStreaming();
+      }
+    });
+  }
+
+  Future<void> _initRealtimeStreaming() async {
+    if (widget.preview) return;
+
+    _realtimeSubscription?.cancel();
+    _realtimeSubscription = _realtimeService.events.listen((event) {
+      switch (event.type) {
+        case ShipperRealtimeEventType.orderCreated:
+        case ShipperRealtimeEventType.orderAccepted:
+        case ShipperRealtimeEventType.orderStatusChanged:
+          _scheduleRealtimeRefresh();
+          break;
+        case ShipperRealtimeEventType.profileUpdated:
+          _loadUserProfile();
+          break;
+        case ShipperRealtimeEventType.error:
+          debugPrint('STOMP error: ${event.message}');
+          break;
+        case ShipperRealtimeEventType.connected:
+        case ShipperRealtimeEventType.disconnected:
+          break;
+      }
+    });
+
+    await _realtimeService.connect();
+  }
+
+  void _scheduleRealtimeRefresh() {
+    if (!mounted) return;
+    _realtimeRefreshDebounce?.cancel();
+    _realtimeRefreshDebounce = Timer(const Duration(milliseconds: 350), () {
+      if (mounted) {
+        _refreshData();
+      }
+    });
   }
 
   Future<void> _requestLocationPermission() async {
@@ -171,7 +222,6 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
       await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
-      debugPrint('Location permission granted and position fetched');
     } catch (e) {
       debugPrint('Error requesting location permission: $e');
     }
@@ -191,15 +241,29 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
   @override
   void dispose() {
     _autoRefreshTimer?.cancel();
+    _realtimeRefreshDebounce?.cancel();
+    _realtimeSubscription?.cancel();
+    _realtimeService.dispose();
     super.dispose();
   }
 
   Future<void> _refreshData() async {
     if (!mounted) return;
 
-    context.read<ShipperDashboardBloc>().add(RefreshDashboardData());
+    final blocContext = _dashboardBlocContext;
+    if (blocContext == null) return;
 
-    await Future.delayed(const Duration(milliseconds: 500));
+    // Trigger refresh
+    blocContext.read<ShipperDashboardBloc>().add(RefreshDashboardData());
+    
+    // Wait for BLoC to finish loading (not loading anymore = finished)
+    await blocContext.read<ShipperDashboardBloc>().stream.firstWhere(
+      (state) => state.status != DashboardStatus.loading,
+      orElse: () => const ShipperDashboardState.initial(),
+    );
+    
+    // Then refresh user profile
+    await _loadUserProfile();
   }
 
   @override
@@ -215,42 +279,52 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
               ..add(LoadDashboardData());
           },
         ),
-        BlocProvider(
-          create: (_) => OrderFilterBloc()..add(const LoadOrderFilter()),
-        ),
       ],
-      child: Scaffold(
-        body: IndexedStack(
-          index: _currentIndex,
-          children: [
-            _overviewPage(),
-            _historyPage(),
-            _statisticsPage(),
-            _profilePage(),
-          ],
-        ),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          selectedItemColor: ShipperTheme.primaryColor,
-          unselectedItemColor: Colors.grey,
-          onTap: (idx) => setState(() => _currentIndex = idx),
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard),
-              label: 'Tổng quan',
+      child: Builder(
+        builder: (innerContext) {
+          _dashboardBlocContext = innerContext;
+          return Scaffold(
+            body: IndexedStack(
+              index: _currentIndex,
+              children: [
+                _overviewPage(),
+                _historyPage(),
+                _statisticsPage(),
+                _profilePage(),
+              ],
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.receipt_long),
-              label: 'Lịch sử',
+            bottomNavigationBar: BottomNavigationBar(
+              currentIndex: _currentIndex,
+              selectedItemColor: ShipperTheme.primaryColor,
+              unselectedItemColor: Colors.grey,
+              onTap: (idx) {
+                setState(() => _currentIndex = idx);
+                // Refresh user profile when accessing profile tab
+                if (idx == 3) {
+                  _loadUserProfile();
+                }
+              },
+              items: [
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.dashboard),
+                  label: _tr(context, 'Tổng quan', 'Overview'),
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.receipt_long),
+                  label: _tr(context, 'Đơn hàng', 'Orders'),
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.bar_chart),
+                  label: _tr(context, 'Thống kê', 'Stats'),
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.person),
+                  label: _tr(context, 'Cá nhân', 'Profile'),
+                ),
+              ],
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.analytics),
-              label: 'Thống kê',
-            ),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Cá nhân'),
-          ],
-        ),
-        floatingActionButton: _currentIndex == 0 ? _buildFilterFAB() : null,
+          );
+        },
       ),
     );
   }
@@ -271,20 +345,19 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                 Icon(Icons.cloud_off, size: 64, color: Colors.grey[400]),
                 const SizedBox(height: 16),
                 Text(
-                  'Không thể tải dữ liệu',
+                  _tr(context, 'Không thể tải dữ liệu', 'Unable to load data'),
                   style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                 ),
                 const SizedBox(height: 12),
                 ElevatedButton.icon(
                   onPressed: _refreshData,
                   icon: const Icon(Icons.refresh, size: 18),
-                  label: const Text('Thử lại'),
+                  label: Text(_tr(context, 'Thử lại', 'Retry')),
                 ),
               ],
             ),
           );
         }
-        final statusText = state.isOnline ? 'Đang hoạt động' : 'Ngoại tuyến';
         return RefreshIndicator(
           onRefresh: () async => _refreshData(),
           child: SingleChildScrollView(
@@ -293,43 +366,65 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _buildUserAvatar(),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _userData?['fullName'] ?? 'Shipper',
-                            style:
-                                Theme.of(
+                    Row(
+                      children: [
+                        _buildUserAvatar(),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _userData?['fullName'] ?? 'Shipper',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style:
+                                    Theme.of(
+                                      context,
+                                    ).textTheme.headlineSmall?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface,
+                                      fontWeight: FontWeight.w700,
+                                    ) ??
+                                    TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface,
+                                    ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _tr(
                                   context,
-                                ).textTheme.headlineSmall?.copyWith(
-                                  color: ShipperTheme.textColor,
-                                  fontWeight: FontWeight.w700,
-                                ) ??
-                                const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: ShipperTheme.textColor,
+                                  'Đối tác giao hàng',
+                                  'Delivery partner',
                                 ),
+                                style:
+                                    Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                      fontWeight: FontWeight.w500,
+                                    ) ??
+                                    TextStyle(
+                                      fontSize: 13,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                    ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            statusText,
-                            style:
-                                Theme.of(context).textTheme.bodyMedium
-                                    ?.copyWith(color: Colors.black54) ??
-                                const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black54,
-                                ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 12),
                     OnlineToggle(
                       isOnline: state.isOnline,
                       onToggle: () => context.read<ShipperDashboardBloc>().add(
@@ -346,90 +441,51 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Đơn hàng sẵn có',
+                  _tr(context, 'Đơn hàng sẵn có', 'Available orders'),
                   style:
                       Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: ShipperTheme.textColor,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontWeight: FontWeight.w700,
                       ) ??
-                      const TextStyle(
+                      TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: ShipperTheme.textColor,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
-                ),
-                const SizedBox(height: 8),
-                // Filter Chip
-                BlocBuilder<OrderFilterBloc, OrderFilterState>(
-                  builder: (context, filterState) {
-                    if (filterState is OrderFilterLoaded) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          if (filterState.filter.isActive)
-                            Column(
-                              children: [
-                                ActiveFilterChip(
-                                  filter: filterState.filter,
-                                  onClear: () => context
-                                      .read<OrderFilterBloc>()
-                                      .add(const ResetOrderFilter()),
-                                ),
-                                const SizedBox(height: 12),
-                              ],
-                            ),
-                        ],
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
                 ),
                 const SizedBox(height: 8),
                 if (state.availableOrders.isEmpty)
                   _buildEmptyAvailableOrders()
                 else
-                  // Filter orders
-                  BlocBuilder<OrderFilterBloc, OrderFilterState>(
-                    builder: (context, filterState) {
-                      final repository = context.read<ShipperRepository>();
-                      List<ShipperOrder> displayOrders = state.availableOrders;
+                  AvailableOrdersList(
+                    orders: state.availableOrders,
+                    onAccept: (order) async {
+                      // Accept order via API
+                      final updatedOrder = await context
+                          .read<ShipperDashboardBloc>()
+                          .acceptOrder(order.id);
 
-                      if (filterState is OrderFilterLoaded) {
-                        displayOrders = repository.filterOrders(
-                          state.availableOrders,
-                          filterState.filter,
+                      // Navigate to map immediately after accepting
+                      if (updatedOrder != null && context.mounted) {
+                        final result = await Navigator.push<bool>(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => OrderMapScreen(
+                              order: updatedOrder,
+                              showDeliveryRoute:
+                                  false, // Show route to store first
+                            ),
+                          ),
                         );
+
+                        if (result == true && context.mounted) {
+                          context.read<ShipperDashboardBloc>().add(
+                            RefreshDashboardData(),
+                          );
+                        }
                       }
 
-                      if (displayOrders.isEmpty) {
-                        return _buildNoResultsMessage();
-                      }
-
-                      return AvailableOrdersList(
-                        orders: displayOrders,
-                        onAccept: (order) async {
-                          // Accept order via API
-                          final updatedOrder = await context
-                              .read<ShipperDashboardBloc>()
-                              .acceptOrder(order.id);
-
-                          // Navigate to map immediately after accepting
-                          if (updatedOrder != null && context.mounted) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => OrderMapScreen(
-                                  order: updatedOrder,
-                                  showDeliveryRoute:
-                                      false, // Show route to store first
-                                ),
-                              ),
-                            );
-                          }
-
-                          return updatedOrder;
-                        },
-                      );
+                      return updatedOrder;
                     },
                   ),
               ],
@@ -437,47 +493,6 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildFilterFAB() {
-    return BlocBuilder<OrderFilterBloc, OrderFilterState>(
-      builder: (context, state) {
-        final currentFilter = (state is OrderFilterLoaded)
-            ? state.filter
-            : const OrderFilter();
-
-        return OrderFilterButton(
-          currentFilter: currentFilter,
-          onFilterApplied: (filter) {
-            context.read<OrderFilterBloc>().add(UpdateOrderFilter(filter));
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildNoResultsMessage() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 40),
-      child: Column(
-        children: [
-          Icon(Icons.filter_list_off, size: 72, color: Colors.grey[300]),
-          const SizedBox(height: 16),
-          Text(
-            'Không có đơn hàng phù hợp với bộ lọc',
-            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          ElevatedButton.icon(
-            onPressed: () =>
-                context.read<OrderFilterBloc>().add(const ResetOrderFilter()),
-            icon: const Icon(Icons.autorenew, size: 18),
-            label: const Text('Xóa bộ lọc'),
-          ),
-        ],
-      ),
     );
   }
 
@@ -509,7 +524,7 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
           Icon(Icons.inbox_outlined, size: 72, color: Colors.grey[300]),
           const SizedBox(height: 16),
           Text(
-            'Chưa có đơn hàng nào',
+            _tr(context, 'Chưa có đơn hàng nào', 'No orders yet'),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w500,
@@ -518,7 +533,11 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Đơn hàng mới sẽ xuất hiện ở đây\nkhi cửa hàng xác nhận đơn',
+            _tr(
+              context,
+              'Đơn hàng mới sẽ xuất hiện ở đây\nkhi cửa hàng xác nhận đơn',
+              'New orders will appear here\nwhen stores confirm orders',
+            ),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,
@@ -546,14 +565,17 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                 Icon(Icons.cloud_off, size: 64, color: Colors.grey[400]),
                 const SizedBox(height: 16),
                 Text(
-                  'Không thể tải dữ liệu',
-                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                  _tr(context, 'Không thể tải dữ liệu', 'Unable to load data'),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 ElevatedButton.icon(
                   onPressed: _refreshData,
                   icon: const Icon(Icons.refresh, size: 18),
-                  label: const Text('Thử lại'),
+                  label: Text(_tr(context, 'Thử lại', 'Retry')),
                 ),
               ],
             ),
@@ -581,12 +603,11 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Lịch sử đơn hàng',
-                      style: TextStyle(
+                    Text(
+                      _tr(context, 'Lịch sử đơn hàng', 'Order history'),
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: ShipperTheme.textColor,
                       ),
                     ),
                     Container(
@@ -599,7 +620,7 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        '${state.deliveries.length} đơn',
+                        '${state.deliveries.length} ${_tr(context, 'đơn', 'orders')}',
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -613,9 +634,9 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                 Row(
                   children: HistoryFilter.values.map((filter) {
                     final label = switch (filter) {
-                      HistoryFilter.all => 'Tất cả',
-                      HistoryFilter.completed => 'Hoàn thành',
-                      HistoryFilter.cancelled => 'Đã hủy',
+                      HistoryFilter.all => _tr(context, 'Tất cả', 'All'),
+                      HistoryFilter.completed => _tr(context, 'Hoàn thành', 'Completed'),
+                      HistoryFilter.cancelled => _tr(context, 'Đã hủy', 'Cancelled'),
                     };
                     final count = switch (filter) {
                       HistoryFilter.all => state.deliveries.length,
@@ -639,11 +660,15 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                             decoration: BoxDecoration(
                               color: selected
                                   ? ShipperTheme.primaryColor
-                                  : Colors.grey[100],
+                                  : Theme.of(context).colorScheme.surface,
                               borderRadius: BorderRadius.circular(10),
                               border: selected
                                   ? null
-                                  : Border.all(color: Colors.grey[300]!),
+                                  : Border.all(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.outlineVariant,
+                                    ),
                             ),
                             child: Column(
                               children: [
@@ -654,7 +679,9 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                                     fontWeight: FontWeight.w600,
                                     color: selected
                                         ? Colors.white
-                                        : Colors.grey[700],
+                                        : Theme.of(
+                                            context,
+                                          ).colorScheme.onSurface,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
@@ -736,7 +763,7 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                                                   CrossAxisAlignment.start,
                                               children: [
                                                 Text(
-                                                  'Đơn #${order.id}',
+                                                  '${_tr(context, 'Đơn', 'Order')} #${order.id}',
                                                   style: const TextStyle(
                                                     fontWeight: FontWeight.bold,
                                                     fontSize: 16,
@@ -745,15 +772,19 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                                                 const SizedBox(height: 4),
                                                 Text(
                                                   order.deliveryAddress,
-                                                  style: const TextStyle(
-                                                    color: Colors.black54,
+                                                  style: TextStyle(
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .onSurfaceVariant,
                                                   ),
                                                 ),
                                                 const SizedBox(height: 4),
                                                 Text(
-                                                  'Khách: ${order.customerName}',
-                                                  style: const TextStyle(
-                                                    color: Colors.black54,
+                                                  '${_tr(context, 'Khách', 'Customer')}: ${order.customerName}',
+                                                  style: TextStyle(
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .onSurfaceVariant,
                                                   ),
                                                 ),
                                               ],
@@ -829,18 +860,25 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
           Icon(Icons.receipt_long_outlined, size: 72, color: Colors.grey[300]),
           const SizedBox(height: 16),
           Text(
-            'Chưa có đơn hàng nào',
+            _tr(context, 'Chưa có đơn hàng nào', 'No orders yet'),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w500,
-              color: Colors.grey[500],
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'Lịch sử đơn hàng sẽ xuất hiện ở đây',
+            _tr(
+              context,
+              'Lịch sử đơn hàng sẽ xuất hiện ở đây',
+              'Order history will appear here',
+            ),
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: Colors.grey[400]),
+            style: TextStyle(
+              fontSize: 13,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -888,7 +926,9 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
           return const Center(child: CircularProgressIndicator());
         }
         if (state.status == DashboardStatus.error) {
-          return Center(child: Text('Lỗi: ${state.error}'));
+          return Center(
+            child: Text('${_tr(context, 'Lỗi', 'Error')}: ${state.error}'),
+          );
         }
 
         // Placeholder values while backend details are not available
@@ -900,12 +940,11 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                'Thống kê',
-                style: TextStyle(
+              Text(
+                _tr(context, 'Thống kê', 'Statistics'),
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: ShipperTheme.textColor,
                 ),
               ),
               const SizedBox(height: 12),
@@ -925,26 +964,26 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Text(
-                        'Chi tiết',
-                        style: TextStyle(
+                      Text(
+                        _tr(context, 'Chi tiết', 'Details'),
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 12),
                       _buildStatRow(
-                        'Giờ online',
-                        '${onlineHours.toStringAsFixed(1)} giờ',
+                        _tr(context, 'Giờ online', 'Online hours'),
+                        '${onlineHours.toStringAsFixed(1)} ${_tr(context, 'giờ', 'h')}',
                       ),
                       const SizedBox(height: 8),
                       _buildStatRow(
-                        'Thu nhập tuần',
+                        _tr(context, 'Thu nhập tuần', 'Weekly earnings'),
                         '${weeklyIncome.toStringAsFixed(0)}₫',
                       ),
                       const SizedBox(height: 8),
                       _buildStatRow(
-                        'Tỷ lệ nhận đơn',
+                        _tr(context, 'Tỷ lệ nhận đơn', 'Acceptance rate'),
                         '${state.acceptanceRate.toStringAsFixed(1)}%',
                       ),
                     ],
@@ -966,10 +1005,20 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title, style: const TextStyle(fontSize: 14)),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 14,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
         Text(
           value,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
         ),
       ],
     );

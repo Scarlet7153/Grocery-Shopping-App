@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../enums/app_type.dart'; 
-import 'app_config.dart';
 
 class AppLauncher extends StatelessWidget {
   const AppLauncher({super.key});
@@ -17,11 +16,13 @@ class AppLauncher extends StatelessWidget {
       case AppType.admin:
         return {'name': 'Quản Trị Viên', 'color': 0xFF6A1B9A}; // Màu tím
     }
+
   }
+
 
   @override
   Widget build(BuildContext context) {
-    const apps = AppType.values; 
+    // final apps = AppType.values; // Not used directly
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dev Menu: Khởi động App'),
@@ -88,7 +89,6 @@ class AppLauncher extends StatelessWidget {
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
-                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 6),
               Text(
@@ -116,6 +116,8 @@ class AppLauncher extends StatelessWidget {
       case AppType.admin:
         return Icons.admin_panel_settings;
     }
+  }
+
   }
 
 void _launchApp(

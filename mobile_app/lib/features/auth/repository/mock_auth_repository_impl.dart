@@ -36,7 +36,6 @@ class MockAuthRepositoryImpl implements AuthRepository {
         name = 'Tài xế giao hàng';
         break;
       case AppType.customer:
-      default:
         role = UserRole.customer;
         name = 'Khách hàng Test';
     }
@@ -77,10 +76,16 @@ class MockAuthRepositoryImpl implements AuthRepository {
       final mockToken =
           'mock_jwt_token_${DateTime.now().millisecondsSinceEpoch}';
 
+      final parsedUserId = int.tryParse(mockUser.id.replaceAll(RegExp(r'[^0-9]'), ''));
+
       final authData = AuthDataModel(
         token: mockToken,
-        userId: mockUser.id,
-        user: mockUser,
+        type: 'Bearer',
+        userId: parsedUserId,
+        phoneNumber: mockUser.phoneNumber,
+        fullName: mockUser.fullName,
+        role: mockUser.role.name.toUpperCase(),
+        avatarUrl: mockUser.avatarUrl,
       );
 
       final response = AuthResponseModel(
@@ -164,6 +169,46 @@ class MockAuthRepositoryImpl implements AuthRepository {
     required AppType appType,
   }) async {
     throw UnimplementedError('Mock Register chưa được cài đặt');
+  }
+
+  @override
+  Future<UserModel> updateProfile({
+    required Map<String, dynamic> userData,
+  }) async {
+    final current = await getCurrentUser();
+    if (current == null) {
+      throw Exception('Chưa đăng nhập');
+    }
+
+    final updated = current.copyWith(
+      fullName: (userData['fullName'] ?? current.fullName).toString(),
+      address: userData['address']?.toString() ?? current.address,
+      avatarUrl: userData['avatarUrl']?.toString() ?? current.avatarUrl,
+      updatedAt: DateTime.now(),
+      storeName: userData['storeName']?.toString() ?? current.storeName,
+      storeAddress:
+          userData['storeAddress']?.toString() ?? current.storeAddress,
+    );
+
+    await _prefs.setString(_keyUser, jsonEncode(updated.toJson()));
+    return updated;
+  }
+
+  @override
+  Future<void> changePassword({
+    required String oldPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    if (newPassword != confirmPassword) {
+      throw Exception('Mật khẩu xác nhận không khớp');
+    }
+    if (newPassword.length < 6) {
+      throw Exception('Mật khẩu phải có ít nhất 6 ký tự');
+    }
+
+    // Mock mode: accept password change after basic validation.
+    await Future<void>.delayed(const Duration(milliseconds: 300));
   }
 
   @override

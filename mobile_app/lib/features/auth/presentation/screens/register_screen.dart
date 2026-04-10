@@ -453,7 +453,7 @@ class _RegisterScreenState extends State<RegisterScreen>
     ValueChanged<LocationItem?>? onChanged,
   }) {
     return DropdownButtonFormField<LocationItem>(
-      value: value,
+      initialValue: value,
       items: items
           .map(
             (item) => DropdownMenuItem<LocationItem>(
@@ -471,11 +471,11 @@ class _RegisterScreenState extends State<RegisterScreen>
         fillColor: AppColors.surfaceVariant,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-          borderSide: BorderSide(color: AppColors.border),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusM),
-          borderSide: BorderSide(color: AppColors.border),
+          borderSide: const BorderSide(color: AppColors.border),
         ),
       ),
     );
@@ -665,16 +665,6 @@ class _RegisterScreenState extends State<RegisterScreen>
       return 'Vui lòng nhập email hợp lệ';
     }
 
-    return null;
-  }
-
-  String? _validateAddress(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Vui lòng nhập địa chỉ';
-    }
-    if (value.trim().length < 5) {
-      return 'Địa chỉ phải có ít nhất 5 ký tự';
-    }
     return null;
   }
 

@@ -207,10 +207,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(
+                const Expanded(
                   child: Text(
                     'T\u1ed5ng c\u1ed9ng',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),

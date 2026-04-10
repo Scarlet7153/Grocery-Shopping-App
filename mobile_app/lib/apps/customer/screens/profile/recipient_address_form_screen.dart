@@ -365,7 +365,7 @@ class _RecipientAddressFormScreenState
     LocationItem? value,
   }) {
     return DropdownButtonFormField<LocationItem>(
-      value: value,
+      initialValue: value,
       items: items
           .map(
             (item) => DropdownMenuItem<LocationItem>(
@@ -442,29 +442,27 @@ class _RecipientAddressFormScreenState
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: RadioListTile<String>(
-                          title: const Text('Anh'),
-                          value: 'Anh',
-                          groupValue: selectedTitle,
-                          onChanged: (value) {
-                            setModalState(() => selectedTitle = value);
-                          },
+                  RadioGroup<String>(
+                    groupValue: selectedTitle,
+                    onChanged: (value) {
+                      setModalState(() => selectedTitle = value);
+                    },
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: RadioListTile<String>(
+                            title: const Text('Anh'),
+                            value: 'Anh',
+                          ),
                         ),
-                      ),
-                      Expanded(
-                        child: RadioListTile<String>(
-                          title: const Text('Chị'),
-                          value: 'Chị',
-                          groupValue: selectedTitle,
-                          onChanged: (value) {
-                            setModalState(() => selectedTitle = value);
-                          },
+                        Expanded(
+                          child: RadioListTile<String>(
+                            title: const Text('Chị'),
+                            value: 'Chị',
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   TextField(
                     controller: nameController,

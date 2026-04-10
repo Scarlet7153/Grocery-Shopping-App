@@ -67,6 +67,10 @@ class AppLocalizations {
   String translate(String key) {
     return _localizedValues[locale.languageCode]?[key] ?? key;
   }
+
+  String byLocale({required String vi, required String en}) {
+    return locale.languageCode == 'en' ? en : vi;
+  }
 }
 
 class AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

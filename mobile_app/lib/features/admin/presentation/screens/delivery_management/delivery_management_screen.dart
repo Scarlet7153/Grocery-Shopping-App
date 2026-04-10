@@ -13,7 +13,6 @@ class DeliveryManagementScreen extends StatefulWidget {
 
 class _DeliveryManagementScreenState extends State<DeliveryManagementScreen> {
   final OrderService _orderService = OrderService();
-  final _currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
   final _searchController = TextEditingController();
   String _searchQuery = '';
   String _statusFilter = 'Tất cả';
@@ -155,7 +154,7 @@ class _DeliveryManagementScreenState extends State<DeliveryManagementScreen> {
       onTap: () => setState(() => _statusFilter = isSelected ? 'Tất cả' : title),
       child: Column(
         children: [
-          Icon(icon, color: isSelected ? color : color.withOpacity(0.4), size: 24),
+          Icon(icon, color: isSelected ? color : color.withValues(alpha: 0.4), size: 24),
           const SizedBox(height: 8),
           Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isSelected ? Colors.black : Colors.grey)),
           Text(title, style: TextStyle(fontSize: 11, color: isSelected ? color : Colors.grey, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
@@ -196,7 +195,7 @@ class _DeliveryManagementScreenState extends State<DeliveryManagementScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -291,7 +290,7 @@ class _DeliveryManagementScreenState extends State<DeliveryManagementScreen> {
      
      return Container(
        padding: const EdgeInsets.all(10),
-       decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+       decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
        child: Icon(icon, color: color, size: 22),
      );
   }
@@ -306,7 +305,7 @@ class _DeliveryManagementScreenState extends State<DeliveryManagementScreen> {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
       child: Text(text, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
     );
   }

@@ -1,8 +1,13 @@
-import 'dart:io';
+import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../bloc/shipper_dashboard_bloc.dart';
 import '../../models/shipper_order.dart';
+import '../../repository/shipper_repository.dart';
+import '../../services/shipper_realtime_stomp_service.dart';
 import '../../../../core/theme/shipper_theme.dart';
 
 class DeliveryConfirmationScreen extends StatefulWidget {
@@ -22,9 +27,87 @@ class DeliveryConfirmationScreen extends StatefulWidget {
 
 class _DeliveryConfirmationScreenState
     extends State<DeliveryConfirmationScreen> {
-  File? _proofImage;
+  XFile? _proofImage;
+  Uint8List? _proofImageBytes;
   bool _isUploading = false;
   final ImagePicker _imagePicker = ImagePicker();
+  bool _isRealtimeSyncing = false;
+  StreamSubscription<ShipperRealtimeEvent>? _realtimeSubscription;
+  final ShipperRealtimeStompService _realtimeService =
+      ShipperRealtimeStompService();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _initRealtimeStreaming();
+      }
+    });
+  }
+
+  Future<void> _initRealtimeStreaming() async {
+    _realtimeSubscription?.cancel();
+    _realtimeSubscription = _realtimeService.events.listen((event) {
+      if (!_isEventForCurrentOrder(event)) return;
+
+      switch (event.type) {
+        case ShipperRealtimeEventType.orderStatusChanged:
+          _handleRealtimeStatusChanged(event);
+          break;
+        case ShipperRealtimeEventType.error:
+          debugPrint('DeliveryConfirmation STOMP error: ${event.message}');
+          break;
+        case ShipperRealtimeEventType.connected:
+        case ShipperRealtimeEventType.disconnected:
+        case ShipperRealtimeEventType.orderCreated:
+        case ShipperRealtimeEventType.orderAccepted:
+        case ShipperRealtimeEventType.profileUpdated:
+          break;
+      }
+    });
+
+    await _realtimeService.connect();
+  }
+
+  bool _isEventForCurrentOrder(ShipperRealtimeEvent event) {
+    final payload = event.payload;
+    if (payload == null) return false;
+
+    final rawOrderId = payload['orderId'] ?? payload['id'];
+    final eventOrderId = rawOrderId is int
+        ? rawOrderId
+        : int.tryParse(rawOrderId?.toString() ?? '');
+
+    return eventOrderId == widget.order.id;
+  }
+
+  Future<void> _handleRealtimeStatusChanged(ShipperRealtimeEvent event) async {
+    if (!mounted || _isRealtimeSyncing) return;
+
+    final newStatus = event.payload?['newStatus']?.toString();
+    if (newStatus != 'DELIVERED') return;
+
+    _isRealtimeSyncing = true;
+    try {
+      final repository = context.read<ShipperRepository>();
+      final refreshed = await repository.getOrderById(widget.order.id);
+      if (!mounted) return;
+
+      Navigator.of(context).pop(refreshed ?? widget.order);
+    } catch (e) {
+      debugPrint('Realtime refresh failed in DeliveryConfirmation: $e');
+    } finally {
+      _isRealtimeSyncing = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _realtimeSubscription?.cancel();
+    _realtimeService.dispose();
+    super.dispose();
+  }
 
   Future<void> _pickImage(ImageSource source) async {
     try {
@@ -36,7 +119,11 @@ class _DeliveryConfirmationScreenState
       );
 
       if (pickedFile != null) {
-        setState(() => _proofImage = File(pickedFile.path));
+        final imageBytes = await pickedFile.readAsBytes();
+        setState(() {
+          _proofImage = pickedFile;
+          _proofImageBytes = imageBytes;
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -48,7 +135,7 @@ class _DeliveryConfirmationScreenState
   }
 
   Future<void> _confirmDelivery() async {
-    if (_proofImage == null) {
+    if (_proofImage == null || _proofImageBytes == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Vui lòng chụp ảnh chứng minh giao hàng'),
@@ -61,28 +148,53 @@ class _DeliveryConfirmationScreenState
     setState(() => _isUploading = true);
 
     try {
-      // TODO: Upload image to backend + update order status to DELIVERED
-      // await _shipperRepository.uploadDeliveryProof(
-      //   orderId: widget.order.id,
-      //   imageFile: _proofImage!,
-      // );
+      final repository = context.read<ShipperRepository>();
+
+      final podImageUrl = await repository.uploadPOD(_proofImage!, widget.order.id);
+      if (podImageUrl == null || podImageUrl.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Upload ảnh chứng minh giao hàng thất bại'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      final updatedOrder = await repository.updateOrderStatus(
+        widget.order.id,
+        'DELIVERED',
+        podImageUrl: podImageUrl,
+      );
+
+      if (updatedOrder == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Không thể cập nhật trạng thái đơn hàng'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
 
       if (mounted) {
+        context.read<ShipperDashboardBloc>().add(RefreshDashboardData());
         widget.onConfirm?.call();
-        Navigator.of(context).pop(true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Giao hàng thành công!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        Navigator.of(context).pop(updatedOrder);
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isUploading = false);
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Lỗi xác nhận: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUploading = false);
       }
     }
   }
@@ -90,7 +202,7 @@ class _DeliveryConfirmationScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ShipperTheme.backgroundColor,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
       appBar: AppBar(
         title: const Text('Xác nhận giao hàng'),
         backgroundColor: ShipperTheme.primaryColor,
@@ -279,7 +391,11 @@ class _DeliveryConfirmationScreenState
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.person, color: ShipperTheme.primaryColor, size: 20),
+              const Icon(
+                Icons.person,
+                color: ShipperTheme.primaryColor,
+                size: 20,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -321,7 +437,11 @@ class _DeliveryConfirmationScreenState
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.phone, color: ShipperTheme.secondaryColor, size: 20),
+                const Icon(
+                  Icons.phone,
+                  color: ShipperTheme.secondaryColor,
+                  size: 20,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -351,7 +471,11 @@ class _DeliveryConfirmationScreenState
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.home, color: ShipperTheme.primaryColor, size: 20),
+              const Icon(
+                Icons.home,
+                color: ShipperTheme.primaryColor,
+                size: 20,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -419,7 +543,7 @@ class _DeliveryConfirmationScreenState
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Image.file(_proofImage!, fit: BoxFit.cover),
+                  child: Image.memory(_proofImageBytes!, fit: BoxFit.cover),
                 ),
               ),
               const SizedBox(height: 14),

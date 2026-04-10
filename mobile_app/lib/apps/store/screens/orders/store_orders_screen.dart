@@ -58,8 +58,9 @@ OrderStatusType _orderStatusFromApi(String? s) {
   if (u == 'PENDING' || u == 'NEW') return OrderStatusType.newOrder;
   if (u == 'PROCESSING') return OrderStatusType.processing;
   if (u == 'SHIPPING') return OrderStatusType.shipping;
-  if (u == 'DELIVERED' || u == 'DONE' || u == 'COMPLETED')
+  if (u == 'DELIVERED' || u == 'DONE' || u == 'COMPLETED') {
     return OrderStatusType.done;
+  }
   return OrderStatusType.newOrder;
 }
 
@@ -138,12 +139,13 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
     super.initState();
     context.read<StoreOrdersBloc>().add(LoadStoreOrders());
     _orderSearchController.addListener(() {
-      if (mounted)
+      if (mounted) {
         setState(
           () => _orderSearchQuery = _orderSearchController.text
               .trim()
               .toLowerCase(),
         );
+      }
     });
   }
 
@@ -201,11 +203,12 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
         );
       }
     }
-    if (mounted)
+    if (mounted) {
       setState(() {
         _cardLoadingOrderId = null;
         _cardLoadingAction = null;
       });
+    }
   }
 
   Future<void> _runCardReject(_OrderData o) async {
@@ -228,11 +231,12 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
         );
       }
     }
-    if (mounted)
+    if (mounted) {
       setState(() {
         _cardLoadingOrderId = null;
         _cardLoadingAction = null;
       });
+    }
   }
 
   Future<void> _runCardMarkReady(_OrderData o) async {
@@ -255,11 +259,12 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
         );
       }
     }
-    if (mounted)
+    if (mounted) {
       setState(() {
         _cardLoadingOrderId = null;
         _cardLoadingAction = null;
       });
+    }
   }
 
   void _showOrderDetailModal(BuildContext context, _OrderData order) {
@@ -423,8 +428,9 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
           month < 1 ||
           month > 12 ||
           day < 1 ||
-          day > 31)
+          day > 31) {
         return null;
+      }
       final now = DateTime.now();
       return DateTime(now.year, month, day);
     } catch (_) {
@@ -546,8 +552,9 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
       if (_filter == _FilterTab.all && idx > 0) {
         if (index == idx) return const SizedBox(height: 24);
         idx++;
-        if (index == idx)
+        if (index == idx) {
           return Divider(height: 1, color: Colors.grey.shade300);
+        }
         idx++;
         if (index == idx) return const SizedBox(height: 24);
         idx++;
@@ -596,8 +603,9 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
           );
         }
         idx++;
-        if (i < group.length - 1 && index == idx)
+        if (i < group.length - 1 && index == idx) {
           return const SizedBox(height: kCardPadding);
+        }
         if (i < group.length - 1) idx++;
       }
     }

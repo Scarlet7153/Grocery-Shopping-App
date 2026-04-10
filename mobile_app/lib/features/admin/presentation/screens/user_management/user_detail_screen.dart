@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/enums/app_type.dart';
 import '../../../../auth/models/user_model.dart';
 import '../../../domain/repositories/user_repository.dart';
 import '../../../data/repositories/api_user_repository_impl.dart';
@@ -261,7 +260,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                 children: [
                   CircleAvatar(
                     radius: 40,
-                    backgroundColor: Colors.purple.withOpacity(0.1),
+                    backgroundColor: Colors.purple.withValues(alpha: 0.1),
                     backgroundImage: _user.avatarUrl != null 
                         ? const NetworkImage('https://i.pravatar.cc/150') // Fake UI image
                         : null,

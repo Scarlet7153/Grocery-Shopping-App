@@ -107,7 +107,7 @@ class _StoreLoginScreenState extends State<StoreLoginScreen> {
           padding: const EdgeInsets.all(16),
 
           decoration: BoxDecoration(
-            color: StoreTheme.primaryColor.withOpacity(0.1),
+            color: StoreTheme.primaryColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(16),
           ),
 

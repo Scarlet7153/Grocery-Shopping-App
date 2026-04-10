@@ -1,4 +1,4 @@
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:grocery_shopping_app/apps/shipper/models/user_profile.dart';
 import 'package:grocery_shopping_app/apps/shipper/repository/shipper_repository.dart';
 

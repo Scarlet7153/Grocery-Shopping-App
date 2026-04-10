@@ -90,6 +90,9 @@ public class RedisConfig {
         
         // Subscribe to location updates
         container.addMessageListener(orderEventListener, new PatternTopic("location:order:*"));
+
+        // Subscribe to user profile updates
+        container.addMessageListener(orderEventListener, new PatternTopic("user:profile:*"));
         
         return container;
     }

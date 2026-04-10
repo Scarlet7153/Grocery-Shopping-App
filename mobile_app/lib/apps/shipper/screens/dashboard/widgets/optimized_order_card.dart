@@ -151,7 +151,7 @@ class OptimizedOrderCard extends StatelessWidget {
                 // Store name (secondary - 14px)
                 Row(
                   children: [
-                    Icon(Icons.store, size: 16, color: Colors.orange),
+                    const Icon(Icons.store, size: 16, color: Colors.orange),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
@@ -172,7 +172,7 @@ class OptimizedOrderCard extends StatelessWidget {
                 // Delivery address (16px body)
                 Row(
                   children: [
-                    Icon(Icons.location_on, size: 16, color: Colors.red),
+                    const Icon(Icons.location_on, size: 16, color: Colors.red),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(

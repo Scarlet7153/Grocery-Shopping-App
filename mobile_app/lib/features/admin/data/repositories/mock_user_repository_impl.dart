@@ -11,8 +11,9 @@ class MockUserRepositoryImpl implements UserRepository {
       final isShipper = index >= 14 && index < 19;
       
       UserRole role;
-      if (isCustomer) role = UserRole.customer;
-      else if (isStore) role = UserRole.store;
+      if (isCustomer) {
+        role = UserRole.customer;
+      } else if (isStore) role = UserRole.store;
       else if (isShipper) role = UserRole.shipper;
       else role = UserRole.admin;
 
@@ -73,7 +74,8 @@ class MockUserRepositoryImpl implements UserRepository {
   }
 
   @override
-  Future<UserModel> createUser(UserModel user) async {
+  Future<UserModel> createUser(UserModel user, {required String password}) async {
+    // Password not used in mock implementation, but kept for API parity
     await Future.delayed(const Duration(milliseconds: 500));
     _mockUsers.add(user);
     return user;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:grocery_shopping_app/features/auth/bloc/auth_bloc.dart';
+import 'package:grocery_shopping_app/features/auth/bloc/auth_event.dart';
 import 'package:grocery_shopping_app/features/auth/bloc/auth_state.dart';
 import 'package:grocery_shopping_app/features/admin/presentation/screens/user_management/user_management_screen.dart';
 import 'package:grocery_shopping_app/features/admin/presentation/screens/store_management/store_management_screen.dart';
@@ -8,10 +9,6 @@ import 'package:grocery_shopping_app/features/admin/presentation/screens/shipper
 import 'package:grocery_shopping_app/features/admin/presentation/screens/order_management/order_management_screen.dart';
 import 'package:grocery_shopping_app/features/admin/presentation/screens/delivery_management/delivery_management_screen.dart';
 import 'package:grocery_shopping_app/features/admin/presentation/screens/settings/settings_screen.dart';
-import 'package:grocery_shopping_app/features/admin/domain/repositories/user_repository.dart';
-import 'package:grocery_shopping_app/features/admin/data/repositories/api_user_repository_impl.dart';
-import 'package:grocery_shopping_app/features/admin/domain/repositories/store_repository.dart';
-import 'package:grocery_shopping_app/features/admin/data/repositories/api_store_repository_impl.dart';
 import 'package:grocery_shopping_app/features/orders/data/order_service.dart';
 import 'package:grocery_shopping_app/features/orders/data/order_model.dart';
 import 'package:grocery_shopping_app/core/utils/logger.dart';
@@ -32,9 +29,7 @@ class AdminDashboardScreen extends StatefulWidget {
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   int _currentIndex = 0;
   late PageController _pageController;
-  
-  final UserRepository _userRepository = ApiUserRepositoryImpl();
-  final StoreRepository _storeRepository = ApiStoreRepositoryImpl();
+
   final _currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
 
   final List<Map<String, dynamic>> _navItems = [
@@ -69,44 +64,51 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AuthBloc, AuthState>(
-      builder: (context, state) {
-        if (state is AuthAuthenticated) {
-          final user = state.user;
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              final bool isLargeScreen = constraints.maxWidth > 900;
-              
-              return Scaffold(
-                backgroundColor: const Color(0xFFF0F2F5),
-                appBar: _currentIndex == 0 ? _buildAppBar(user) : null,
-                body: Row(
-                  children: [
-                    if (isLargeScreen) _buildSidebar(),
-                    Expanded(
-                      child: PageView(
-                        controller: _pageController,
-                        onPageChanged: (index) => setState(() => _currentIndex = index),
-                        children: [
-                          _buildOverviewTab(),
-                          const UserManagementScreen(),
-                          const StoreManagementScreen(),
-                          const ShipperManagementScreen(),
-                          const OrderManagementScreen(),
-                          const DeliveryManagementScreen(),
-                          const SettingsScreen(),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                bottomNavigationBar: isLargeScreen ? null : _buildBottomNav(),
-              );
-            },
-          );
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthUnauthenticated) {
+          Navigator.pushReplacementNamed(context, '/login');
         }
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
       },
+      child: BlocBuilder<AuthBloc, AuthState>(
+        builder: (context, state) {
+          if (state is AuthAuthenticated) {
+            final user = state.user;
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final bool isLargeScreen = constraints.maxWidth > 900;
+                
+                return Scaffold(
+                  backgroundColor: const Color(0xFFF0F2F5),
+                  appBar: _currentIndex == 0 ? _buildAppBar(user) : null,
+                  body: Row(
+                    children: [
+                      if (isLargeScreen) _buildSidebar(),
+                      Expanded(
+                        child: PageView(
+                          controller: _pageController,
+                          onPageChanged: (index) => setState(() => _currentIndex = index),
+                          children: [
+                            _buildOverviewTab(user),
+                            const UserManagementScreen(),
+                            const StoreManagementScreen(),
+                            const ShipperManagementScreen(),
+                            const OrderManagementScreen(),
+                            const DeliveryManagementScreen(),
+                            const SettingsScreen(),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  bottomNavigationBar: isLargeScreen ? null : _buildBottomNav(),
+                );
+              },
+            );
+          }
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        },
+      ),
     );
   }
 
@@ -166,7 +168,29 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 const CircleAvatar(radius: 16, backgroundColor: Colors.orange, child: Icon(Icons.person, size: 16, color: Colors.white)),
                 const SizedBox(width: 12),
                 const Expanded(child: Text('Admin Manager', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
-                IconButton(onPressed: () {}, icon: const Icon(Icons.logout, size: 18, color: Colors.grey)),
+                IconButton(
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Đăng xuất'),
+                        content: const Text('Bạn có chắc chắn muốn thoát khỏi hệ thống?'),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Hủy')),
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              context.read<AuthBloc>().add(const LogoutRequested());
+                            },
+                            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                            child: const Text('Đăng xuất'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }, 
+                  icon: const Icon(Icons.logout, size: 18, color: Colors.grey)
+                ),
               ],
             ),
           ),
@@ -276,7 +300,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   // --- TAB 0: TỔNG QUAN ---
-  Widget _buildOverviewTab() {
+  Widget _buildOverviewTab(UserModel user) {
     return FutureBuilder<Map<String, dynamic>>(
       future: _loadDashboardStats(),
       builder: (context, snapshot) {
@@ -294,7 +318,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
-                _buildWelcomeHeader(stats),
+                _buildWelcomeHeader(user, stats),
                 const SizedBox(height: 24),
                 _buildStatsGrid(stats),
                 const SizedBox(height: 24),
@@ -316,20 +340,80 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildWelcomeHeader(Map<String, dynamic> stats) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Chào buổi sáng, Admin! 👋',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
+  String _getGreeting(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final hour = DateTime.now().hour;
+    if (hour < 12) return l.translate('greeting_morning');
+    if (hour < 18) return l.translate('greeting_afternoon');
+    return l.translate('greeting_evening');
+  }
+
+  Widget _buildWelcomeHeader(UserModel user, Map<String, dynamic> stats) {
+    final l = AppLocalizations.of(context)!;
+    final greeting = _getGreeting(context);
+    
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.indigo[800]!, Colors.indigo[600]!],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        const SizedBox(height: 4),
-        Text(
-          'Hệ thống đang hoạt động ổn định. Kiểm tra ngay hôm nay.',
-          style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-        ),
-      ],
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.indigo.withValues(alpha: 0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$greeting, ${user.fullName.split(' ').last}! 👋',
+                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l.translate('greeting_welcome_back'),
+                  style: TextStyle(fontSize: 14, color: Colors.white.withValues(alpha: 0.9)),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.verified_user, color: Colors.white, size: 14),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Hệ thống đang hoạt động ổn định',
+                        style: TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.w500),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Background decoration icon
+          Opacity(
+            opacity: 0.1,
+            child: Icon(Icons.auto_graph, size: 80, color: Colors.white),
+          ),
+        ],
+      ),
     );
   }
 
@@ -602,7 +686,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildRecentActivities(Map<String, dynamic> stats) {
-    final List<UserModel> topUsers = stats['recentUsers']?.cast<UserModel>() ?? [];
+    final List rawUsers = stats['recentUsers'] ?? [];
+    final List<UserModel> topUsers = rawUsers.map((u) {
+      if (u is UserModel) return u;
+      return UserModel.fromJson(Map<String, dynamic>.from(u as Map));
+    }).toList();
+    
     final List<OrderModel> recentOrders = stats['recentOrders']?.cast<OrderModel>() ?? [];
     
     final List<Map<String, dynamic>> combined = [
@@ -666,51 +755,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Future<Map<String, dynamic>> _loadDashboardStats() async {
     try {
       final orderService = OrderService();
-      final results = await Future.wait([
-        _userRepository.getUsers(),
-        _storeRepository.getStores(),
-        orderService.getAllOrdersAdmin(),
-      ]);
-
-      final users = results[0] as List<UserModel>;
-      final stores = results[1] as List<Map<String, dynamic>>;
-      final orders = results[2] as List<OrderModel>;
+      // Use the centralized stats aggregation logic in OrderService
+      // which utilizes ONLY existing backend endpoints.
+      final stats = await orderService.getAdminStats();
       
-      final customerCount = users.where((u) => u.role == UserRole.customer).length;
-      final storeCount = stores.length;
-      final totalUsers = users.length;
-      
-      // Calculate real revenue from DELIVERED orders
-      double totalRevenue = 0;
-      int deliveredCount = 0;
-      for (var order in orders) {
-        if (order.status == 'DELIVERED') {
-          totalRevenue += (order.totalAmount ?? 0).toDouble();
-          deliveredCount++;
-        }
-      }
-
-      // Profit estimation (e.g. 10% of revenue)
-      double estimatedProfit = totalRevenue * 0.1;
-
-      // Sort users by ID or something to get "recent" ones
-      final recentUsers = users.reversed.take(3).toList();
-      
-      // Recent activities: Combine new orders and new users
-      final recentActivities = orders.take(5).toList();
-
-      return {
-        'userCount': totalUsers,
-        'storeCount': storeCount,
-        'revenue': totalRevenue,
-        'orders': orders.length,
-        'deliveredCount': deliveredCount,
-        'profit': estimatedProfit,
-        'topStores': stores.take(3).toList(),
-        'recentUsers': recentUsers,
-        'recentOrders': recentActivities,
-        'customerCount': customerCount,
-      };
+      // Map the service results to the UI's expected keys if necessary
+      return stats;
     } catch (e) {
       AppLogger.error('Dashboard Stats Load Error: $e');
       return {

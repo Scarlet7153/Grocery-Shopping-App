@@ -73,4 +73,26 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      */
     @Query("SELECT o FROM Order o WHERE o.status = 'CONFIRMED' AND o.shipper IS NULL ORDER BY o.createdAt ASC")
     List<Order> findAvailableOrdersForShippers();
+
+    /**
+     * Tính tổng doanh thu từ các đơn hàng đã giao thành công (DELIVERED)
+     * @return Tổng doanh thu (BigDecimal)
+     */
+    @Query("SELECT SUM(o.totalAmount) FROM Order o WHERE o.status = 'DELIVERED'")
+    java.math.BigDecimal getTotalRevenue();
+
+    /**
+     * Đếm tổng số đơn hàng theo từng trạng thái
+     * @param status Trạng thái đơn hàng
+     * @return Số lượng đơn hàng
+     */
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.status = :status")
+    Long countByStatus(@Param("status") OrderStatus status);
+
+    /**
+     * Lấy tất cả đơn hàng, sắp xếp theo thời gian mới nhất
+     * @return Danh sách đơn hàng
+     */
+    @Query("SELECT o FROM Order o ORDER BY o.createdAt DESC")
+    List<Order> findAllOrdersSorted();
 }

@@ -7,6 +7,9 @@ import 'package:grocery_shopping_app/features/products/data/product_model.dart';
 import 'package:grocery_shopping_app/features/orders/data/order_service.dart';
 import 'package:grocery_shopping_app/features/orders/data/order_model.dart';
 import 'package:intl/intl.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:grocery_shopping_app/core/api/upload_service.dart';
+import 'package:grocery_shopping_app/core/api/api_routes.dart';
 
 class StoreDetailScreen extends StatefulWidget {
   final Map<String, dynamic> store;
@@ -24,6 +27,8 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
 
   final _productService = ProductService();
   final _orderService = OrderService();
+  final _uploadService = UploadService();
+  final _picker = ImagePicker();
   final _currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
   
   List<ProductModel> _products = <ProductModel>[];
@@ -272,10 +277,28 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            CircleAvatar(
-              radius: 40,
-              backgroundColor: Colors.blue.withValues(alpha: 0.1),
-              child: const Icon(Icons.store, size: 40, color: Colors.blue),
+            GestureDetector(
+              onTap: _pickAndUploadStoreImage,
+              child: Stack(
+                alignment: Alignment.bottomRight,
+                children: [
+                  CircleAvatar(
+                    radius: 40,
+                    backgroundColor: Colors.blue.withValues(alpha: 0.1),
+                    backgroundImage: _store['imageUrl'] != null && _store['imageUrl'].toString().isNotEmpty
+                        ? NetworkImage(_store['imageUrl'])
+                        : null,
+                    child: _store['imageUrl'] == null || _store['imageUrl'].toString().isEmpty
+                        ? const Icon(Icons.store, size: 40, color: Colors.blue)
+                        : null,
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: const BoxDecoration(color: Colors.indigo, shape: BoxShape.circle),
+                    child: const Icon(Icons.camera_alt, size: 16, color: Colors.white),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 16),
             Text(_store['storeName'] ?? 'Chưa có tên', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
@@ -291,6 +314,62 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _pickAndUploadStoreImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+      if (image == null) return;
+
+      setState(() => _isLoading = true);
+      
+      final String endpoint = ApiRoutes.uploadStore(_store['id'].toString());
+      final String newUrl = await _uploadService.uploadImage(endpoint, image);
+
+      if (mounted) {
+        setState(() {
+          _store['imageUrl'] = newUrl;
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cập nhật ảnh cửa hàng thành công!'), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi upload: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _pickAndUploadProductImage(ProductModel product) async {
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+      if (image == null) return;
+
+      setState(() => _isProductsLoading = true);
+      
+      final String endpoint = ApiRoutes.uploadProductWithId(product.id.toString());
+      await _uploadService.uploadImage(endpoint, image);
+
+      if (mounted) {
+        setState(() => _isProductsLoading = false);
+        _loadProducts(); // Fresh reload
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cập nhật ảnh sản phẩm thành công!'), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isProductsLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi upload: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   Widget _buildInfoRow(IconData icon, String label, String value, {Color? color}) {
@@ -465,6 +544,11 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
                       color: isHidden ? Colors.grey : Colors.green, 
                       fontWeight: FontWeight.bold
                     )
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.camera_alt, color: Colors.blue[400], size: 20),
+                    tooltip: 'Đổi ảnh',
+                    onPressed: () => _pickAndUploadProductImage(prod),
                   ),
                   IconButton(
                     icon: Icon(isHidden ? Icons.visibility : Icons.visibility_off, color: isHidden ? Colors.green : Colors.red),

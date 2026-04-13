@@ -16,7 +16,6 @@ class AppLauncher extends StatelessWidget {
       case AppType.admin:
         return {'name': 'Quản Trị Viên', 'color': 0xFF6A1B9A}; // Màu tím
     }
-
   }
 
 
@@ -118,9 +117,7 @@ class AppLauncher extends StatelessWidget {
     }
   }
 
-  }
-
-void _launchApp(
+  void _launchApp(
     BuildContext context, 
     AppType appType, 
     String appName, 
@@ -136,3 +133,4 @@ void _launchApp(
       ),
     );
   }
+}

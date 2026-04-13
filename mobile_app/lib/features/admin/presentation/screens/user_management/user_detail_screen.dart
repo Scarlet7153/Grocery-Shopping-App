@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../../../core/enums/app_type.dart';
 import '../../../../auth/models/user_model.dart';
 import '../../../domain/repositories/user_repository.dart';
 import '../../../data/repositories/api_user_repository_impl.dart';

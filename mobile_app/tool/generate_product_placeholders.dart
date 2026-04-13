@@ -55,7 +55,6 @@ void main() {
       y2: size - pad,
       color: colorFromHex(0xFFE8E0C8),
     );
-    final label = p.$2;
     final textColor = colorFromHex(0xFF333333);
     try {
       img.drawString(

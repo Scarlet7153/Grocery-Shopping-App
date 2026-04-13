@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../block/store_dashboard_bloc.dart';
+import '../../block/store_orders_bloc.dart';
+import '../../block/store_products_bloc.dart';
 import '../dashboard/store_dashboard_screen.dart';
 import '../orders/store_orders_screen.dart';
 import '../products/store_products_screen.dart';
@@ -28,10 +33,38 @@ class _StoreHomeScreenState extends State<StoreHomeScreen> {
     pages = [
       StoreDashboardScreen(token: widget.token),
       const StoreOrdersScreen(),
-      const StoreProductsScreen(),
+      StoreProductsScreen(token: widget.token),
       const StoreChatScreen(),
-      const StoreProfileScreen(),
+      StoreProfileScreen(token: widget.token),
     ];
+  }
+
+  void _selectTab(int index) {
+    setState(() => currentIndex = index);
+    if (!mounted) return;
+    final t = widget.token;
+    switch (index) {
+      case 0:
+        context.read<StoreDashboardBloc>().add(
+              LoadStoreDashboard(t, showLoading: false),
+            );
+        context.read<StoreOrdersBloc>().add(LoadStoreOrders());
+        context.read<StoreProductsBloc>().add(LoadStoreProducts(token: t));
+        break;
+      case 1:
+        context.read<StoreOrdersBloc>().add(LoadStoreOrders());
+        break;
+      case 2:
+        context.read<StoreProductsBloc>().add(LoadStoreProducts(token: t));
+        break;
+      case 4:
+        context.read<StoreDashboardBloc>().add(
+              LoadStoreDashboard(t, showLoading: false),
+            );
+        break;
+      default:
+        break;
+    }
   }
 
   @override
@@ -56,49 +89,49 @@ class _StoreHomeScreenState extends State<StoreHomeScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 ScaleOnTap(
-                  onTap: () => setState(() => currentIndex = 0),
+                  onTap: () => _selectTab(0),
                   child: _NavItem(
                     icon: Icons.dashboard_rounded,
                     label: 'Tổng quan',
                     isSelected: currentIndex == 0,
-                    onTap: () => setState(() => currentIndex = 0),
+                    onTap: () => _selectTab(0),
                   ),
                 ),
                 ScaleOnTap(
-                  onTap: () => setState(() => currentIndex = 1),
+                  onTap: () => _selectTab(1),
                   child: _NavItem(
                     icon: Icons.receipt_long_rounded,
                     label: 'Đơn',
                     isSelected: currentIndex == 1,
-                    onTap: () => setState(() => currentIndex = 1),
+                    onTap: () => _selectTab(1),
                   ),
                 ),
                 ScaleOnTap(
-                  onTap: () => setState(() => currentIndex = 2),
+                  onTap: () => _selectTab(2),
                   child: _NavItem(
                     icon: Icons.inventory_2_rounded,
                     label: 'Sản phẩm',
                     isSelected: currentIndex == 2,
-                    onTap: () => setState(() => currentIndex = 2),
+                    onTap: () => _selectTab(2),
                   ),
                 ),
                 ScaleOnTap(
-                  onTap: () => setState(() => currentIndex = 3),
+                  onTap: () => _selectTab(3),
                   child: _NavItem(
                     icon: Icons.chat_bubble_rounded,
                     label: 'Chat',
                     isSelected: currentIndex == 3,
-                    onTap: () => setState(() => currentIndex = 3),
+                    onTap: () => _selectTab(3),
                     unreadCount: 2,
                   ),
                 ),
                 ScaleOnTap(
-                  onTap: () => setState(() => currentIndex = 4),
+                  onTap: () => _selectTab(4),
                   child: _NavItem(
                     icon: Icons.store_rounded,
                     label: 'Cửa hàng',
                     isSelected: currentIndex == 4,
-                    onTap: () => setState(() => currentIndex = 4),
+                    onTap: () => _selectTab(4),
                   ),
                 ),
               ],

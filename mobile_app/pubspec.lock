@@ -42,7 +42,7 @@ packages:
     source: hosted
     version: "2.13.1"
   bloc:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: bloc
       sha256: "106842ad6569f0b60297619e9e0b1885c2fb9bf84812935490e6c5275777804e"
@@ -202,7 +202,7 @@ packages:
     source: hosted
     version: "4.11.1"
   collection:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: collection
       sha256: "2f5709ae4d3d59dd8f7cd309b4e023046b57d8a6c82130785d2b0e5868084e76"
@@ -585,10 +585,10 @@ packages:
     dependency: transitive
     description:
       name: google_maps_flutter_android
-      sha256: "9c14d3d58a398d6182c2c674b17d36c16a1d64c2c60891e9acf019856319c512"
+      sha256: "843e217deba8c2ca5ca9eee17e17c2f350b1dd24f64ec6a068d21573c7a1e755"
       url: "https://pub.dev"
     source: hosted
-    version: "2.19.5"
+    version: "2.19.6"
   google_maps_flutter_ios:
     dependency: transitive
     description:
@@ -662,7 +662,7 @@ packages:
     source: hosted
     version: "0.15.6"
   http:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: http
       sha256: "87721a4a50b19c7f1d49001e51409bddc46303966ce89a65af4f4e6004896412"
@@ -678,7 +678,7 @@ packages:
     source: hosted
     version: "3.2.2"
   http_parser:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: http_parser
       sha256: "178d74305e7866013777bab2c3d8726205dc5a4dd935297175b19a23a2e66571"
@@ -686,7 +686,7 @@ packages:
     source: hosted
     version: "4.1.2"
   image:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
       name: image
       sha256: f9881ff4998044947ec38d098bc7c8316ae1186fa786eddffdb867b9bc94dfce
@@ -809,10 +809,10 @@ packages:
     dependency: "direct dev"
     description:
       name: json_serializable
-      sha256: ea1432d167339ea9b5bb153f0571d0039607a873d6e04e0117af043f14a1fd4b
+      sha256: c2fcb3920cf2b6ae6845954186420fca40bc0a8abcc84903b7801f17d7050d7c
       url: "https://pub.dev"
     source: hosted
-    version: "6.8.0"
+    version: "6.9.0"
   latlong2:
     dependency: "direct main"
     description:
@@ -1017,10 +1017,10 @@ packages:
     dependency: transitive
     description:
       name: path_provider_android
-      sha256: "914a07484c4380e572998d30486e77e0d9cd2faec72fee268086d07bf7f302c9"
+      sha256: "69cbd515a62b94d32a7944f086b2f82b4ac40a1d45bebfc00813a430ab2dabcd"
       url: "https://pub.dev"
     source: hosted
-    version: "2.3.0"
+    version: "2.3.1"
   path_provider_foundation:
     dependency: transitive
     description:
@@ -1402,6 +1402,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.12.1"
+  stomp_dart_client:
+    dependency: "direct main"
+    description:
+      name: stomp_dart_client
+      sha256: "9ca00600a212f1e08fda614cf6815437829b1d08d8911ff5c798f130a2fa2d59"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.1.3"
   stream_channel:
     dependency: transitive
     description:

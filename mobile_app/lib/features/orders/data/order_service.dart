@@ -15,32 +15,51 @@ class OrderService {
   // Local persistence simulation for Admin Dashboard (Clearing as per user request)
   static final List<OrderModel> _mockOrders = [];
 
-  /// Get store orders. Optional: page, limit, status.
-  Future<List<OrderModel>> getStoreOrders({
-    int? page,
-    int? limit,
-    String? status,
-  }) async {
+  /// GET /orders/my-store-orders — backend không hỗ trợ page/limit/status query.
+  Future<List<OrderModel>> getStoreOrders() async {
     try {
-      final response = await _client.get<dynamic>(
-        ApiRoutes.myStoreOrders,
-        queryParameters: {
-          if (page != null) 'page': page,
-          if (limit != null) 'limit': limit,
-          if (status != null) 'status': status,
-        },
-      );
+      final response = await _client.get<dynamic>(ApiRoutes.myStoreOrders);
       final data = response.data;
-      if (data != null && data['data'] != null) {
-        return (data['data'] as List)
-            .map((item) => OrderModel.fromJson(Map<String, dynamic>.from(item)))
-            .toList();
+      if (data is! Map<String, dynamic>) {
+        throw const ApiException(
+          message: 'Phản hồi danh sách đơn hàng không hợp lệ',
+        );
       }
-      return [];
-    } catch (e) {
+      final raw = data['data'];
+      if (raw == null) {
+        throw const ApiException(
+          message: 'Phản hồi danh sách đơn hàng không hợp lệ',
+        );
+      }
+      if (raw is! List) {
+        throw const ApiException(
+          message: 'Phản hồi danh sách đơn hàng không hợp lệ',
+        );
+      }
+      final out = <OrderModel>[];
+      for (final item in raw) {
+        if (item is! Map) {
+          debugPrint('getStoreOrders: bỏ qua phần tử không phải object');
+          continue;
+        }
+        try {
+          out.add(
+            OrderModel.fromJson(Map<String, dynamic>.from(item)),
+          );
+        } catch (e, st) {
+          debugPrint('getStoreOrders: lỗi parse một đơn — $e\n$st');
+        }
+      }
+      if (raw.isNotEmpty && out.isEmpty) {
+        throw const ApiException(
+          message: 'Không đọc được dữ liệu đơn hàng',
+        );
+      }
+      return out;
+    } on DioException catch (e) {
       debugPrint('getStoreOrders error: $e');
-      // Fallback for development if needed, or rethrow
-      return _mockOrders; 
+      if (e.error is ApiException) throw e.error as ApiException;
+      rethrow;
     }
   }
 
@@ -48,20 +67,6 @@ class OrderService {
 
   // Cache để tránh quét lại nhiều lần trong cùng một phiên làm việc
   static List<OrderModel>? _cachedDiscoveredOrders;
-
-  /// Lấy thông tin một đơn hàng (không gây lỗi UI nếu không tìm thấy)
-  Future<OrderModel?> _fetchSingleOrderSilently(int id) async {
-    try {
-      final response = await _client.get<dynamic>('/orders/$id');
-      final data = response.data;
-      if (data != null && data['data'] != null) {
-        return OrderModel.fromJson(Map<String, dynamic>.from(data['data']));
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
-  }
 
   /// Cơ chế Khám phá Đơn hàng dựa trên danh sách User (Theo gợi ý: Check Users -> Load Orders)
   /// Không quét mù quáng dải ID rộng, tập trung vào các ID có khả năng tồn tại cao.
@@ -92,13 +97,46 @@ class OrderService {
 
     debugPrint('🔍 Đang "khám phá" dữ liệu đơn hàng hệ thống (Utilizing Detail API)...');
     
-    final List<OrderModel> foundOrders = [];
-    final List<Future<OrderModel?>> scanTasks = [];
-    
-    // Quét thử các ID tiềm năng (ví dụ 30 ID gần nhất)
-    // /orders/{id} mở cho tất cả người dùng authenticated, bao gồm ADMIN.
-    for (int i = 1; i <= 30; i++) {
-      scanTasks.add(_fetchSingleOrderSilently(i));
+    try {
+      // 1. Lấy danh sách toàn bộ User thực tế
+      final usersRes = await _client.get<dynamic>('/users');
+      final List rawList = (usersRes.data != null && usersRes.data['data'] != null) 
+          ? usersRes.data['data'] 
+          : [];
+      
+      final List<String> userIds = rawList
+          .map((u) => u['id']?.toString() ?? '')
+          .where((id) => id.isNotEmpty)
+          .toList();
+      
+      // 2. Gọi API lấy đơn hàng cho từng User (Dùng API mới tạo ở Backend)
+      final Set<OrderModel> allFoundOrders = {};
+      final List<Future<List<OrderModel>>> futures = [];
+      
+      for (var uid in userIds) {
+        futures.add(getOrdersByUserIdForAdmin(uid));
+      }
+
+      final results = await Future.wait(futures);
+      for (var list in results) {
+        allFoundOrders.addAll(list);
+        if (onProgress != null) onProgress(allFoundOrders.length);
+      }
+
+      final List<OrderModel> finalOrders = allFoundOrders.toList();
+      
+      // Sắp xếp theo thời gian mới nhất
+      finalOrders.sort((a, b) {
+        final dateA = DateTime.tryParse(a.createdAt ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final dateB = DateTime.tryParse(b.createdAt ?? '') ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return dateB.compareTo(dateA);
+      });
+
+      _cachedDiscoveredOrders = finalOrders;
+      return finalOrders.isNotEmpty ? finalOrders : _mockOrders;
+    } catch (e) {
+      debugPrint('❌ Lỗi trong quá trình khám phá Đơn hàng theo User: $e');
+      return _cachedDiscoveredOrders ?? _mockOrders;
     }
 
     final results = await Future.wait(scanTasks);
@@ -272,29 +310,21 @@ class OrderService {
     return true;
   }
 
-  /// Update order status by id (requires auth).
-  Future<OrderModel> updateOrderStatus(dynamic orderId, String status) async {
+  /// PATCH /orders/{id}/status — body: newStatus, optional cancelReason / podImageUrl.
+  Future<OrderModel> updateOrderStatus(
+    dynamic orderId, {
+    required String newStatus,
+    String? cancelReason,
+    String? podImageUrl,
+  }) async {
     try {
-      // For Admin simulation, also update the local mock list if it exists there
-      final mockIdx = _mockOrders.indexWhere((o) => o.id == orderId);
-      if (mockIdx != -1) {
-        final current = _mockOrders[mockIdx];
-        _mockOrders[mockIdx] = OrderModel(
-          id: current.id,
-          status: status,
-          totalAmount: current.totalAmount,
-          customerName: current.customerName,
-          customerPhone: current.customerPhone,
-          storeName: current.storeName,
-          shipperName: current.shipperName,
-          createdAt: current.createdAt,
-          items: current.items,
-        );
-      }
-
       final response = await _client.patch<Map<String, dynamic>>(
         ApiRoutes.updateOrderStatus(orderId),
-        data: UpdateOrderStatusRequest(status: status).toJson(),
+        data: UpdateOrderStatusRequest(
+          newStatus: newStatus,
+          cancelReason: cancelReason,
+          podImageUrl: podImageUrl,
+        ).toJson(),
       );
       final data = response.data;
       if (data == null) {
@@ -307,11 +337,10 @@ class OrderService {
             : Map<String, dynamic>.from(order as Map),
       );
     } on DioException catch (e) {
-      // If we are in simulated mode (e.g. 404/500 from backend), we just return the mock one if available
-      final mockIdx = _mockOrders.indexWhere((o) => o.id == orderId);
-      if (mockIdx != -1) return _mockOrders[mockIdx];
-      
-      throw e.error is ApiException ? e.error as ApiException : ApiException(message: e.message ?? 'Lỗi cập nhật trạng thái đơn hàng');
+      if (e.error is ApiException) throw e.error as ApiException;
+      throw ApiException(
+        message: e.message ?? 'Lỗi cập nhật trạng thái đơn hàng',
+      );
     }
   }
 }

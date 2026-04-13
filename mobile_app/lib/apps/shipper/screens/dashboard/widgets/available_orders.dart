@@ -9,7 +9,6 @@ import 'package:grocery_shopping_app/apps/shipper/services/routing_service.dart'
 import 'package:grocery_shopping_app/apps/shipper/bloc/shipper_dashboard_bloc.dart';
 import 'package:grocery_shopping_app/apps/shipper/screens/dashboard/widgets/optimized_order_card.dart';
 import '../../order_detail/order_detail_screen.dart';
-import '../../delivery/delivery_flow_screen.dart';
 import '../../delivery/order_map_screen.dart';
 
 class AvailableOrdersList extends StatefulWidget {
@@ -213,7 +212,7 @@ class _AvailableOrdersListState extends State<AvailableOrdersList> {
               } else if (order.status == OrderStatus.PICKING_UP ||
                   order.status == OrderStatus.DELIVERING) {
                 // Mở map để tiếp tục giao hàng
-                Navigator.push(
+                final result = await Navigator.push<bool>(
                   context,
                   MaterialPageRoute(
                     builder: (_) => OrderMapScreen(
@@ -222,6 +221,10 @@ class _AvailableOrdersListState extends State<AvailableOrdersList> {
                     ),
                   ),
                 );
+
+                if (result == true && context.mounted) {
+                  context.read<ShipperDashboardBloc>().add(RefreshDashboardData());
+                }
               }
             },
             onDetails: () {
@@ -232,8 +235,8 @@ class _AvailableOrdersListState extends State<AvailableOrdersList> {
                 ),
               );
             },
-            onMap: () {
-              Navigator.push(
+            onMap: () async {
+              final result = await Navigator.push<bool>(
                 context,
                 MaterialPageRoute(
                   builder: (_) => OrderMapScreen(
@@ -242,6 +245,10 @@ class _AvailableOrdersListState extends State<AvailableOrdersList> {
                   ),
                 ),
               );
+
+              if (result == true && context.mounted) {
+                context.read<ShipperDashboardBloc>().add(RefreshDashboardData());
+              }
             },
           );
         },

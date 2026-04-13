@@ -6,6 +6,7 @@ import 'package:grocery_shopping_app/features/orders/data/order_model.dart';
 import 'package:intl/intl.dart';
 
 import '../../block/store_orders_bloc.dart';
+import '../../store_order_status.dart';
 import '../../widgets/scale_on_tap.dart';
 
 /// Design system — Grab Merchant (#00B14F)
@@ -49,30 +50,42 @@ class _OrderData {
   });
 }
 
-/// Luồng đơn: Đơn mới → Đang chuẩn bị → Đang giao → Hoàn thành
-enum OrderStatusType { newOrder, processing, shipping, done }
+/// Luồng đơn (UI): Đơn mới → Đang chuẩn bị → Đang giao → Hoàn thành (+ Đã hủy).
+///
+/// Ánh xạ backend → tab/chip (GET trả về enum dạng chuỗi):
+/// - PENDING → newOrder (Đơn mới)
+/// - CONFIRMED, PICKING_UP, PROCESSING → processing (Đang chuẩn bị)
+/// - DELIVERING → shipping (Đang giao)
+/// - DELIVERED → done (Hoàn thành)
+/// - CANCELLED → cancelled (Đã hủy; chỉ hiện rõ trong "Tất cả")
+enum OrderStatusType { newOrder, processing, shipping, done, cancelled }
 
 OrderStatusType _orderStatusFromApi(String? s) {
   if (s == null || s.isEmpty) return OrderStatusType.newOrder;
   final u = s.toUpperCase();
+  if (u == 'CANCELLED') return OrderStatusType.cancelled;
   if (u == 'PENDING' || u == 'NEW') return OrderStatusType.newOrder;
-  if (u == 'PROCESSING') return OrderStatusType.processing;
-  if (u == 'SHIPPING') return OrderStatusType.shipping;
-  if (u == 'DELIVERED' || u == 'DONE' || u == 'COMPLETED')
+  if (storeOrderStatusIsPreparing(s)) return OrderStatusType.processing;
+  if (u == 'DELIVERING' || u == 'SHIPPING') return OrderStatusType.shipping;
+  if (u == 'DELIVERED' || u == 'DONE' || u == 'COMPLETED') {
     return OrderStatusType.done;
+  }
   return OrderStatusType.newOrder;
 }
 
-String _orderStatusToApi(OrderStatusType t) {
+/// Mục tiêu PATCH [newStatus] khi người dùng chọn trong sheet (không dùng cho hủy/accept).
+String _backendNewStatusForSheetTarget(OrderStatusType t) {
   switch (t) {
     case OrderStatusType.newOrder:
       return 'PENDING';
     case OrderStatusType.processing:
-      return 'PROCESSING';
+      return 'CONFIRMED';
     case OrderStatusType.shipping:
-      return 'SHIPPING';
+      return 'DELIVERING';
     case OrderStatusType.done:
       return 'DELIVERED';
+    case OrderStatusType.cancelled:
+      return 'CANCELLED';
   }
 }
 
@@ -88,6 +101,7 @@ _OrderData _orderDataFromModel(OrderModel o) {
     OrderStatusType.processing: 'Đang chuẩn bị',
     OrderStatusType.shipping: 'Đang giao',
     OrderStatusType.done: 'Hoàn thành',
+    OrderStatusType.cancelled: 'Đã hủy',
   };
   final items = (o.items ?? []).map((i) => _OrderItem(
     name: i.productName ?? '',
@@ -95,9 +109,13 @@ _OrderData _orderDataFromModel(OrderModel o) {
     price: _formatAmount(i.unitPrice),
   )).toList();
   final history = <String>['Đặt đơn'];
-  if (statusType.index >= 1) history.add('Đang chuẩn bị');
-  if (statusType.index >= 2) history.add('Đang giao');
-  if (statusType.index >= 3) history.add('Hoàn thành');
+  if (statusType == OrderStatusType.cancelled) {
+    history.add('Đã hủy');
+  } else {
+    if (statusType.index >= 1) history.add('Đang chuẩn bị');
+    if (statusType.index >= 2) history.add('Đang giao');
+    if (statusType.index >= 3) history.add('Hoàn thành');
+  }
   final String idStr = o.id?.toString() ?? '';
   final displayId = idStr.isNotEmpty ? (idStr.startsWith('#') ? idStr : '#$idStr') : '';
   return _OrderData(
@@ -138,12 +156,13 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
     super.initState();
     context.read<StoreOrdersBloc>().add(LoadStoreOrders());
     _orderSearchController.addListener(() {
-      if (mounted)
+      if (mounted) {
         setState(
           () => _orderSearchQuery = _orderSearchController.text
               .trim()
               .toLowerCase(),
         );
+      }
     });
   }
 
@@ -153,32 +172,76 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
     super.dispose();
   }
 
-  void _showToast(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('✔ $message'),
-        backgroundColor: _kPrimary,
-        behavior: SnackBarBehavior.floating,
-      ),
+  String _rawOrderId(String displayId) => displayId.replaceFirst('#', '');
+
+  void _dispatchOrderStatusUpdate(
+    String displayOrderId,
+    String newStatus, {
+    String? cancelReason,
+    String? successMessageVi,
+  }) {
+    context.read<StoreOrdersBloc>().add(
+          UpdateStoreOrderStatus(
+            int.parse(_rawOrderId(displayOrderId)),
+            newStatus,
+            cancelReason: cancelReason,
+            successMessageVi: successMessageVi,
+          ),
+        );
+  }
+
+  void _updateOrderStatusFromSheet(String orderId, OrderStatusType target) {
+    _dispatchOrderStatusUpdate(
+      orderId,
+      _backendNewStatusForSheetTarget(target),
+      successMessageVi: 'Đã cập nhật trạng thái',
     );
   }
 
-  String _rawOrderId(String displayId) => displayId.replaceFirst('#', '');
-
-  void _updateOrderStatus(String orderId, OrderStatusType newType) {
-    context.read<StoreOrdersBloc>().add(
-          UpdateStoreOrderStatus(int.parse(_rawOrderId(orderId)), _orderStatusToApi(newType)),
-        );
-  }
-
-  void _acceptOrder(String orderId) {
-    _updateOrderStatus(orderId, OrderStatusType.processing);
-  }
-
-  void _rejectOrder(String orderId) {
-    context.read<StoreOrdersBloc>().add(
-          UpdateStoreOrderStatus(int.parse(_rawOrderId(orderId)), 'CANCELLED'),
-        );
+  Future<String?> _promptCancelReason() async {
+    final controller = TextEditingController();
+    try {
+      return showDialog<String>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Từ chối đơn hàng'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Vui lòng nhập lý do hủy đơn (bắt buộc theo quy định hệ thống).',
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  hintText: 'Lý do hủy đơn…',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Hủy'),
+            ),
+            TextButton(
+              onPressed: () {
+                final t = controller.text.trim();
+                if (t.isEmpty) return;
+                Navigator.pop(ctx, t);
+              },
+              child: const Text('Xác nhận'),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      controller.dispose();
+    }
   }
 
   Future<void> _runCardAccept(_OrderData o) async {
@@ -187,52 +250,28 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
       _cardLoadingOrderId = o.id;
       _cardLoadingAction = 'accept';
     });
-    try {
-      _acceptOrder(o.id);
-      if (mounted) _showToast('Đơn đã được chấp nhận');
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Không thể chấp nhận đơn. Vui lòng thử lại.'),
-            backgroundColor: Color(0xFFD32F2F),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
-    if (mounted)
-      setState(() {
-        _cardLoadingOrderId = null;
-        _cardLoadingAction = null;
-      });
+    _dispatchOrderStatusUpdate(
+      o.id,
+      'CONFIRMED',
+      successMessageVi: 'Đơn đã được chấp nhận',
+    );
   }
 
   Future<void> _runCardReject(_OrderData o) async {
     if (_cardLoadingOrderId != null) return;
+    final reason = await _promptCancelReason();
+    if (!mounted) return;
+    if (reason == null || reason.trim().isEmpty) return;
     setState(() {
       _cardLoadingOrderId = o.id;
       _cardLoadingAction = 'reject';
     });
-    try {
-      _rejectOrder(o.id);
-      if (mounted) _showToast('Đơn đã bị từ chối');
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Không thể từ chối đơn. Vui lòng thử lại.'),
-            backgroundColor: Color(0xFFD32F2F),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
-    if (mounted)
-      setState(() {
-        _cardLoadingOrderId = null;
-        _cardLoadingAction = null;
-      });
+    _dispatchOrderStatusUpdate(
+      o.id,
+      'CANCELLED',
+      cancelReason: reason.trim(),
+      successMessageVi: 'Đơn đã bị từ chối',
+    );
   }
 
   Future<void> _runCardMarkReady(_OrderData o) async {
@@ -241,25 +280,11 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
       _cardLoadingOrderId = o.id;
       _cardLoadingAction = 'markReady';
     });
-    try {
-      _updateOrderStatus(o.id, OrderStatusType.shipping);
-      if (mounted) _showToast('Đã cập nhật trạng thái');
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Không thể cập nhật trạng thái. Vui lòng thử lại.'),
-            backgroundColor: Color(0xFFD32F2F),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
-    if (mounted)
-      setState(() {
-        _cardLoadingOrderId = null;
-        _cardLoadingAction = null;
-      });
+    _dispatchOrderStatusUpdate(
+      o.id,
+      'DELIVERING',
+      successMessageVi: 'Đã cập nhật trạng thái',
+    );
   }
 
   void _showOrderDetailModal(BuildContext context, _OrderData order) {
@@ -274,34 +299,6 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
           Navigator.pop(ctx);
           _showUpdateStatusSheet(context, order);
         },
-        onAccept: order.statusType == OrderStatusType.newOrder
-            ? () {
-                _acceptOrder(order.id);
-                _showToast('Đơn đã được chấp nhận');
-                Navigator.pop(ctx);
-              }
-            : null,
-        onReject: order.statusType == OrderStatusType.newOrder
-            ? () {
-                _rejectOrder(order.id);
-                _showToast('Đơn đã bị từ chối');
-                Navigator.pop(ctx);
-              }
-            : null,
-        onMarkReady: order.statusType == OrderStatusType.processing
-            ? () {
-                _updateOrderStatus(order.id, OrderStatusType.shipping);
-                _showToast('Đã cập nhật trạng thái');
-                Navigator.pop(ctx);
-              }
-            : null,
-        onMarkDelivered: order.statusType == OrderStatusType.shipping
-            ? () {
-                _updateOrderStatus(order.id, OrderStatusType.done);
-                _showToast('Đã cập nhật trạng thái');
-                Navigator.pop(ctx);
-              }
-            : null,
       ),
     );
   }
@@ -354,7 +351,7 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
                   type: OrderStatusType.processing,
                   current: order.statusType,
                   onTap: () {
-                    _updateOrderStatus(order.id, OrderStatusType.processing);
+                    _updateOrderStatusFromSheet(order.id, OrderStatusType.processing);
                     Navigator.pop(ctx);
                   },
                 ),
@@ -364,7 +361,7 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
                   type: OrderStatusType.shipping,
                   current: order.statusType,
                   onTap: () {
-                    _updateOrderStatus(order.id, OrderStatusType.shipping);
+                    _updateOrderStatusFromSheet(order.id, OrderStatusType.shipping);
                     Navigator.pop(ctx);
                   },
                 ),
@@ -374,7 +371,7 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
                   type: OrderStatusType.done,
                   current: order.statusType,
                   onTap: () {
-                    _updateOrderStatus(order.id, OrderStatusType.done);
+                    _updateOrderStatusFromSheet(order.id, OrderStatusType.done);
                     Navigator.pop(ctx);
                   },
                 ),
@@ -423,8 +420,9 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
           month < 1 ||
           month > 12 ||
           day < 1 ||
-          day > 31)
+          day > 31) {
         return null;
+      }
       final now = DateTime.now();
       return DateTime(now.year, month, day);
     } catch (_) {
@@ -472,12 +470,14 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
     OrderStatusType.processing,
     OrderStatusType.shipping,
     OrderStatusType.done,
+    OrderStatusType.cancelled,
   ];
   static const _statusLabels = {
     OrderStatusType.newOrder: 'Đơn mới',
     OrderStatusType.processing: 'Đang chuẩn bị',
     OrderStatusType.shipping: 'Đang giao',
     OrderStatusType.done: 'Hoàn thành',
+    OrderStatusType.cancelled: 'Đã hủy',
   };
 
   int _orderListItemCount(List<_OrderData> orders) {
@@ -495,6 +495,9 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
           .toList(),
       OrderStatusType.done: filtered
           .where((o) => o.statusType == OrderStatusType.done)
+          .toList(),
+      OrderStatusType.cancelled: filtered
+          .where((o) => o.statusType == OrderStatusType.cancelled)
           .toList(),
     };
     int count = 0;
@@ -538,6 +541,9 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
       OrderStatusType.done: filtered
           .where((o) => o.statusType == OrderStatusType.done)
           .toList(),
+      OrderStatusType.cancelled: filtered
+          .where((o) => o.statusType == OrderStatusType.cancelled)
+          .toList(),
     };
     int idx = 0;
     for (final status in _statusOrder) {
@@ -546,8 +552,9 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
       if (_filter == _FilterTab.all && idx > 0) {
         if (index == idx) return const SizedBox(height: 24);
         idx++;
-        if (index == idx)
+        if (index == idx) {
           return Divider(height: 1, color: Colors.grey.shade300);
+        }
         idx++;
         if (index == idx) return const SizedBox(height: 24);
         idx++;
@@ -596,8 +603,9 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
           );
         }
         idx++;
-        if (i < group.length - 1 && index == idx)
+        if (i < group.length - 1 && index == idx) {
           return const SizedBox(height: kCardPadding);
+        }
         if (i < group.length - 1) idx++;
       }
     }
@@ -609,9 +617,17 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
     final theme = Theme.of(context);
     final isWide = MediaQuery.sizeOf(context).width > 600;
     return BlocListener<StoreOrdersBloc, StoreOrdersState>(
-      listenWhen: (prev, curr) => curr is StoreOrdersError,
+      listenWhen: (prev, curr) =>
+          (curr is StoreOrdersError && prev is StoreOrdersLoaded) ||
+          (curr is StoreOrdersLoaded && curr.successMessageVi != null),
       listener: (context, state) {
         if (state is StoreOrdersError) {
+          if (_cardLoadingOrderId != null) {
+            setState(() {
+              _cardLoadingOrderId = null;
+              _cardLoadingAction = null;
+            });
+          }
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
@@ -620,10 +636,29 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
             ),
           );
         }
+        if (state is StoreOrdersLoaded && state.successMessageVi != null) {
+          if (_cardLoadingOrderId != null) {
+            setState(() {
+              _cardLoadingOrderId = null;
+              _cardLoadingAction = null;
+            });
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('✔ ${state.successMessageVi}'),
+              backgroundColor: _kPrimary,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          context.read<StoreOrdersBloc>().add(ClearStoreOrdersSuccessMessage());
+        }
       },
       child: BlocBuilder<StoreOrdersBloc, StoreOrdersState>(
         builder: (context, state) {
-          final isLoading = state is StoreOrdersLoading;
+          final loadError =
+              state is StoreOrdersError ? state.message : null;
+          final isLoading = state is StoreOrdersLoading ||
+              state is StoreOrdersInitial;
           final orders = state is StoreOrdersLoaded
               ? state.orders.map(_orderDataFromModel).toList()
               : <_OrderData>[];
@@ -792,33 +827,68 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
                     ),
                     const SizedBox(height: 20),
                     Expanded(
-                      child: isLoading
-                          ? ListView.builder(
+                      child: loadError != null
+                          ? Padding(
                               padding: EdgeInsets.fromLTRB(
                                 kPaddingLarge,
                                 0,
                                 kPaddingLarge,
                                 isWide ? 32 : 28,
                               ),
-                              itemCount: 8,
-                              itemBuilder: (context, index) => Padding(
-                                padding: EdgeInsets.only(
-                                  bottom: index < 7 ? kCardPadding : 0,
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      loadError,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey.shade800,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    TextButton(
+                                      onPressed: () => context
+                                          .read<StoreOrdersBloc>()
+                                          .add(LoadStoreOrders()),
+                                      child: const Text('Thử lại'),
+                                    ),
+                                  ],
                                 ),
-                                child: const _OrderCardSkeleton(),
                               ),
                             )
-                          : ListView.builder(
-                              padding: EdgeInsets.fromLTRB(
-                                kPaddingLarge,
-                                0,
-                                kPaddingLarge,
-                                isWide ? 32 : 28,
-                              ),
-                              itemCount: _orderListItemCount(orders),
-                              itemBuilder: (context, index) =>
-                                  _orderListItemAt(context, index, orders),
-                            ),
+                          : isLoading
+                              ? ListView.builder(
+                                  padding: EdgeInsets.fromLTRB(
+                                    kPaddingLarge,
+                                    0,
+                                    kPaddingLarge,
+                                    isWide ? 32 : 28,
+                                  ),
+                                  itemCount: 8,
+                                  itemBuilder: (context, index) => Padding(
+                                    padding: EdgeInsets.only(
+                                      bottom: index < 7 ? kCardPadding : 0,
+                                    ),
+                                    child: const _OrderCardSkeleton(),
+                                  ),
+                                )
+                              : ListView.builder(
+                                  padding: EdgeInsets.fromLTRB(
+                                    kPaddingLarge,
+                                    0,
+                                    kPaddingLarge,
+                                    isWide ? 32 : 28,
+                                  ),
+                                  itemCount: _orderListItemCount(orders),
+                                  itemBuilder: (context, index) =>
+                                      _orderListItemAt(
+                                        context,
+                                        index,
+                                        orders,
+                                      ),
+                                ),
                     ),
                   ],
                 ),
@@ -905,6 +975,8 @@ class _StatusOption extends StatelessWidget {
         return Icons.local_shipping_rounded;
       case OrderStatusType.done:
         return Icons.check_circle_rounded;
+      case OrderStatusType.cancelled:
+        return Icons.cancel_rounded;
     }
   }
 
@@ -918,6 +990,8 @@ class _StatusOption extends StatelessWidget {
         return const Color(0xFF1976D2);
       case OrderStatusType.done:
         return _kPrimary;
+      case OrderStatusType.cancelled:
+        return const Color(0xFFD32F2F);
     }
   }
 
@@ -1077,6 +1151,8 @@ class _OrderCardState extends State<_OrderCard> {
         return const Color(0xFF1976D2);
       case OrderStatusType.done:
         return _kPrimary;
+      case OrderStatusType.cancelled:
+        return const Color(0xFFD32F2F);
     }
   }
 
@@ -1090,6 +1166,8 @@ class _OrderCardState extends State<_OrderCard> {
         return Icons.local_shipping_rounded;
       case OrderStatusType.done:
         return Icons.check_circle_rounded;
+      case OrderStatusType.cancelled:
+        return Icons.cancel_rounded;
     }
   }
 
@@ -1358,19 +1436,11 @@ class _OrderDetailSheet extends StatefulWidget {
   final _OrderData order;
   final VoidCallback onClose;
   final VoidCallback? onUpdateStatus;
-  final VoidCallback? onAccept;
-  final VoidCallback? onReject;
-  final VoidCallback? onMarkReady;
-  final VoidCallback? onMarkDelivered;
 
   const _OrderDetailSheet({
     required this.order,
     required this.onClose,
     this.onUpdateStatus,
-    this.onAccept,
-    this.onReject,
-    this.onMarkReady,
-    this.onMarkDelivered,
   });
 
   @override
@@ -1382,75 +1452,127 @@ class _OrderDetailSheetState extends State<_OrderDetailSheet> {
   bool _loadingReject = false;
   bool _loadingMarkReady = false;
   bool _loadingMarkDelivered = false;
+  bool _awaitingBloc = false;
 
-  void _showErrorSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: const Color(0xFFD32F2F),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+  int get _orderIdInt =>
+      int.parse(widget.order.id.replaceFirst('#', ''));
+
+  void _resetActionLoading() {
+    _loadingAccept = false;
+    _loadingReject = false;
+    _loadingMarkReady = false;
+    _loadingMarkDelivered = false;
+    _awaitingBloc = false;
   }
 
-  Future<void> _runAccept() async {
-    if (_loadingAccept) return;
-    setState(() => _loadingAccept = true);
+  Future<String?> _promptCancelReasonInSheet() async {
+    final controller = TextEditingController();
     try {
-      await Future.delayed(const Duration(milliseconds: 600));
-      if (!mounted) return;
-      widget.onAccept!();
-    } catch (_) {
-      if (mounted) {
-        setState(() => _loadingAccept = false);
-        _showErrorSnackBar('Không thể chấp nhận đơn. Vui lòng thử lại.');
-      }
+      return showDialog<String>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Từ chối đơn hàng'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Vui lòng nhập lý do hủy đơn (bắt buộc theo quy định hệ thống).',
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  hintText: 'Lý do hủy đơn…',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Hủy'),
+            ),
+            TextButton(
+              onPressed: () {
+                final t = controller.text.trim();
+                if (t.isEmpty) return;
+                Navigator.pop(ctx, t);
+              },
+              child: const Text('Xác nhận'),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      controller.dispose();
     }
+  }
+
+  void _runAccept() {
+    if (_loadingAccept) return;
+    setState(() {
+      _loadingAccept = true;
+      _awaitingBloc = true;
+    });
+    context.read<StoreOrdersBloc>().add(
+          UpdateStoreOrderStatus(
+            _orderIdInt,
+            'CONFIRMED',
+            successMessageVi: 'Đơn đã được chấp nhận',
+          ),
+        );
   }
 
   Future<void> _runReject() async {
     if (_loadingReject) return;
-    setState(() => _loadingReject = true);
-    try {
-      await Future.delayed(const Duration(milliseconds: 600));
-      if (!mounted) return;
-      widget.onReject!();
-    } catch (_) {
-      if (mounted) {
-        setState(() => _loadingReject = false);
-        _showErrorSnackBar('Không thể từ chối đơn. Vui lòng thử lại.');
-      }
-    }
+    final reason = await _promptCancelReasonInSheet();
+    if (!mounted) return;
+    if (reason == null || reason.trim().isEmpty) return;
+    setState(() {
+      _loadingReject = true;
+      _awaitingBloc = true;
+    });
+    context.read<StoreOrdersBloc>().add(
+          UpdateStoreOrderStatus(
+            _orderIdInt,
+            'CANCELLED',
+            cancelReason: reason.trim(),
+            successMessageVi: 'Đơn đã bị từ chối',
+          ),
+        );
   }
 
-  Future<void> _runMarkReady() async {
+  void _runMarkReady() {
     if (_loadingMarkReady) return;
-    setState(() => _loadingMarkReady = true);
-    try {
-      await Future.delayed(const Duration(milliseconds: 600));
-      if (!mounted) return;
-      widget.onMarkReady!();
-    } catch (_) {
-      if (mounted) {
-        setState(() => _loadingMarkReady = false);
-        _showErrorSnackBar('Không thể cập nhật trạng thái. Vui lòng thử lại.');
-      }
-    }
+    setState(() {
+      _loadingMarkReady = true;
+      _awaitingBloc = true;
+    });
+    context.read<StoreOrdersBloc>().add(
+          UpdateStoreOrderStatus(
+            _orderIdInt,
+            'DELIVERING',
+            successMessageVi: 'Đã cập nhật trạng thái',
+          ),
+        );
   }
 
-  Future<void> _runMarkDelivered() async {
+  void _runMarkDelivered() {
     if (_loadingMarkDelivered) return;
-    setState(() => _loadingMarkDelivered = true);
-    try {
-      await Future.delayed(const Duration(milliseconds: 600));
-      if (!mounted) return;
-      widget.onMarkDelivered!();
-    } catch (_) {
-      if (mounted) {
-        setState(() => _loadingMarkDelivered = false);
-        _showErrorSnackBar('Không thể cập nhật trạng thái. Vui lòng thử lại.');
-      }
-    }
+    setState(() {
+      _loadingMarkDelivered = true;
+      _awaitingBloc = true;
+    });
+    context.read<StoreOrdersBloc>().add(
+          UpdateStoreOrderStatus(
+            _orderIdInt,
+            'DELIVERED',
+            successMessageVi: 'Đã cập nhật trạng thái',
+          ),
+        );
   }
 
   Color _statusColor(OrderStatusType t) {
@@ -1463,6 +1585,8 @@ class _OrderDetailSheetState extends State<_OrderDetailSheet> {
         return const Color(0xFF1976D2);
       case OrderStatusType.done:
         return _kPrimary;
+      case OrderStatusType.cancelled:
+        return const Color(0xFFD32F2F);
     }
   }
 
@@ -1470,7 +1594,23 @@ class _OrderDetailSheetState extends State<_OrderDetailSheet> {
   Widget build(BuildContext context) {
     final order = widget.order;
     final statusColor = _statusColor(order.statusType);
-    return Container(
+    return BlocListener<StoreOrdersBloc, StoreOrdersState>(
+      listenWhen: (prev, curr) =>
+          curr is StoreOrdersError ||
+          (curr is StoreOrdersLoaded && curr.successMessageVi != null),
+      listener: (ctx, state) {
+        if (!_awaitingBloc) return;
+        if (state is StoreOrdersError) {
+          if (mounted) setState(_resetActionLoading);
+        } else if (state is StoreOrdersLoaded &&
+            state.successMessageVi != null) {
+          if (mounted) {
+            setState(_resetActionLoading);
+            Navigator.pop(ctx);
+          }
+        }
+      },
+      child: Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
@@ -1704,17 +1844,17 @@ class _OrderDetailSheetState extends State<_OrderDetailSheet> {
                     loadingMarkReady: _loadingMarkReady,
                     loadingMarkDelivered: _loadingMarkDelivered,
                     onClose: widget.onClose,
-                    onAccept: widget.onAccept != null
-                        ? () => _runAccept()
+                    onAccept: order.statusType == OrderStatusType.newOrder
+                        ? _runAccept
                         : null,
-                    onReject: widget.onReject != null
+                    onReject: order.statusType == OrderStatusType.newOrder
                         ? () => _runReject()
                         : null,
-                    onMarkReady: widget.onMarkReady != null
-                        ? () => _runMarkReady()
+                    onMarkReady: order.statusType == OrderStatusType.processing
+                        ? _runMarkReady
                         : null,
-                    onMarkDelivered: widget.onMarkDelivered != null
-                        ? () => _runMarkDelivered()
+                    onMarkDelivered: order.statusType == OrderStatusType.shipping
+                        ? _runMarkDelivered
                         : null,
                   ),
                 ],
@@ -1723,6 +1863,7 @@ class _OrderDetailSheetState extends State<_OrderDetailSheet> {
           ),
         ],
       ),
+    ),
     );
   }
 }

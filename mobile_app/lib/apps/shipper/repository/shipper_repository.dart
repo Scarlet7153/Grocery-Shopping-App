@@ -1,7 +1,10 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:grocery_shopping_app/core/constants/app_constants.dart';
 import 'package:grocery_shopping_app/core/network/network_config.dart';
+import 'package:grocery_shopping_app/core/network/api_endpoints.dart';
 import 'package:grocery_shopping_app/apps/shipper/models/shipper_order.dart';
 import 'package:grocery_shopping_app/apps/shipper/models/order_filter.dart';
 
@@ -39,9 +42,6 @@ class ShipperRepository {
       if (response.statusCode == 200) {
         final data = response.data as Map<String, dynamic>;
 
-        // Debug log
-        print('Login response data: $data');
-
         if (data['success'] == true && data['data'] != null) {
           final token = data['data']['token'] as String?;
           if (token != null) {
@@ -63,11 +63,11 @@ class ShipperRepository {
       }
       throw Exception('Lỗi máy chủ, vui lòng thử lại sau');
     } on DioException catch (e) {
-      print('🔴 DioException StatusCode: ${e.response?.statusCode}');
-      print('🔴 DioException Response Data: ${e.response?.data}');
-      print('🔴 DioException Type: ${e.type}');
-      print('🔴 DioException Message: ${e.message}');
-      print('🔴 DioException Error: ${e.error}');
+      debugPrint('DioException statusCode: ${e.response?.statusCode}');
+      debugPrint('DioException responseData: ${e.response?.data}');
+      debugPrint('DioException type: ${e.type}');
+      debugPrint('DioException message: ${e.message}');
+      debugPrint('DioException error: ${e.error}');
 
       if (e.response?.data != null &&
           e.response?.data is Map<String, dynamic>) {
@@ -75,7 +75,9 @@ class ShipperRepository {
         final backendMessage = data['message']?.toString();
         final statusCode = e.response!.statusCode;
 
-        print('🔴 Backend message: $backendMessage, statusCode: $statusCode');
+        debugPrint(
+          'Backend message: $backendMessage, statusCode: $statusCode',
+        );
 
         if (statusCode == 401 ||
             (backendMessage != null &&
@@ -131,7 +133,7 @@ class ShipperRepository {
       if (e is Exception) {
         rethrow;
       }
-      print('💥 Unexpected error: ${e.toString()}');
+      debugPrint('Unexpected error: ${e.toString()}');
       throw Exception('Lỗi không xác định, vui lòng thử lại');
     }
   }
@@ -170,13 +172,11 @@ class ShipperRepository {
     final availableOrders = await getAvailableOrders();
     final deliveries = await getMyDeliveries();
 
-    final deliveredCount = deliveries
-        .where((o) => o.status == OrderStatus.DELIVERED)
-        .length;
+    final deliveredCount =
+        deliveries.where((o) => o.status == OrderStatus.DELIVERED).length;
     final totalOrders = deliveries.length;
-    final acceptanceRate = totalOrders == 0
-        ? 0.0
-        : (deliveredCount / totalOrders) * 100;
+    final acceptanceRate =
+        totalOrders == 0 ? 0.0 : (deliveredCount / totalOrders) * 100;
     final earnings = deliveries
         .where((o) => o.status == OrderStatus.DELIVERED)
         .fold<double>(0.0, (prev, e) => prev + e.grandTotal);
@@ -270,9 +270,8 @@ class ShipperRepository {
     final response = await _dio.get(uri);
     if (response.statusCode == 200) {
       final data = response.data;
-      final payload = (data is Map && data['data'] != null)
-          ? data['data']
-          : data;
+      final payload =
+          (data is Map && data['data'] != null) ? data['data'] : data;
       return ShipperOrder.fromJson(payload as Map<String, dynamic>);
     }
     return null;
@@ -286,9 +285,8 @@ class ShipperRepository {
     final response = await _dio.post(uri);
     if (response.statusCode == 200) {
       final data = response.data;
-      final payload = (data is Map && data['data'] != null)
-          ? data['data']
-          : data;
+      final payload =
+          (data is Map && data['data'] != null) ? data['data'] : data;
       return ShipperOrder.fromJson(payload as Map<String, dynamic>);
     }
     return null;
@@ -314,9 +312,8 @@ class ShipperRepository {
     final response = await _dio.patch(uri, data: body);
     if (response.statusCode == 200) {
       final data = response.data;
-      final payload = (data is Map && data['data'] != null)
-          ? data['data']
-          : data;
+      final payload =
+          (data is Map && data['data'] != null) ? data['data'] : data;
       return ShipperOrder.fromJson(payload as Map<String, dynamic>);
     }
     return null;
@@ -352,15 +349,72 @@ class ShipperRepository {
     required String newPassword,
     required String confirmPassword,
   }) async {
-    final response = await _dio.post(
-      '/users/change-password',
-      data: {
-        'oldPassword': oldPassword,
-        'newPassword': newPassword,
-        'confirmPassword': confirmPassword,
-      },
-    );
-    return response.statusCode == 200;
+    if (oldPassword == newPassword) {
+      throw ShipperApiException('Mật khẩu mới không được trùng mật khẩu cũ');
+    }
+
+    try {
+      final response = await _dio.post(
+        '/users/change-password',
+        data: {
+          'oldPassword': oldPassword,
+          'newPassword': newPassword,
+          'confirmPassword': confirmPassword,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final payload = response.data;
+        if (payload is Map<String, dynamic> && payload['success'] == false) {
+          throw ShipperApiException(
+            payload['message']?.toString() ?? 'Đổi mật khẩu thất bại',
+          );
+        }
+        return true;
+      }
+
+      throw ShipperApiException('Đổi mật khẩu thất bại');
+    } on DioException catch (e) {
+      String? message;
+      final responseData = e.response?.data;
+
+      if (responseData is Map<String, dynamic>) {
+        final rawMessage = responseData['message']?.toString().trim();
+        if (rawMessage != null &&
+            rawMessage.isNotEmpty &&
+            rawMessage.toLowerCase() != 'dữ liệu không hợp lệ') {
+          message = rawMessage;
+        }
+
+        final fieldErrors = responseData['data'];
+        if ((message == null || message.isEmpty) && fieldErrors is Map) {
+          for (final key in ['oldPassword', 'newPassword', 'confirmPassword']) {
+            final fieldMessage = fieldErrors[key]?.toString().trim();
+            if (fieldMessage != null && fieldMessage.isNotEmpty) {
+              message = fieldMessage;
+              break;
+            }
+          }
+
+          if ((message == null || message.isEmpty) && fieldErrors.isNotEmpty) {
+            message = fieldErrors.values.first?.toString().trim();
+          }
+        }
+      }
+
+      if (message == null || message.isEmpty) {
+        final statusCode = e.response?.statusCode;
+        if (statusCode == 401 || statusCode == 403) {
+          message = 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại';
+        } else if (statusCode == 400) {
+          message = 'Thông tin đổi mật khẩu không hợp lệ';
+        } else {
+          message = 'Đổi mật khẩu thất bại';
+        }
+      }
+
+      throw ShipperApiException(message);
+    }
   }
 
   Future<bool> updateProfile({
@@ -372,6 +426,188 @@ class ShipperRepository {
       data: {'fullName': fullName, if (address != null) 'address': address},
     );
     return response.statusCode == 200;
+  }
+
+  /// Upload avatar user
+  ///
+  /// Uploads image file (direct Cloudinary ưu tiên, fallback backend)
+  /// Returns imageUrl if successful
+  Future<String?> uploadAvatar(XFile imageFile) async {
+    try {
+      final bytes = await imageFile.readAsBytes();
+      return await uploadAvatarBytes(bytes, imageFile.name);
+    } catch (e) {
+      debugPrint('Error uploading avatar: $e');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>?> _requestAvatarUploadSignature() async {
+    final response = await _dio.post(ApiEndpoints.uploadAvatarSignature);
+    if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+      final payload = response.data as Map<String, dynamic>;
+      if (payload['success'] == true && payload['data'] is Map<String, dynamic>) {
+        return payload['data'] as Map<String, dynamic>;
+      }
+    }
+    return null;
+  }
+
+  Future<bool> _saveAvatarUrlToProfile(String imageUrl) async {
+    final response = await _dio.put(
+      ApiEndpoints.saveAvatarUrl,
+      data: {'imageUrl': imageUrl},
+    );
+
+    if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+      final payload = response.data as Map<String, dynamic>;
+      return payload['success'] == true;
+    }
+
+    return false;
+  }
+
+  Future<String?> _uploadAvatarToCloudinaryDirect(
+    Uint8List bytes,
+    String filename,
+  ) async {
+    final signature = await _requestAvatarUploadSignature();
+    if (signature == null) return null;
+
+    final uploadUrl = signature['uploadUrl']?.toString();
+    final apiKey = signature['apiKey']?.toString();
+    final timestamp = signature['timestamp']?.toString();
+    final folder = signature['folder']?.toString();
+    final publicId = signature['publicId']?.toString();
+    final cloudinarySignature = signature['signature']?.toString();
+
+    if (uploadUrl == null ||
+        apiKey == null ||
+        timestamp == null ||
+        folder == null ||
+        publicId == null ||
+        cloudinarySignature == null) {
+      return null;
+    }
+
+    final cloudinaryDio = Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 20),
+        sendTimeout: const Duration(seconds: 40),
+        receiveTimeout: const Duration(seconds: 40),
+      ),
+    );
+
+    final formData = FormData.fromMap({
+      'file': MultipartFile.fromBytes(bytes, filename: filename),
+      'api_key': apiKey,
+      'timestamp': timestamp,
+      'folder': folder,
+      'public_id': publicId,
+      'signature': cloudinarySignature,
+    });
+
+    final response = await cloudinaryDio.post(uploadUrl, data: formData);
+    if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+      final payload = response.data as Map<String, dynamic>;
+      final secureUrl = payload['secure_url']?.toString();
+      if (secureUrl != null && secureUrl.isNotEmpty) {
+        final saved = await _saveAvatarUrlToProfile(secureUrl);
+        if (saved) {
+          return secureUrl;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  Future<String?> _uploadAvatarViaBackend(
+    Uint8List bytes,
+    String filename,
+  ) async {
+    final multipartFile = MultipartFile.fromBytes(
+      bytes,
+      filename: filename,
+    );
+
+    final formData = FormData.fromMap({
+      'file': multipartFile,
+    });
+
+    final response = await _dio.post(
+      ApiEndpoints.uploadAvatar,
+      data: formData,
+    );
+
+    if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+      final data = response.data as Map<String, dynamic>;
+      if (data['success'] == true && data['data'] != null) {
+        return data['data'] as String;
+      }
+    }
+
+    return null;
+  }
+
+  /// Upload avatar bytes (đã crop)
+  ///
+  /// Uploads image bytes: direct Cloudinary trước, fallback backend
+  /// Returns imageUrl if successful
+  Future<String?> uploadAvatarBytes(Uint8List bytes, String filename) async {
+    try {
+      try {
+        final directUrl = await _uploadAvatarToCloudinaryDirect(bytes, filename);
+        if (directUrl != null) {
+          return directUrl;
+        }
+      } catch (e) {
+        debugPrint('Direct Cloudinary upload failed, fallback to backend: $e');
+      }
+
+      return await _uploadAvatarViaBackend(bytes, filename);
+    } catch (e) {
+      debugPrint('Error uploading avatar bytes: $e');
+      rethrow;
+    }
+  }
+
+  /// Upload POD (Proof of Delivery) image
+  ///
+  /// Uploads image file for delivery confirmation (POST /api/upload/pod/{orderId})
+  /// Returns imageUrl if successful
+  Future<String?> uploadPOD(XFile imageFile, int orderId) async {
+    try {
+      final bytes = await imageFile.readAsBytes();
+      final multipartFile = MultipartFile.fromBytes(
+        bytes,
+        filename: imageFile.name,
+      );
+
+      final formData = FormData.fromMap({
+        'file': multipartFile,
+      });
+
+      final uri =
+          ApiEndpoints.uploadPOD.replaceAll('{orderId}', orderId.toString());
+
+      final response = await _dio.post(
+        uri,
+        data: formData,
+      );
+
+      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
+        final data = response.data as Map<String, dynamic>;
+        if (data['success'] == true && data['data'] != null) {
+          return data['data'] as String;
+        }
+      }
+
+      return null;
+    } catch (e) {
+      debugPrint('Error uploading POD: $e');
+      rethrow;
+    }
   }
 }
 

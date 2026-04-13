@@ -26,8 +26,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   final StoreRepository _storeRepository = ApiStoreRepositoryImpl();
 
   late Future<Map<String, dynamic>> _statsFuture;
-  double _dynamicRevenue = 0;
-  int _dynamicOrders = 0;
 
   @override
   void initState() {
@@ -107,9 +105,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         chartDataMap[chartIdx] = (chartDataMap[chartIdx] ?? 0) + amount;
       }
 
-      _dynamicRevenue = realRevenue;
-      _dynamicOrders = realOrdersCount;
-
       // 3. Chuẩn bị danh sách Xếp hạng
       final List<Map<String, dynamic>> topStoreResults = [];
       storeRevenueMap.forEach((key, val) {
@@ -142,7 +137,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       };
     }).catchError((e) {
       debugPrint('Analytics Load Error: $e');
-      return <String, dynamic>{'userCount': 0, 'storeCount': 0, 'offline': true};
+      return <String, Object>{'userCount': 0, 'storeCount': 0, 'offline': true};
     });
   }
 
@@ -365,7 +360,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               children: [
                 CircleAvatar(
                   radius: 18,
-                  backgroundColor: color.withOpacity(0.1),
+                  backgroundColor: color.withValues(alpha: 0.1),
                   child: Icon(icon, size: 18, color: color),
                 ),
                 const Spacer(),
@@ -462,14 +457,14 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             ),
             borderData: FlBorderData(show: false),
             lineBarsData: [
-              LineChartBarData(
+                LineChartBarData(
                 spots: List.generate(pointCount, (index) {
                   double val = chartData[index] ?? 0;
                   return FlSpot(index.toDouble(), val);
                 }),
                 isCurved: true, color: Colors.deepPurple, barWidth: 4,
                 dotData: const FlDotData(show: true),
-                belowBarData: BarAreaData(show: true, color: Colors.deepPurple.withOpacity(0.2)),
+                belowBarData: BarAreaData(show: true, color: Colors.deepPurple.withValues(alpha: 0.2)),
               ),
             ],
           )),
@@ -533,7 +528,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
             ),
             child: Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.grey[800])),

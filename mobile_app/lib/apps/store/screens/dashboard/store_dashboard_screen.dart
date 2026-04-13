@@ -2,9 +2,173 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:grocery_shopping_app/core/ui/ui_constants.dart';
+import 'package:grocery_shopping_app/features/orders/data/order_model.dart';
+import 'package:intl/intl.dart';
 import '../../block/store_dashboard_bloc.dart';
+import '../../block/store_orders_bloc.dart';
+import '../../block/store_products_bloc.dart';
+import '../../store_order_status.dart';
 
 import '../orders/store_orders_screen.dart';
+
+String _dashboardOrderAmountText(double? v) {
+  if (v == null) return '0đ';
+  return '${NumberFormat('#,###', 'vi').format(v.round())}đ';
+}
+
+String _dashboardOrderStatusVi(String? status) {
+  switch ((status ?? '').toUpperCase()) {
+    case 'PENDING':
+      return 'Chờ xác nhận';
+    case 'CONFIRMED':
+    case 'PICKING_UP':
+      return 'Đang chuẩn bị';
+    case 'DELIVERING':
+      return 'Đang giao';
+    case 'DELIVERED':
+      return 'Hoàn thành';
+    case 'CANCELLED':
+      return 'Đã hủy';
+    default:
+      return status ?? '—';
+  }
+}
+
+_DashboardRecentOrderKind _dashboardOrderKind(String? status) {
+  switch ((status ?? '').toUpperCase()) {
+    case 'DELIVERED':
+      return _DashboardRecentOrderKind.done;
+    case 'DELIVERING':
+      return _DashboardRecentOrderKind.shipping;
+    case 'CANCELLED':
+      return _DashboardRecentOrderKind.cancelled;
+    default:
+      return _DashboardRecentOrderKind.processing;
+  }
+}
+
+double _dashboardOrderMoney(OrderModel o) {
+  if (o.grandTotal != null) return o.grandTotal!;
+  return (o.totalAmount ?? 0) + (o.shippingFee ?? 0);
+}
+
+DateTime? _dashboardParseCreatedAt(OrderModel o) =>
+    DateTime.tryParse(o.createdAt ?? '');
+
+bool _dashboardSameCalendarDay(DateTime a, DateTime b) =>
+    a.year == b.year && a.month == b.month && a.day == b.day;
+
+int _dashboardCountTodayOrders(List<OrderModel> orders) {
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  var c = 0;
+  for (final o in orders) {
+    final d = _dashboardParseCreatedAt(o);
+    if (d == null) continue;
+    final day = DateTime(d.year, d.month, d.day);
+    if (day == today) c++;
+  }
+  return c;
+}
+
+int _dashboardCountPreparing(List<OrderModel> orders) => orders
+    .where((o) => storeOrderStatusIsPreparing(o.status))
+    .length;
+
+int _dashboardCountDelivering(List<OrderModel> orders) =>
+    orders.where((o) => (o.status ?? '').toUpperCase() == 'DELIVERING').length;
+
+int _dashboardCountDelivered(List<OrderModel> orders) =>
+    orders.where((o) => (o.status ?? '').toUpperCase() == 'DELIVERED').length;
+
+double _dashboardMonthRevenueDelivered(List<OrderModel> orders) {
+  final now = DateTime.now();
+  var sum = 0.0;
+  for (final o in orders) {
+    if ((o.status ?? '').toUpperCase() != 'DELIVERED') continue;
+    final d = _dashboardParseCreatedAt(o);
+    if (d == null) continue;
+    if (d.year != now.year || d.month != now.month) continue;
+    sum += _dashboardOrderMoney(o);
+  }
+  return sum;
+}
+
+int _dashboardCountCancelled(List<OrderModel> orders) => orders
+    .where((o) => (o.status ?? '').toUpperCase() == 'CANCELLED')
+    .length;
+
+double _dashboardTodayRevenueDelivered(List<OrderModel> orders) {
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  var sum = 0.0;
+  for (final o in orders) {
+    if ((o.status ?? '').toUpperCase() != 'DELIVERED') continue;
+    final d = _dashboardParseCreatedAt(o);
+    if (d == null) continue;
+    final day = DateTime(d.year, d.month, d.day);
+    if (day != today) continue;
+    sum += _dashboardOrderMoney(o);
+  }
+  return sum;
+}
+
+/// Tuần T2–CN hiện tại; mỗi cột là tổng DELIVERED theo ngày đặt (createdAt).
+List<double> _dashboardWeekDailyRevenueVnd(
+  List<OrderModel> orders,
+  DateTime now,
+) {
+  final weekday = now.weekday;
+  final monday = DateTime(now.year, now.month, now.day)
+      .subtract(Duration(days: weekday - 1));
+  final daily = List<double>.filled(7, 0);
+  for (final o in orders) {
+    if ((o.status ?? '').toUpperCase() != 'DELIVERED') continue;
+    final d = _dashboardParseCreatedAt(o);
+    if (d == null) continue;
+    final dayOnly = DateTime(d.year, d.month, d.day);
+    for (var i = 0; i < 7; i++) {
+      final slot = monday.add(Duration(days: i));
+      if (_dashboardSameCalendarDay(dayOnly, slot)) {
+        daily[i] += _dashboardOrderMoney(o);
+        break;
+      }
+    }
+  }
+  return daily;
+}
+
+String _dashboardOrdersStatOrDash(
+  StoreOrdersState s,
+  int Function(List<OrderModel>) compute,
+) {
+  if (s is StoreOrdersLoading || s is StoreOrdersInitial) return '—';
+  if (s is StoreOrdersError) return '!';
+  if (s is StoreOrdersLoaded) return '${compute(s.orders)}';
+  return '—';
+}
+
+String _dashboardMonthRevenueText(StoreOrdersState s) {
+  if (s is StoreOrdersLoading || s is StoreOrdersInitial) return '—';
+  if (s is StoreOrdersError) return '!';
+  if (s is StoreOrdersLoaded) {
+    return _dashboardOrderAmountText(
+      _dashboardMonthRevenueDelivered(s.orders),
+    );
+  }
+  return '—';
+}
+
+String _dashboardCancelledText(StoreOrdersState s) {
+  if (s is StoreOrdersLoading || s is StoreOrdersInitial) return '—';
+  if (s is StoreOrdersError) return '!';
+  if (s is StoreOrdersLoaded) {
+    return '${_dashboardCountCancelled(s.orders)}';
+  }
+  return '—';
+}
+
+enum _DashboardRecentOrderKind { processing, shipping, done, cancelled }
 
 /// Design system — Grab Merchant (#00B14F)
 const Color _kPrimary = Color(0xFF00B14F);
@@ -17,18 +181,53 @@ const double _kLabelSize = 13;
 
 class StoreDashboardScreen extends StatefulWidget {
   final String token;
+  final ValueNotifier<int>? overviewRefresh;
 
-  const StoreDashboardScreen({super.key, required this.token});
+  const StoreDashboardScreen({
+    super.key,
+    required this.token,
+    this.overviewRefresh,
+  });
 
   @override
   State<StoreDashboardScreen> createState() => _StoreDashboardScreenState();
 }
 
 class _StoreDashboardScreenState extends State<StoreDashboardScreen> {
+  Map<String, dynamic>? _cachedHeaderStore;
+
   @override
   void initState() {
     super.initState();
+    widget.overviewRefresh?.addListener(_onOverviewRefreshSignal);
     context.read<StoreDashboardBloc>().add(LoadStoreDashboard(widget.token));
+  }
+
+  @override
+  void dispose() {
+    widget.overviewRefresh?.removeListener(_onOverviewRefreshSignal);
+    super.dispose();
+  }
+
+  void _onOverviewRefreshSignal() {
+    if (!mounted) return;
+    context.read<StoreDashboardBloc>().add(LoadStoreDashboard(widget.token));
+    context.read<StoreProductsBloc>().add(LoadStoreProducts(token: widget.token));
+    context.read<StoreOrdersBloc>().add(LoadStoreOrders());
+  }
+
+  Map<String, dynamic>? _headerStoreMap(StoreDashboardState state) {
+    if (state is StoreDashboardLoaded) return state.store;
+    if (state is StoreDashboardError) return null;
+    return _cachedHeaderStore;
+  }
+
+  String _statusLabelFromStore(Map<String, dynamic>? m) {
+    if (m == null) return '—';
+    final v = m['isOpen'];
+    if (v == true) return 'Đang mở';
+    if (v == false) return 'Đang đóng';
+    return '—';
   }
 
   @override
@@ -52,10 +251,24 @@ class _StoreDashboardScreenState extends State<StoreDashboardScreen> {
         surfaceTintColor: Colors.transparent,
         toolbarHeight: 52,
       ),
-      body: BlocBuilder<StoreDashboardBloc, StoreDashboardState>(
-        buildWhen: (prev, curr) => prev.runtimeType != curr.runtimeType,
+      body: BlocConsumer<StoreDashboardBloc, StoreDashboardState>(
+        listenWhen: (prev, curr) =>
+            curr is StoreDashboardLoaded || curr is StoreDashboardError,
+        listener: (context, state) {
+          if (state is StoreDashboardLoaded) {
+            setState(() => _cachedHeaderStore = state.store);
+          } else if (state is StoreDashboardError) {
+            setState(() => _cachedHeaderStore = null);
+          }
+        },
+        buildWhen: (prev, curr) => prev != curr,
         builder: (context, state) {
           final isLoading = state is StoreDashboardLoading;
+          final dashboardErr =
+              state is StoreDashboardError ? state.message : null;
+          final hm = _headerStoreMap(state);
+          final headerName = hm?['storeName']?.toString() ?? '—';
+          final headerStatus = _statusLabelFromStore(hm);
           return SingleChildScrollView(
             padding: const EdgeInsets.symmetric(
               horizontal: kPaddingLarge,
@@ -67,7 +280,27 @@ class _StoreDashboardScreenState extends State<StoreDashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _HeaderSection(),
+                    _HeaderSection(
+                      storeName: headerName,
+                      statusLabel: headerStatus,
+                    ),
+                    if (dashboardErr != null) ...[
+                      const SizedBox(height: kCardPadding),
+                      Text(
+                        dashboardErr,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey.shade800,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: () => context
+                            .read<StoreDashboardBloc>()
+                            .add(LoadStoreDashboard(widget.token)),
+                        child: const Text('Thử lại'),
+                      ),
+                    ],
                     const SizedBox(height: kSectionSpacing),
                     if (isLoading) _SkeletonStatisticsRow(),
                     if (!isLoading) _StatisticsRow(),
@@ -416,6 +649,14 @@ class _SkeletonRecentActivitySection extends StatelessWidget {
 
 /// Header: compact — avatar, store name, status badge
 class _HeaderSection extends StatelessWidget {
+  final String storeName;
+  final String statusLabel;
+
+  const _HeaderSection({
+    required this.storeName,
+    required this.statusLabel,
+  });
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -433,9 +674,9 @@ class _HeaderSection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Siêu Thị Mini B',
-                  style: TextStyle(
+                Text(
+                  storeName,
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF1A1A1A),
@@ -455,9 +696,9 @@ class _HeaderSection extends StatelessWidget {
                       width: 1,
                     ),
                   ),
-                  child: const Text(
-                    'Đang mở',
-                    style: TextStyle(
+                  child: Text(
+                    statusLabel,
+                    style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: _kPrimary,
@@ -477,64 +718,92 @@ class _HeaderSection extends StatelessWidget {
 class _RevenueSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(kCardPadding),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [_kPrimary, Color(0xFF008C39)],
+    return BlocBuilder<StoreOrdersBloc, StoreOrdersState>(
+      builder: (context, orderState) {
+        final now = DateTime.now();
+        String todayText;
+        List<double> weekDaily;
+        final todayIdx = now.weekday - 1;
+        if (orderState is StoreOrdersLoaded) {
+          todayText = _dashboardOrderAmountText(
+            _dashboardTodayRevenueDelivered(orderState.orders),
+          );
+          weekDaily = _dashboardWeekDailyRevenueVnd(orderState.orders, now);
+        } else if (orderState is StoreOrdersError) {
+          todayText = '!';
+          weekDaily = List<double>.filled(7, 0);
+        } else {
+          todayText = '—';
+          weekDaily = List<double>.filled(7, 0);
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(kCardPadding),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [_kPrimary, Color(0xFF008C39)],
+                ),
+                borderRadius: BorderRadius.circular(kRadiusLarge),
+                boxShadow: const [
+                  BoxShadow(
+                    color: _kCardShadow,
+                    blurRadius: 8,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Doanh thu hôm nay',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.95),
+                      fontSize: _kLabelSize,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    todayText,
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            borderRadius: BorderRadius.circular(kRadiusLarge),
-            boxShadow: const [
-              BoxShadow(
-                color: _kCardShadow,
-                blurRadius: 8,
-                offset: Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Doanh thu hôm nay',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.95),
-                  fontSize: _kLabelSize,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                '2.500.000đ',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  letterSpacing: -0.5,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: kCardPadding),
-        _RevenueChartSection(),
-      ],
+            const SizedBox(height: kCardPadding),
+            _RevenueChartSection(
+              dailyTotalsVnd: weekDaily,
+              todayIndex: todayIdx,
+            ),
+          ],
+        );
+      },
     );
   }
 }
 
-/// Biểu đồ doanh thu tuần — gradient, bo góc, hover + tooltip (web), highlight hôm nay (CN)
-const List<double> _kWeeklyRevenue = [1.2, 1.8, 1.5, 2.0, 2.2, 2.5, 2.0];
 const List<String> _kWeekDays = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
-int get _kTodayIndex => 6; // CN = Chủ nhật
 
 class _RevenueChartSection extends StatefulWidget {
+  final List<double> dailyTotalsVnd;
+  final int todayIndex;
+
+  const _RevenueChartSection({
+    required this.dailyTotalsVnd,
+    required this.todayIndex,
+  });
+
   @override
   State<_RevenueChartSection> createState() => _RevenueChartSectionState();
 }
@@ -544,7 +813,11 @@ class _RevenueChartSectionState extends State<_RevenueChartSection> {
 
   @override
   Widget build(BuildContext context) {
-    final maxVal = _kWeeklyRevenue.reduce((a, b) => a > b ? a : b);
+    final totals = widget.dailyTotalsVnd;
+    final maxVal = totals.isEmpty
+        ? 1.0
+        : totals.reduce((a, b) => a > b ? a : b);
+    final scale = maxVal > 0 ? maxVal : 1.0;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(kCardPadding),
@@ -577,11 +850,13 @@ class _RevenueChartSectionState extends State<_RevenueChartSection> {
               crossAxisAlignment: CrossAxisAlignment.end,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: List.generate(7, (i) {
-                final h = (_kWeeklyRevenue[i] / maxVal) * 120.0;
+                final raw = i < totals.length ? totals[i] : 0.0;
+                final h = (raw / scale) * 120.0;
                 final barHeight = h.clamp(24.0, 120.0);
                 final isHovered = _hoveredIndex == i;
-                final isToday = i == _kTodayIndex;
-                final amount = '${(_kWeeklyRevenue[i] * 1000).round()}k';
+                final isToday = i == widget.todayIndex;
+                final amount =
+                    '${NumberFormat('#,###', 'vi').format(raw.round())}đ';
                 Widget bar = AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   height: barHeight,
@@ -644,7 +919,7 @@ class _RevenueChartSectionState extends State<_RevenueChartSection> {
                                 ),
                               ),
                               child: Text(
-                                '$amountđ',
+                                amount,
                                 style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
@@ -689,6 +964,37 @@ class _ExtraStatsRow extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isNarrow = constraints.maxWidth < 500;
+        final productCountCard = BlocBuilder<StoreProductsBloc, StoreProductsState>(
+          buildWhen: (a, b) =>
+              a.runtimeType != b.runtimeType ||
+              (a is StoreProductsLoaded &&
+                  b is StoreProductsLoaded &&
+                  a.products.length != b.products.length),
+          builder: (context, state) {
+            final v = state is StoreProductsLoaded
+                ? '${state.products.length}'
+                : '—';
+            return _StatCard(
+              value: v,
+              label: 'Tổng sản phẩm',
+              icon: Icons.inventory_2_rounded,
+            );
+          },
+        );
+        final revenueCard = BlocBuilder<StoreOrdersBloc, StoreOrdersState>(
+          builder: (context, orderState) => _StatCard(
+            value: _dashboardMonthRevenueText(orderState),
+            label: 'Doanh thu tháng',
+            icon: Icons.trending_up_rounded,
+          ),
+        );
+        final cancelledCard = BlocBuilder<StoreOrdersBloc, StoreOrdersState>(
+          builder: (context, orderState) => _StatCard(
+            value: _dashboardCancelledText(orderState),
+            label: 'Đơn bị hủy',
+            icon: Icons.cancel_rounded,
+          ),
+        );
         if (isNarrow) {
           return GridView.count(
             shrinkWrap: true,
@@ -697,50 +1003,20 @@ class _ExtraStatsRow extends StatelessWidget {
             mainAxisSpacing: kCardPadding,
             crossAxisSpacing: kCardPadding,
             childAspectRatio: 1.6,
-            children: const [
-              _StatCard(
-                value: '50',
-                label: 'Tổng sản phẩm',
-                icon: Icons.inventory_2_rounded,
-              ),
-              _StatCard(
-                value: '45tr',
-                label: 'Doanh thu tháng',
-                icon: Icons.trending_up_rounded,
-              ),
-              _StatCard(
-                value: '3',
-                label: 'Đơn bị hủy',
-                icon: Icons.cancel_rounded,
-              ),
+            children: [
+              productCountCard,
+              revenueCard,
+              cancelledCard,
             ],
           );
         }
-        return const Row(
+        return Row(
           children: [
-            Expanded(
-              child: _StatCard(
-                value: '50',
-                label: 'Tổng sản phẩm',
-                icon: Icons.inventory_2_rounded,
-              ),
-            ),
-            SizedBox(width: kCardPadding),
-            Expanded(
-              child: _StatCard(
-                value: '45.000.000đ',
-                label: 'Doanh thu tháng',
-                icon: Icons.trending_up_rounded,
-              ),
-            ),
-            SizedBox(width: kCardPadding),
-            Expanded(
-              child: _StatCard(
-                value: '3',
-                label: 'Đơn bị hủy',
-                icon: Icons.cancel_rounded,
-              ),
-            ),
+            Expanded(child: productCountCard),
+            const SizedBox(width: kCardPadding),
+            Expanded(child: revenueCard),
+            const SizedBox(width: kCardPadding),
+            Expanded(child: cancelledCard),
           ],
         );
       },
@@ -751,75 +1027,95 @@ class _ExtraStatsRow extends StatelessWidget {
 class _StatisticsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isNarrow = constraints.maxWidth < 500;
-        if (isNarrow) {
-          return GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            mainAxisSpacing: kCardPadding,
-            crossAxisSpacing: kCardPadding,
-            childAspectRatio: 1.4,
-            children: const [
-              _StatCard(
-                value: '18',
-                label: 'Đơn hôm nay',
-                icon: Icons.shopping_bag_rounded,
-              ),
-              _StatCard(
-                value: '4',
-                label: 'Đang chuẩn bị',
-                icon: Icons.hourglass_top_rounded,
-              ),
-              _StatCard(
-                value: '2',
-                label: 'Đang giao',
-                icon: Icons.local_shipping_rounded,
-              ),
-              _StatCard(
-                value: '14',
-                label: 'Hoàn thành',
-                icon: Icons.check_circle_rounded,
-              ),
-            ],
-          );
-        }
-        return const Row(
-          children: [
-            Expanded(
-              child: _StatCard(
-                value: '18',
-                label: 'Đơn hôm nay',
-                icon: Icons.shopping_bag_rounded,
-              ),
-            ),
-            SizedBox(width: kCardPadding),
-            Expanded(
-              child: _StatCard(
-                value: '4',
-                label: 'Đang chuẩn bị',
-                icon: Icons.hourglass_top_rounded,
-              ),
-            ),
-            SizedBox(width: kCardPadding),
-            Expanded(
-              child: _StatCard(
-                value: '2',
-                label: 'Đang giao',
-                icon: Icons.local_shipping_rounded,
-              ),
-            ),
-            SizedBox(width: kCardPadding),
-            Expanded(
-              child: _StatCard(
-                value: '14',
-                label: 'Hoàn thành',
-                icon: Icons.check_circle_rounded,
-              ),
-            ),
-          ],
+    return BlocBuilder<StoreOrdersBloc, StoreOrdersState>(
+      builder: (context, orderState) {
+        final vToday = _dashboardOrdersStatOrDash(
+          orderState,
+          _dashboardCountTodayOrders,
+        );
+        final vPrep = _dashboardOrdersStatOrDash(
+          orderState,
+          _dashboardCountPreparing,
+        );
+        final vShip = _dashboardOrdersStatOrDash(
+          orderState,
+          _dashboardCountDelivering,
+        );
+        final vDone = _dashboardOrdersStatOrDash(
+          orderState,
+          _dashboardCountDelivered,
+        );
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final isNarrow = constraints.maxWidth < 500;
+            if (isNarrow) {
+              return GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 2,
+                mainAxisSpacing: kCardPadding,
+                crossAxisSpacing: kCardPadding,
+                childAspectRatio: 1.4,
+                children: [
+                  _StatCard(
+                    value: vToday,
+                    label: 'Đơn hôm nay',
+                    icon: Icons.shopping_bag_rounded,
+                  ),
+                  _StatCard(
+                    value: vPrep,
+                    label: 'Đang chuẩn bị',
+                    icon: Icons.hourglass_top_rounded,
+                  ),
+                  _StatCard(
+                    value: vShip,
+                    label: 'Đang giao',
+                    icon: Icons.local_shipping_rounded,
+                  ),
+                  _StatCard(
+                    value: vDone,
+                    label: 'Hoàn thành',
+                    icon: Icons.check_circle_rounded,
+                  ),
+                ],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(
+                  child: _StatCard(
+                    value: vToday,
+                    label: 'Đơn hôm nay',
+                    icon: Icons.shopping_bag_rounded,
+                  ),
+                ),
+                const SizedBox(width: kCardPadding),
+                Expanded(
+                  child: _StatCard(
+                    value: vPrep,
+                    label: 'Đang chuẩn bị',
+                    icon: Icons.hourglass_top_rounded,
+                  ),
+                ),
+                const SizedBox(width: kCardPadding),
+                Expanded(
+                  child: _StatCard(
+                    value: vShip,
+                    label: 'Đang giao',
+                    icon: Icons.local_shipping_rounded,
+                  ),
+                ),
+                const SizedBox(width: kCardPadding),
+                Expanded(
+                  child: _StatCard(
+                    value: vDone,
+                    label: 'Hoàn thành',
+                    icon: Icons.check_circle_rounded,
+                  ),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -1125,32 +1421,11 @@ class _RecentActivitySection extends StatelessWidget {
   }
 }
 
-/// Đơn gần đây — compact preview (3 đơn + nút Xem tất cả)
+/// Đơn gần đây — compact preview (tối đa 3 đơn từ API + nút Xem tất cả)
 class _RecentOrdersPreview extends StatelessWidget {
   final VoidCallback onViewAll;
 
   const _RecentOrdersPreview({required this.onViewAll});
-
-  static const _recentOrders = [
-    (
-      id: '#1234',
-      amount: '150.000đ',
-      status: 'Đang chuẩn bị',
-      statusType: OrderStatus.processing,
-    ),
-    (
-      id: '#1235',
-      amount: '80.000đ',
-      status: 'Đang giao',
-      statusType: OrderStatus.shipping,
-    ),
-    (
-      id: '#1236',
-      amount: '120.000đ',
-      status: 'Hoàn thành',
-      statusType: OrderStatus.done,
-    ),
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -1177,45 +1452,93 @@ class _RecentOrdersPreview extends StatelessWidget {
               ),
             ],
           ),
-          child: Column(
-            children: [
-              ..._recentOrders.map(
-                (o) => _RecentOrderRow(
-                  id: o.id,
-                  amount: o.amount,
-                  status: o.status,
-                  statusType: o.statusType,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Divider(height: 1),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: TextButton(
-                  onPressed: onViewAll,
-                  style: TextButton.styleFrom(
-                    foregroundColor: _kPrimary,
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Xem tất cả',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
+          child: BlocBuilder<StoreOrdersBloc, StoreOrdersState>(
+            builder: (context, state) {
+              if (state is StoreOrdersLoading ||
+                  state is StoreOrdersInitial) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(
+                    child: Text(
+                      'Đang tải đơn hàng…',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF1A1A1A),
                       ),
-                      SizedBox(width: 6),
-                      Icon(Icons.arrow_forward_rounded, size: 18),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-            ],
+                );
+              }
+              if (state is StoreOrdersError) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: Text(
+                    'Không tải được danh sách đơn hàng: ${state.message}',
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+                  ),
+                );
+              }
+              if (state is! StoreOrdersLoaded) {
+                return const SizedBox.shrink();
+              }
+              final orders = state.orders;
+              if (orders.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Center(
+                    child: Text(
+                      'Chưa có đơn hàng nào',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF1A1A1A),
+                      ),
+                    ),
+                  ),
+                );
+              }
+              final preview = orders.take(3).toList();
+              return Column(
+                children: [
+                  ...preview.map(
+                    (OrderModel o) => _RecentOrderRow(
+                      id: '#${o.id}',
+                      amount: _dashboardOrderAmountText(o.grandTotal),
+                      status: _dashboardOrderStatusVi(o.status),
+                      statusKind: _dashboardOrderKind(o.status),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Divider(height: 1),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
+                      onPressed: onViewAll,
+                      style: TextButton.styleFrom(
+                        foregroundColor: _kPrimary,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Xem tất cả',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                          SizedBox(width: 6),
+                          Icon(Icons.arrow_forward_rounded, size: 18),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ],
@@ -1223,19 +1546,17 @@ class _RecentOrdersPreview extends StatelessWidget {
   }
 }
 
-enum OrderStatus { processing, shipping, done }
-
 class _RecentOrderRow extends StatefulWidget {
   final String id;
   final String amount;
   final String status;
-  final OrderStatus statusType;
+  final _DashboardRecentOrderKind statusKind;
 
   const _RecentOrderRow({
     required this.id,
     required this.amount,
     required this.status,
-    required this.statusType,
+    required this.statusKind,
   });
 
   @override
@@ -1246,13 +1567,15 @@ class _RecentOrderRowState extends State<_RecentOrderRow> {
   bool _hover = false;
 
   Color get _statusColor {
-    switch (widget.statusType) {
-      case OrderStatus.processing:
+    switch (widget.statusKind) {
+      case _DashboardRecentOrderKind.processing:
         return const Color(0xFFF57C00);
-      case OrderStatus.shipping:
+      case _DashboardRecentOrderKind.shipping:
         return const Color(0xFF1976D2);
-      case OrderStatus.done:
+      case _DashboardRecentOrderKind.done:
         return _kPrimary;
+      case _DashboardRecentOrderKind.cancelled:
+        return Colors.grey.shade600;
     }
   }
 

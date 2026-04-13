@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/theme/store_theme.dart';
 import '../../features/orders/data/order_service.dart';
-import '../../features/products/data/product_service.dart';
 
 import 'screens/auth/store_splash_screen.dart';
 import 'repository/store_repository.dart';
@@ -25,7 +24,7 @@ class StoreApp extends StatelessWidget {
       providers: [
         BlocProvider(create: (_) => StoreAuthBloc(StoreRepository())),
         BlocProvider(create: (_) => StoreDashboardBloc(StoreRepository())),
-        BlocProvider(create: (_) => StoreProductsBloc(ProductService())),
+        BlocProvider(create: (_) => StoreProductsBloc(StoreRepository())),
         BlocProvider(create: (_) => StoreOrdersBloc(OrderService())),
       ],
       child: MaterialApp(

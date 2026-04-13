@@ -73,6 +73,8 @@ class _CustomTextFieldState extends State<CustomTextField> {
 
   String? get _displayError => widget.errorText ?? _validationError;
 
+  ColorScheme get _scheme => Theme.of(context).colorScheme;
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -119,7 +121,8 @@ class _CustomTextFieldState extends State<CustomTextField> {
         maxLines: widget.maxLines,
         enabled: widget.enabled,
         readOnly: widget.readOnly,
-        style: AppTextStyles.inputText,
+        style: AppTextStyles.inputText.copyWith(color: _getInputTextColor()),
+        cursorColor: widget.focusColor ?? _scheme.primary,
         decoration: _buildInputDecoration(),
       ),
     );
@@ -173,14 +176,16 @@ class _CustomTextFieldState extends State<CustomTextField> {
         color: _getBorderColor(),
         width: _isFocused ? 2.0 : 1.0,
       ),
-      color: widget.enabled ? AppColors.surface : AppColors.surfaceVariant,
+      color: widget.enabled
+          ? _scheme.surfaceContainerHighest.withValues(alpha: 0.9)
+          : _scheme.surfaceContainerHighest.withValues(alpha: 0.55),
     );
   }
 
   InputDecoration _buildInputDecoration() {
     return InputDecoration(
       hintText: widget.hint,
-      hintStyle: AppTextStyles.inputHint,
+      hintStyle: AppTextStyles.inputHint.copyWith(color: _getHintColor()),
       prefixIcon: widget.prefixIcon != null
           ? Icon(
               widget.prefixIcon,
@@ -226,12 +231,12 @@ class _CustomTextFieldState extends State<CustomTextField> {
       return AppColors.error;
     }
     if (_isFocused) {
-      return widget.focusColor ?? AppColors.storePrimary;
+      return widget.focusColor ?? _scheme.primary;
     }
     if (!widget.enabled) {
-      return AppColors.textHint.withValues(alpha: 0.5);
+      return _scheme.outlineVariant.withValues(alpha: 0.5);
     }
-    return AppColors.border;
+    return _scheme.outlineVariant;
   }
 
   Color _getLabelColor() {
@@ -239,9 +244,9 @@ class _CustomTextFieldState extends State<CustomTextField> {
       return AppColors.error;
     }
     if (_isFocused) {
-      return widget.focusColor ?? AppColors.storePrimary;
+      return widget.focusColor ?? _scheme.primary;
     }
-    return AppColors.textSecondary;
+    return _scheme.onSurfaceVariant;
   }
 
   Color _getPrefixIconColor() {
@@ -249,18 +254,29 @@ class _CustomTextFieldState extends State<CustomTextField> {
       return AppColors.error;
     }
     if (_isFocused) {
-      return widget.focusColor ?? AppColors.storePrimary;
+      return widget.focusColor ?? _scheme.primary;
     }
     if (!widget.enabled) {
-      return AppColors.textHint;
+      return _scheme.onSurfaceVariant.withValues(alpha: 0.6);
     }
-    return AppColors.textSecondary;
+    return _scheme.onSurfaceVariant;
   }
 
   Color _getSuffixIconColor() {
     if (_isFocused) {
-      return widget.focusColor ?? AppColors.storePrimary;
+      return widget.focusColor ?? _scheme.primary;
     }
-    return AppColors.textSecondary;
+    return _scheme.onSurfaceVariant;
+  }
+
+  Color _getInputTextColor() {
+    if (!widget.enabled) {
+      return _scheme.onSurface.withValues(alpha: 0.6);
+    }
+    return _scheme.onSurface;
+  }
+
+  Color _getHintColor() {
+    return _scheme.onSurfaceVariant;
   }
 }

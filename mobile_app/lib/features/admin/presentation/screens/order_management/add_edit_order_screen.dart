@@ -224,7 +224,7 @@ class _AddEditOrderScreenState extends State<AddEditOrderScreen> {
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    value: _status,
+                    initialValue: _status,
                     decoration: const InputDecoration(labelText: 'Trạng thái', border: OutlineInputBorder()),
                     items: const [
                       DropdownMenuItem(value: 'PENDING', child: Text('Chờ xử lý')),
@@ -449,7 +449,7 @@ class _AddEditOrderScreenState extends State<AddEditOrderScreen> {
               final option = options.elementAt(index);
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: Colors.indigo.withOpacity(0.1),
+                  backgroundColor: Colors.indigo.withValues(alpha: 0.1),
                   child: Icon(icon, color: Colors.indigo, size: 20),
                 ),
                 title: Text(
@@ -464,7 +464,7 @@ class _AddEditOrderScreenState extends State<AddEditOrderScreen> {
                 ),
                 onTap: () => onSelected(option),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                hoverColor: Colors.indigo.withOpacity(0.05),
+                hoverColor: Colors.indigo.withValues(alpha: 0.05),
               );
             },
           ),

@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:grocery_shopping_app/core/ui/ui_constants.dart';
 import 'package:grocery_shopping_app/features/products/data/product_model.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../../block/store_products_bloc.dart';
@@ -22,12 +24,8 @@ const double _kImageHeight = 140;
 const int _kCacheWidth = 600;
 const int _kCacheHeight = 280;
 
-/// Stock badge: >20 Còn hàng (green), 10–20 Sắp hết (orange), 0 Hết hàng (red). 1–9 cũng Sắp hết (orange).
-const int _kStockHighThreshold = 20; // above = Còn hàng
-const int _kStockLowThreshold =
-    10; // 10–20 = Sắp hết; 1–9 = Sắp hết; 0 = Hết hàng
-const int _kLowStockThreshold = 5; // filter chip
-const int _kHighStockThreshold = 20; // filter chip
+/// Ngưỡng tồn: "Sắp hết" = (0, 20], "Còn hàng" = > 20 (sản phẩm đang hiển thị).
+const int _kLowStockMax = 20;
 const int _kSearchDebounceMs = 300;
 
 /// Fallback khi không có ảnh theo tên. Path chuẩn: assets/products/<filename>.jpg
@@ -62,10 +60,59 @@ const Map<String, String> productImages = {
 String productImageAsset(String name) {
   if (productImages.containsKey(name)) return productImages[name]!;
   for (final entry in productImages.entries) {
-    if (name.startsWith(entry.key) || name.contains(entry.key))
+    if (name.startsWith(entry.key) || name.contains(entry.key)) {
       return entry.value;
+    }
   }
   return kDefaultProductImage;
+}
+
+bool _isNetworkImageUrl(String path) =>
+    path.startsWith('http://') || path.startsWith('https://');
+
+/// Local asset or HTTPS [imageUrl] from backend.
+Widget _productImageForPath(
+  String path, {
+  double? width,
+  double? height,
+  int? cacheWidth,
+  int? cacheHeight,
+  BoxFit fit = BoxFit.cover,
+}) {
+  if (_isNetworkImageUrl(path)) {
+    return Image.network(
+      path,
+      width: width,
+      height: height,
+      fit: fit,
+      cacheWidth: cacheWidth,
+      cacheHeight: cacheHeight,
+      errorBuilder: (_, __, ___) => Container(
+        color: _kPrimaryLight,
+        child: const Icon(
+          Icons.inventory_2_rounded,
+          size: 40,
+          color: _kPrimary,
+        ),
+      ),
+    );
+  }
+  return Image.asset(
+    path,
+    width: width,
+    height: height,
+    fit: fit,
+    cacheWidth: cacheWidth,
+    cacheHeight: cacheHeight,
+    errorBuilder: (_, __, ___) => Container(
+      color: _kPrimaryLight,
+      child: const Icon(
+        Icons.inventory_2_rounded,
+        size: 40,
+        color: _kPrimary,
+      ),
+    ),
+  );
 }
 
 /// Trạng thái sản phẩm (chỉ UI)
@@ -92,15 +139,17 @@ class _StoreProduct {
   });
 
   /// Badge text: "Còn hàng" | "Sắp hết" | "Hết hàng" theo số lượng.
-  String get stockStatusLabel => stock == 0
-      ? 'Hết hàng'
-      : (stock > _kStockHighThreshold ? 'Còn hàng' : 'Sắp hết');
+  String get stockStatusLabel {
+    if (status == ProductStatus.hidden) return 'Ẩn';
+    if (stock == 0) return 'Hết hàng';
+    return stock > _kLowStockMax ? 'Còn hàng' : 'Sắp hết';
+  }
   String get stockLabel => stock > 0 ? 'Còn $stock' : 'Hết hàng';
 
   /// Đường dẫn asset ảnh sản phẩm; dùng imageUrlOverride nếu có, không thì map theo tên, fallback default.
   String get imageAssetPath => imageUrlOverride ?? productImageAsset(name);
-  bool get isLowStock => stock > 0 && stock < _kHighStockThreshold;
-  bool get isVeryLowStock => stock > 0 && stock < _kLowStockThreshold;
+  bool get isLowStock => stock > 0 && stock <= _kLowStockMax;
+  bool get isVeryLowStock => stock > 0 && stock <= 8;
 }
 
 String _formatPrice(double? v) {
@@ -108,67 +157,71 @@ String _formatPrice(double? v) {
   return '${NumberFormat('#,###', 'vi').format(v.round())}đ';
 }
 
-_StoreProduct _fromProductModel(ProductModel m) {
-  final stock = m.stock ?? 0;
-  ProductStatus status = ProductStatus.active;
-  if (m.isActive == false) {
+_StoreProduct _fromProductModel(ProductModel m, int displayStock) {
+  final st = (m.status ?? '').toUpperCase();
+  ProductStatus status;
+  if (st == 'HIDDEN') {
     status = ProductStatus.hidden;
-  } else if (stock == 0)
+  } else if (st == 'OUT_OF_STOCK' || displayStock == 0) {
     status = ProductStatus.outOfStock;
+  } else {
+    status = ProductStatus.active;
+  }
   return _StoreProduct(
     name: m.name ?? '',
     description: m.description ?? '',
     price: _formatPrice(m.price),
-    stock: stock,
+    stock: displayStock,
     soldCount: 0,
     status: status,
     imageUrlOverride: m.imageUrl,
   );
 }
 
-class StoreProductsScreen extends StatefulWidget {
-  const StoreProductsScreen({super.key});
-
-  @override
-  State<StoreProductsScreen> createState() => _StoreProductsScreenState();
-}
-
 enum _StockFilter { all, inStock, lowStock, outOfStock, hidden }
 
+bool _matchesStockFilter(
+  ProductModel p,
+  int stock,
+  _StockFilter f,
+) {
+  final st = (p.status ?? '').toUpperCase();
+  final isHidden = st == 'HIDDEN';
+  final isOutStatus = st == 'OUT_OF_STOCK';
+  switch (f) {
+    case _StockFilter.inStock:
+      if (isHidden) return false;
+      if (isOutStatus) return false;
+      return stock > _kLowStockMax;
+    case _StockFilter.lowStock:
+      if (isHidden) return false;
+      if (isOutStatus) return false;
+      return stock > 0 && stock <= _kLowStockMax;
+    case _StockFilter.outOfStock:
+      if (isHidden) return false;
+      return isOutStatus || stock == 0;
+    case _StockFilter.hidden:
+      return isHidden;
+    case _StockFilter.all:
+      return true;
+  }
+}
+
 List<ProductModel> _applyProductFilter(
-  List<ProductModel> list,
+  StoreProductsLoaded loaded,
   _StockFilter stockFilter,
   String searchQuery,
 ) {
-  var result = list;
-  switch (stockFilter) {
-    case _StockFilter.inStock:
-      result = result
-          .where(
-            (p) =>
-                (p.isActive ?? true) && (p.stock ?? 0) >= _kHighStockThreshold,
-          )
-          .toList();
-      break;
-    case _StockFilter.lowStock:
-      result = result
-          .where(
-            (p) =>
-                (p.isActive ?? true) &&
-                (p.stock ?? 0) >= _kLowStockThreshold &&
-                (p.stock ?? 0) < _kHighStockThreshold,
-          )
-          .toList();
-      break;
-    case _StockFilter.outOfStock:
-      result = result.where((p) => (p.stock ?? 0) == 0).toList();
-      break;
-    case _StockFilter.hidden:
-      result = result.where((p) => p.isActive == false).toList();
-      break;
-    case _StockFilter.all:
-      break;
+  final products = loaded.products;
+  final totals = loaded.stockTotals;
+  final kept = <ProductModel>[];
+  for (var i = 0; i < products.length; i++) {
+    final p = products[i];
+    final stock = i < totals.length ? totals[i] : (p.stock ?? 0);
+    if (!_matchesStockFilter(p, stock, stockFilter)) continue;
+    kept.add(p);
   }
+  var result = kept;
   final q = searchQuery.trim();
   if (q.isEmpty) return result;
   final qLower = q.toLowerCase();
@@ -181,6 +234,21 @@ List<ProductModel> _applyProductFilter(
       .toList();
 }
 
+int _displayStockFor(StoreProductsLoaded loaded, ProductModel p) {
+  final i = loaded.products.indexOf(p);
+  if (i < 0) return p.stock ?? 0;
+  return i < loaded.stockTotals.length ? loaded.stockTotals[i] : (p.stock ?? 0);
+}
+
+class StoreProductsScreen extends StatefulWidget {
+  final String token;
+
+  const StoreProductsScreen({super.key, required this.token});
+
+  @override
+  State<StoreProductsScreen> createState() => _StoreProductsScreenState();
+}
+
 class _StoreProductsScreenState extends State<StoreProductsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _debouncedQuery = '';
@@ -191,7 +259,7 @@ class _StoreProductsScreenState extends State<StoreProductsScreen> {
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
-    context.read<StoreProductsBloc>().add(LoadStoreProducts());
+    context.read<StoreProductsBloc>().add(LoadStoreProducts(token: widget.token));
   }
 
   void _onSearchChanged() {
@@ -234,35 +302,49 @@ class _StoreProductsScreenState extends State<StoreProductsScreen> {
         priceController: priceController,
         qtyController: qtyController,
         onSave: null,
-        onSaveToApi: (name, description, price, stock, status) {
-          final request = CreateProductRequest(
-            name: name,
-            description: description.isEmpty ? null : description,
-            price: price,
-            stock: stock,
-            isActive: status != ProductStatus.hidden,
-          );
-          context.read<StoreProductsBloc>().add(CreateStoreProduct(request));
-          Navigator.pop(ctx);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('✔ Sản phẩm đã được thêm'),
-              backgroundColor: _kPrimary,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        },
+        onSaveToApi:
+            (
+              name,
+              description,
+              price,
+              stock,
+              status, {
+              Uint8List? imageBytes,
+              String? imageFilename,
+            }) {
+              final effectiveStock = status == ProductStatus.outOfStock
+                  ? 0
+                  : stock;
+              final params = StoreCreateProductParams(
+                name: name,
+                description: description.isEmpty ? null : description,
+                price: price,
+                stock: effectiveStock,
+                imageUrl: null,
+                markHiddenAfterCreate: status == ProductStatus.hidden,
+                pendingImageBytes: imageBytes?.toList(),
+                pendingImageFilename: imageFilename,
+              );
+              context.read<StoreProductsBloc>().add(
+                CreateStoreProduct(token: widget.token, params: params),
+              );
+            },
         onCancel: () => Navigator.pop(ctx),
       ),
     );
   }
 
   void _showEditProduct(BuildContext context, ProductModel productModel) {
-    final p = _fromProductModel(productModel);
+    final blocState = context.read<StoreProductsBloc>().state;
+    final loaded = blocState is StoreProductsLoaded ? blocState : null;
+    final stock = loaded != null
+        ? _displayStockFor(loaded, productModel)
+        : (productModel.stock ?? 0);
+    final p = _fromProductModel(productModel, stock);
     final nameController = TextEditingController(text: p.name);
     final descController = TextEditingController(text: p.description);
     final priceController = TextEditingController(text: p.price);
-    final stockController = TextEditingController(text: '${p.stock}');
+    final stockController = TextEditingController(text: '$stock');
 
     showModalBottomSheet(
       context: context,
@@ -276,19 +358,41 @@ class _StoreProductsScreenState extends State<StoreProductsScreen> {
         priceController: priceController,
         stockController: stockController,
         onSave: null,
-        onSaveToApi: (request) {
+        onSaveToApi: ({
+          required String name,
+          required String description,
+          Uint8List? newImageBytes,
+          String? newImageFilename,
+        }) {
           if (productModel.id == null || productModel.id!.isEmpty) return;
+          final parsedPrice = _parsePrice(priceController.text);
+          final initPrice = productModel.price;
+          final priceChanged = initPrice != null &&
+              (parsedPrice - initPrice).abs() > 0.001;
+          final stockParsed = int.tryParse(stockController.text.trim());
+          final stockChanged =
+              stockParsed != null && stockParsed != stock;
           context.read<StoreProductsBloc>().add(
-            UpdateStoreProduct(productModel.id!, request),
-          );
-          Navigator.pop(ctx);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('✔ Đã cập nhật sản phẩm'),
-              backgroundColor: _kPrimary,
-              behavior: SnackBarBehavior.floating,
+            SaveStoreProductEdit(
+              token: widget.token,
+              productId: productModel.id!,
+              name: name,
+              description: description,
+              newImageBytes: newImageBytes?.toList(),
+              newImageFilename: newImageFilename,
             ),
           );
+          if (priceChanged || stockChanged) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Giá và số lượng không thể cập nhật từ ứng dụng: máy chủ hiện chưa hỗ trợ thay đổi tồn kho/giá sau khi tạo sản phẩm.',
+                ),
+                backgroundColor: Colors.orange,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
         },
         onCancel: () => Navigator.pop(ctx),
       ),
@@ -299,6 +403,21 @@ class _StoreProductsScreenState extends State<StoreProductsScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return BlocListener<StoreProductsBloc, StoreProductsState>(
+      listenWhen: (prev, curr) =>
+          curr is StoreProductsLoaded && curr.successMessage != null,
+      listener: (context, state) {
+        if (state is StoreProductsLoaded && state.successMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.successMessage!),
+              backgroundColor: _kPrimary,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          context.read<StoreProductsBloc>().add(ClearStoreProductsMessage());
+        }
+      },
+      child: BlocListener<StoreProductsBloc, StoreProductsState>(
       listenWhen: (prev, curr) => curr is StoreProductsError,
       listener: (context, state) {
         if (state is StoreProductsError) {
@@ -444,13 +563,19 @@ class _StoreProductsScreenState extends State<StoreProductsScreen> {
                       if (state is! StoreProductsLoaded) {
                         return const Center(child: Text('Chưa có dữ liệu'));
                       }
+                      final loaded = state;
                       final filteredModels = _applyProductFilter(
-                        state.products,
+                        loaded,
                         _stockFilter,
                         _debouncedQuery,
                       );
                       final filteredDisplay = filteredModels
-                          .map(_fromProductModel)
+                          .map(
+                            (m) => _fromProductModel(
+                              m,
+                              _displayStockFor(loaded, m),
+                            ),
+                          )
                           .toList();
                       return GridView.builder(
                         padding: const EdgeInsets.fromLTRB(
@@ -474,21 +599,24 @@ class _StoreProductsScreenState extends State<StoreProductsScreen> {
                             product: p,
                             onTap: () =>
                                 _showEditProduct(context, productModel),
-                            onHide: () {
-                              if (productModel.id == null) return;
-                              context.read<StoreProductsBloc>().add(
-                                UpdateStoreProduct(
-                                  productModel.id!,
-                                  const UpdateProductRequest(isActive: false),
-                                ),
-                              );
-                            },
+                            onToggleVisibility: productModel.id == null
+                                ? null
+                                : () {
+                                    context.read<StoreProductsBloc>().add(
+                                      ToggleProductVisibility(
+                                        widget.token,
+                                        productModel.id!,
+                                      ),
+                                    );
+                                  },
                             onMarkOutOfStock: () {
-                              if (productModel.id == null) return;
-                              context.read<StoreProductsBloc>().add(
-                                UpdateStoreProduct(
-                                  productModel.id!,
-                                  const UpdateProductRequest(stock: 0),
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Máy chủ hiện chưa hỗ trợ cập nhật tồn kho từ thao tác này.',
+                                  ),
+                                  backgroundColor: Colors.orange,
+                                  behavior: SnackBarBehavior.floating,
                                 ),
                               );
                             },
@@ -530,6 +658,7 @@ class _StoreProductsScreenState extends State<StoreProductsScreen> {
             ),
           ),
         ),
+      ),
       ),
     );
   }
@@ -600,7 +729,7 @@ class _ProductCardSkeleton extends StatelessWidget {
 Color _stockBadgeColor(_StoreProduct p) {
   if (p.status == ProductStatus.hidden) return Colors.grey;
   if (p.stock == 0) return const Color(0xFFD32F2F); // Hết hàng — red
-  if (p.stock > _kStockHighThreshold) return _kPrimary; // Còn hàng — green
+  if (p.stock > _kLowStockMax) return _kPrimary; // Còn hàng — green
   return const Color(0xFFF57C00); // Sắp hết (1–20) — orange
 }
 
@@ -620,13 +749,13 @@ String _statusLabel(ProductStatus s) {
 class _ProductCard extends StatefulWidget {
   final _StoreProduct product;
   final VoidCallback? onTap;
-  final VoidCallback? onHide;
+  final VoidCallback? onToggleVisibility;
   final VoidCallback? onMarkOutOfStock;
 
   const _ProductCard({
     required this.product,
     this.onTap,
-    this.onHide,
+    this.onToggleVisibility,
     this.onMarkOutOfStock,
   });
 
@@ -696,21 +825,13 @@ class _ProductCardState extends State<_ProductCard> {
                       scale: _hover ? 1.04 : 1.0,
                       duration: const Duration(milliseconds: 180),
                       alignment: Alignment.center,
-                      child: Image.asset(
+                      child: _productImageForPath(
                         p.imageAssetPath,
                         width: _kImageWidth,
                         height: _kImageHeight,
-                        fit: BoxFit.cover,
                         cacheWidth: _kCacheWidth,
                         cacheHeight: _kCacheHeight,
-                        errorBuilder: (_, __, ___) => Container(
-                          color: _kPrimaryLight,
-                          child: const Icon(
-                            Icons.inventory_2_rounded,
-                            size: 40,
-                            color: _kPrimary,
-                          ),
-                        ),
+                        fit: BoxFit.cover,
                       ),
                     ),
                     Positioned(
@@ -768,7 +889,8 @@ class _ProductCardState extends State<_ProductCard> {
                       ),
                     ),
                     if (_showQuickActions &&
-                        (widget.onTap != null || widget.onHide != null))
+                        (widget.onTap != null ||
+                            widget.onToggleVisibility != null))
                       Positioned.fill(
                         child: GestureDetector(
                           onTap: _hideQuickActions,
@@ -798,7 +920,7 @@ class _ProductCardState extends State<_ProductCard> {
                                         },
                                       ),
                                     if (widget.onTap != null &&
-                                        widget.onHide != null)
+                                        widget.onToggleVisibility != null)
                                       const SizedBox(width: 8),
                                     if (widget.onTap != null)
                                       _QuickActionButton(
@@ -810,9 +932,9 @@ class _ProductCardState extends State<_ProductCard> {
                                           widget.onTap!();
                                         },
                                       ),
-                                    if (widget.onHide != null)
+                                    if (widget.onToggleVisibility != null)
                                       const SizedBox(width: 8),
-                                    if (widget.onHide != null &&
+                                    if (widget.onToggleVisibility != null &&
                                         p.status != ProductStatus.hidden)
                                       _QuickActionButton(
                                         icon: Icons.visibility_off_rounded,
@@ -820,7 +942,18 @@ class _ProductCardState extends State<_ProductCard> {
                                         color: Colors.grey.shade700,
                                         onTap: () {
                                           _hideQuickActions();
-                                          widget.onHide!();
+                                          widget.onToggleVisibility!();
+                                        },
+                                      ),
+                                    if (widget.onToggleVisibility != null &&
+                                        p.status == ProductStatus.hidden)
+                                      _QuickActionButton(
+                                        icon: Icons.visibility_rounded,
+                                        tooltip: 'Bỏ ẩn',
+                                        color: Colors.grey.shade700,
+                                        onTap: () {
+                                          _hideQuickActions();
+                                          widget.onToggleVisibility!();
                                         },
                                       ),
                                   ],
@@ -1092,8 +1225,10 @@ class _AddProductSheet extends StatefulWidget {
     String description,
     double price,
     int stock,
-    ProductStatus status,
-  )?
+    ProductStatus status, {
+    Uint8List? imageBytes,
+    String? imageFilename,
+  })?
   onSaveToApi;
   final VoidCallback onCancel;
 
@@ -1114,6 +1249,8 @@ class _AddProductSheet extends StatefulWidget {
 class _AddProductSheetState extends State<_AddProductSheet> {
   ProductStatus _selectedStatus = ProductStatus.active;
   bool _imagePicked = false;
+  Uint8List? _pickedBytes;
+  String? _pickedFilename;
   bool _saving = false;
 
   @override
@@ -1162,7 +1299,23 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                 ),
                 const SizedBox(height: kSectionSpacing),
                 GestureDetector(
-                  onTap: () => setState(() => _imagePicked = !_imagePicked),
+                  onTap: () async {
+                    final picker = ImagePicker();
+                    final x = await picker.pickImage(
+                      source: ImageSource.gallery,
+                      maxWidth: 1600,
+                      imageQuality: 85,
+                    );
+                    if (x == null) return;
+                    final bytes = await x.readAsBytes();
+                    if (!mounted) return;
+                    setState(() {
+                      _pickedBytes = bytes;
+                      _pickedFilename =
+                          x.name.isNotEmpty ? x.name : 'san-pham.jpg';
+                      _imagePicked = true;
+                    });
+                  },
                   child: Container(
                     height: 160,
                     width: double.infinity,
@@ -1173,27 +1326,37 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                         color: _kPrimary.withValues(alpha: 0.3),
                       ),
                     ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          _imagePicked
-                              ? Icons.check_circle_rounded
-                              : Icons.add_photo_alternate_rounded,
-                          size: 48,
-                          color: _kPrimary,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _imagePicked ? 'Đã chọn ảnh (demo)' : 'Tải ảnh lên',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: _kPrimary,
+                    clipBehavior: Clip.antiAlias,
+                    child: _pickedBytes != null
+                        ? Image.memory(
+                            _pickedBytes!,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: 160,
+                          )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                _imagePicked
+                                    ? Icons.check_circle_rounded
+                                    : Icons.add_photo_alternate_rounded,
+                                size: 48,
+                                color: _kPrimary,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                _imagePicked
+                                    ? 'Đã chọn ảnh'
+                                    : 'Tải ảnh lên',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: _kPrimary,
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
                 const SizedBox(height: kSectionSpacing),
@@ -1350,13 +1513,23 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                                   );
                                   return;
                                 }
+                                final price =
+                                    _StoreProductsScreenState._parsePrice(
+                                      widget.priceController.text,
+                                    );
+                                if (price <= 0) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Giá phải lớn hơn 0'),
+                                      backgroundColor: Colors.orange,
+                                      behavior: SnackBarBehavior.floating,
+                                    ),
+                                  );
+                                  return;
+                                }
                                 setState(() => _saving = true);
                                 try {
                                   if (widget.onSaveToApi != null) {
-                                    final price =
-                                        _StoreProductsScreenState._parsePrice(
-                                          widget.priceController.text,
-                                        );
                                     final stock =
                                         (int.tryParse(
                                                   widget.qtyController.text,
@@ -1369,6 +1542,8 @@ class _AddProductSheetState extends State<_AddProductSheet> {
                                       price,
                                       stock,
                                       _selectedStatus,
+                                      imageBytes: _pickedBytes,
+                                      imageFilename: _pickedFilename,
                                     );
                                     if (mounted) Navigator.pop(context);
                                   } else if (widget.onSave != null) {
@@ -1447,7 +1622,13 @@ class _EditProductSheet extends StatefulWidget {
   final TextEditingController priceController;
   final TextEditingController stockController;
   final void Function(_StoreProduct updated)? onSave;
-  final void Function(UpdateProductRequest request)? onSaveToApi;
+  final void Function({
+    required String name,
+    required String description,
+    Uint8List? newImageBytes,
+    String? newImageFilename,
+  })?
+  onSaveToApi;
   final VoidCallback onCancel;
 
   const _EditProductSheet({
@@ -1468,14 +1649,14 @@ class _EditProductSheet extends StatefulWidget {
 
 class _EditProductSheetState extends State<_EditProductSheet> {
   late ProductStatus _selectedStatus;
-  String? _imageUrlOverride;
+  Uint8List? _pickedImageBytes;
+  String? _pickedImageFilename;
   bool _saving = false;
 
   @override
   void initState() {
     super.initState();
     _selectedStatus = widget.product.status;
-    _imageUrlOverride = widget.product.imageUrlOverride;
   }
 
   @override
@@ -1532,20 +1713,21 @@ class _EditProductSheetState extends State<_EditProductSheet> {
                       SizedBox(
                         height: 160,
                         width: double.infinity,
-                        child: Image.asset(
-                          _imageUrlOverride ?? productImageAsset(p.name),
-                          fit: BoxFit.cover,
-                          cacheWidth: _kCacheWidth,
-                          cacheHeight: 320,
-                          errorBuilder: (_, __, ___) => Container(
-                            color: _kPrimaryLight,
-                            child: const Icon(
-                              Icons.image_rounded,
-                              size: 48,
-                              color: _kPrimary,
-                            ),
-                          ),
-                        ),
+                        child: _pickedImageBytes != null
+                            ? Image.memory(
+                                _pickedImageBytes!,
+                                height: 160,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              )
+                            : _productImageForPath(
+                                p.imageUrlOverride ?? productImageAsset(p.name),
+                                height: 160,
+                                width: double.infinity,
+                                cacheWidth: _kCacheWidth,
+                                cacheHeight: 320,
+                                fit: BoxFit.cover,
+                              ),
                       ),
                       Positioned(
                         bottom: 8,
@@ -1554,11 +1736,21 @@ class _EditProductSheetState extends State<_EditProductSheet> {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(kRadiusSmall),
                           child: InkWell(
-                            onTap: () {
+                            onTap: () async {
+                              final picker = ImagePicker();
+                              final x = await picker.pickImage(
+                                source: ImageSource.gallery,
+                                maxWidth: 1600,
+                                imageQuality: 85,
+                              );
+                              if (x == null) return;
+                              final bytes = await x.readAsBytes();
+                              if (!mounted) return;
                               setState(() {
-                                _imageUrlOverride = _imageUrlOverride == null
-                                    ? productImageAsset(p.name)
-                                    : null;
+                                _pickedImageBytes = bytes;
+                                _pickedImageFilename = x.name.isNotEmpty
+                                    ? x.name
+                                    : 'san-pham.jpg';
                               });
                             },
                             borderRadius: BorderRadius.circular(kRadiusSmall),
@@ -1734,40 +1926,53 @@ class _EditProductSheetState extends State<_EditProductSheet> {
                         onPressed: _saving
                             ? null
                             : () async {
-                                setState(() => _saving = true);
-                                try {
-                                  if (widget.onSaveToApi != null &&
-                                      widget.productId != null) {
-                                    final name =
-                                        widget.nameController.text
-                                            .trim()
-                                            .isEmpty
-                                        ? p.name
-                                        : widget.nameController.text.trim();
-                                    final priceStr = widget.priceController.text
-                                        .trim();
-                                    final price = priceStr.isEmpty
-                                        ? null
-                                        : _StoreProductsScreenState._parsePrice(
-                                            priceStr,
-                                          );
-                                    final stock = int.tryParse(
-                                      widget.stockController.text,
-                                    );
-                                    widget.onSaveToApi!(
-                                      UpdateProductRequest(
-                                        name: name,
-                                        description: widget.descController.text
-                                            .trim(),
-                                        price: price,
-                                        stock: stock?.clamp(0, 9999),
-                                        isActive:
-                                            _selectedStatus !=
-                                            ProductStatus.hidden,
+                                if (widget.onSaveToApi != null &&
+                                    widget.productId != null) {
+                                  final name =
+                                      widget.nameController.text
+                                          .trim()
+                                          .isEmpty
+                                      ? p.name
+                                      : widget.nameController.text.trim();
+                                  if (name.isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Vui lòng nhập tên sản phẩm',
+                                        ),
+                                        backgroundColor: Colors.orange,
+                                        behavior: SnackBarBehavior.floating,
                                       ),
                                     );
-                                    if (mounted) Navigator.pop(context);
-                                  } else if (widget.onSave != null) {
+                                    return;
+                                  }
+                                  setState(() => _saving = true);
+                                  widget.onSaveToApi!(
+                                    name: name,
+                                    description:
+                                        widget.descController.text.trim(),
+                                    newImageBytes: _pickedImageBytes,
+                                    newImageFilename: _pickedImageFilename,
+                                  );
+                                  if (_selectedStatus != widget.product.status) {
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Trạng thái hiển thị không thể cập nhật từ màn sửa; vui lòng dùng thao tác trên danh sách sản phẩm.',
+                                          ),
+                                          backgroundColor: Colors.orange,
+                                          behavior: SnackBarBehavior.floating,
+                                        ),
+                                      );
+                                    }
+                                  }
+                                  if (mounted) {
+                                    Navigator.pop(context);
+                                  }
+                                } else if (widget.onSave != null) {
+                                  setState(() => _saving = true);
+                                  try {
                                     await Future.delayed(
                                       const Duration(milliseconds: 500),
                                     );
@@ -1798,22 +2003,23 @@ class _EditProductSheetState extends State<_EditProductSheet> {
                                         stock: stock.clamp(0, 9999),
                                         soldCount: widget.product.soldCount,
                                         status: _selectedStatus,
-                                        imageUrlOverride: _imageUrlOverride,
+                                        imageUrlOverride:
+                                            p.imageUrlOverride,
                                       ),
                                     );
-                                  }
-                                } catch (_) {
-                                  if (mounted) {
-                                    setState(() => _saving = false);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Không thể cập nhật sản phẩm. Vui lòng thử lại.',
+                                  } catch (_) {
+                                    if (mounted) {
+                                      setState(() => _saving = false);
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Không thể cập nhật sản phẩm. Vui lòng thử lại.',
+                                          ),
+                                          backgroundColor: Color(0xFFD32F2F),
+                                          behavior: SnackBarBehavior.floating,
                                         ),
-                                        backgroundColor: Color(0xFFD32F2F),
-                                        behavior: SnackBarBehavior.floating,
-                                      ),
-                                    );
+                                      );
+                                    }
                                   }
                                 }
                               },

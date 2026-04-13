@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/store_theme.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
+import '../../repository/store_repository.dart';
 
 class StoreRegisterScreen extends StatefulWidget {
   const StoreRegisterScreen({super.key});
@@ -387,23 +388,28 @@ class _StoreRegisterScreenState extends State<StoreRegisterScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Mock store registration API call
-      await Future.delayed(const Duration(seconds: 3));
-
+      final repo = StoreRepository();
+      await repo.registerStoreOwner(
+        phoneNumber: _phoneController.text.trim(),
+        password: _passwordController.text,
+        fullName: _ownerNameController.text.trim(),
+        storeName: _storeNameController.text.trim(),
+        storeAddress: _storeAddressController.text.trim(),
+        storeDescription:
+            'Giấy phép kinh doanh: ${_businessLicenseController.text.trim()}',
+        storePhoneNumber: _phoneController.text.trim(),
+      );
+      if (!mounted) return;
+      Navigator.pop(
+        context,
+        'Đăng ký thành công. Vui lòng đăng nhập.',
+      );
+    } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đăng ký cửa hàng thành công! Vui lòng chờ duyệt.'),
-            backgroundColor: StoreTheme.primaryColor,
-          ),
-        );
-        Navigator.pop(context); // Back to login
-      }
-    } catch (error) {
-      if (mounted) {
+        final msg = e.toString().replaceFirst(RegExp(r'^Exception: '), '');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Đăng ký thất bại: $error'),
+            content: Text(msg),
             backgroundColor: Colors.red,
           ),
         );

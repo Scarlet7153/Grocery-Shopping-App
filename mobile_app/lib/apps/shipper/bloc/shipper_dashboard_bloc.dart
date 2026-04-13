@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:grocery_shopping_app/apps/shipper/models/shipper_order.dart';
 import 'package:grocery_shopping_app/apps/shipper/repository/shipper_repository.dart';

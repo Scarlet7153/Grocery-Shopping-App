@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/auth/auth_session.dart';
 import '../../../../core/cart/cart_session.dart';
 import '../../../../core/format/formatters.dart';
-import '../orders/customer_orders_screen.dart';
 import '../profile/recipient_info_screen.dart';
 
 class CustomerCartScreen extends StatelessWidget {

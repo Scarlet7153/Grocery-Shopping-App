@@ -415,7 +415,7 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
                 ),
                 Container(
                   padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: Colors.grey.withOpacity(0.1), shape: BoxShape.circle),
+                  decoration: BoxDecoration(color: Colors.grey.withValues(alpha: 0.1), shape: BoxShape.circle),
                   child: const Icon(Icons.show_chart, color: Colors.grey),
                 ),
               ],
@@ -427,7 +427,7 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
                 BarChartData(
                   alignment: BarChartAlignment.spaceAround,
                   maxY: (_weeklyRevenue.reduce((a, b) => a > b ? a : b) * 1.2).clamp(100.0, double.infinity),
-                  barTouchData: BarTouchData(enabled: false),
+                  barTouchData: const BarTouchData(enabled: false),
                   titlesData: FlTitlesData(
                     show: true,
                     bottomTitles: AxisTitles(
@@ -445,9 +445,9 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
                         },
                       ),
                     ),
-                    leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   ),
                   borderData: FlBorderData(show: false),
                   barGroups: [
@@ -470,7 +470,7 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_products == null || _products.isEmpty) {
+    if (_products.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

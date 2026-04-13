@@ -5,7 +5,6 @@ import 'package:grocery_shopping_app/features/admin/domain/repositories/store_re
 import 'package:grocery_shopping_app/features/admin/data/repositories/api_store_repository_impl.dart';
 import 'package:grocery_shopping_app/core/utils/export_service.dart';
 import 'package:grocery_shopping_app/features/orders/data/order_service.dart';
-import 'package:grocery_shopping_app/features/orders/data/order_model.dart';
 
 class StoreManagementScreen extends StatefulWidget {
   const StoreManagementScreen({super.key});
@@ -20,7 +19,6 @@ class _StoreManagementScreenState extends State<StoreManagementScreen> {
   final _currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
   String _searchQuery = '';
   Map<String, double> _storeRevenueMap = {};
-  bool _isLoadingRevenue = false;
 
   @override
   void initState() {
@@ -51,7 +49,6 @@ class _StoreManagementScreenState extends State<StoreManagementScreen> {
       if (!mounted) return;
       setState(() {
         _storeRevenueMap = revenueMap;
-        _isLoadingRevenue = false;
       });
     } catch (e) {
       debugPrint('⚠️ Error loading store revenue (Handled): $e');
@@ -254,7 +251,7 @@ class _StoreManagementScreenState extends State<StoreManagementScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: InkWell(
         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => StoreDetailScreen(store: store))),
@@ -330,7 +327,7 @@ class _StoreManagementScreenState extends State<StoreManagementScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: active ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+        color: active ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(active ? 'Mở cửa' : 'Đóng cửa', style: TextStyle(color: active ? Colors.green[700] : Colors.red[700], fontSize: 11, fontWeight: FontWeight.bold)),

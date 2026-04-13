@@ -36,11 +36,11 @@ class AdminTheme {
     inputDecorationTheme: InputDecorationTheme(
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: primaryColor.withOpacity(0.3)),
+        borderSide: BorderSide(color: primaryColor.withValues(alpha: 0.3)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: primaryColor, width: 2),
+        borderSide: const BorderSide(color: primaryColor, width: 2),
       ),
     ),
   );
@@ -78,14 +78,14 @@ class AdminTheme {
     
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: Colors.white.withOpacity(0.05),
+      fillColor: Colors.white.withValues(alpha: 0.05),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: primaryColor, width: 2),
+        borderSide: const BorderSide(color: primaryColor, width: 2),
       ),
     ),
   );

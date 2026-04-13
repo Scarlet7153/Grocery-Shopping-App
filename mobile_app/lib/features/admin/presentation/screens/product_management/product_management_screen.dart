@@ -130,7 +130,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
         label: Text(label),
         onSelected: (val) => setState(() => _selectedCategory = val ? category : null),
         backgroundColor: Colors.white,
-        selectedColor: Colors.indigo.withOpacity(0.1),
+        selectedColor: Colors.indigo.withValues(alpha: 0.1),
         checkmarkColor: Colors.indigo,
         labelStyle: TextStyle(
           color: isSelected ? Colors.indigo : Colors.black87,
@@ -151,7 +151,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -201,9 +201,9 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: Colors.blue.withOpacity(0.05),
+                        color: Colors.blue.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.blue.withOpacity(0.1)),
+                        border: Border.all(color: Colors.blue.withValues(alpha: 0.1)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -311,7 +311,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: (isActive ? Colors.green : Colors.red).withOpacity(0.1),
+        color: (isActive ? Colors.green : Colors.red).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(

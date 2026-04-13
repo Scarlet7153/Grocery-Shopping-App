@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:grocery_shopping_app/core/enums/app_type.dart';
 import 'package:grocery_shopping_app/features/auth/models/user_model.dart';
 import 'package:grocery_shopping_app/features/admin/domain/repositories/user_repository.dart';
 import 'package:grocery_shopping_app/features/admin/data/repositories/api_user_repository_impl.dart';
-import 'package:grocery_shopping_app/features/admin/presentation/widgets/user_list_item.dart';
 import 'package:grocery_shopping_app/features/admin/presentation/widgets/user_list_item.dart';
 import 'package:grocery_shopping_app/features/admin/presentation/screens/user_management/user_detail_screen.dart';
 import 'package:grocery_shopping_app/core/utils/export_service.dart';
@@ -90,7 +88,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> with Single
                       ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField<UserRole>(
-                        value: selectedRole,
+                        initialValue: selectedRole,
                         decoration: _inputDecoration('Vai trò', Icons.shield_outlined),
                         items: UserRole.values.map((role) {
                           return DropdownMenuItem(

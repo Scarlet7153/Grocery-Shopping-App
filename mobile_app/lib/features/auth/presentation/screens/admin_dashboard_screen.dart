@@ -2,14 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:grocery_shopping_app/features/auth/bloc/auth_bloc.dart';
 import 'package:grocery_shopping_app/features/auth/bloc/auth_state.dart';
-import 'package:grocery_shopping_app/features/auth/bloc/auth_event.dart';
 import 'package:grocery_shopping_app/features/admin/presentation/screens/user_management/user_management_screen.dart';
 import 'package:grocery_shopping_app/features/admin/presentation/screens/store_management/store_management_screen.dart';
 import 'package:grocery_shopping_app/features/admin/presentation/screens/shipper_management/shipper_management_screen.dart';
-import 'package:grocery_shopping_app/features/admin/presentation/screens/product_management/product_management_screen.dart';
 import 'package:grocery_shopping_app/features/admin/presentation/screens/order_management/order_management_screen.dart';
 import 'package:grocery_shopping_app/features/admin/presentation/screens/delivery_management/delivery_management_screen.dart';
-import 'package:grocery_shopping_app/features/admin/presentation/screens/analytics/analytics_screen.dart';
 import 'package:grocery_shopping_app/features/admin/presentation/screens/settings/settings_screen.dart';
 import 'package:grocery_shopping_app/features/admin/domain/repositories/user_repository.dart';
 import 'package:grocery_shopping_app/features/admin/data/repositories/api_user_repository_impl.dart';
@@ -20,7 +17,6 @@ import 'package:grocery_shopping_app/features/orders/data/order_model.dart';
 import 'package:grocery_shopping_app/core/utils/logger.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:grocery_shopping_app/features/auth/models/user_model.dart';
 import 'package:grocery_shopping_app/core/utils/export_service.dart';
 
@@ -139,7 +135,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: Colors.indigo.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                  decoration: BoxDecoration(color: Colors.indigo.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
                   child: const Icon(Icons.shield, color: Colors.indigo, size: 24),
                 ),
                 const SizedBox(width: 12),
@@ -162,7 +158,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     leading: Icon(isSelected ? item['activeIcon'] : item['icon'], color: isSelected ? Colors.indigo : Colors.grey[600]),
                     title: Text(l.translate(item['title']), style: TextStyle(fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, color: isSelected ? Colors.indigo : (Theme.of(context).brightness == Brightness.dark ? Colors.grey[400] : Colors.grey[700]), fontSize: 13)),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    selectedTileColor: Colors.indigo.withOpacity(0.08),
+                    selectedTileColor: Colors.indigo.withValues(alpha: 0.08),
                   ),
                 );
               },
@@ -218,7 +214,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.indigo.withOpacity(0.1),
+              color: Colors.indigo.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.shield_outlined, color: Colors.indigo, size: 20),
@@ -250,7 +246,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -2))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -2))],
       ),
       child: SafeArea(
         child: SizedBox(
@@ -273,7 +269,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         duration: const Duration(milliseconds: 200),
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: isSelected ? Colors.indigo.withOpacity(0.1) : Colors.transparent,
+                          color: isSelected ? Colors.indigo.withValues(alpha: 0.1) : Colors.transparent,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Column(
@@ -480,7 +476,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         gradient: LinearGradient(colors: gradient, begin: Alignment.topLeft, end: Alignment.bottomRight),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
-          BoxShadow(color: gradient.first.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 6)),
+          BoxShadow(color: gradient.first.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 6)),
         ],
       ),
       child: Padding(
@@ -494,7 +490,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
                   child: Icon(icon, color: Colors.white, size: 20),
                 ),
                 Text(trend, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
@@ -508,7 +504,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   child: Text(value, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
                 const SizedBox(height: 2),
-                Text(title, style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 11)),
+                Text(title, style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 11)),
               ],
             ),
           ],
@@ -552,7 +548,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(28),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 20, offset: const Offset(0, 10))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 20, offset: const Offset(0, 10))],
       ),
       child: LineChart(
         LineChartData(
@@ -570,7 +566,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               sideTitles: SideTitles(
                 showTitles: true,
                 getTitlesWidget: (val, meta) {
-                  const titles = ['T-', 'T-', 'T-', 'T-', 'T-', 'Q/A', 'Nay'];
                   // Generate last 7 days labels
                   if (val.toInt() >= 0 && val.toInt() < 7) {
                     final day = now.subtract(Duration(days: 6 - val.toInt()));
@@ -597,7 +592,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               belowBarData: BarAreaData(
                 show: true, 
                 gradient: LinearGradient(
-                  colors: [Colors.indigo.withOpacity(0.2), Colors.indigo.withOpacity(0)],
+                  colors: [Colors.indigo.withValues(alpha: 0.2), Colors.indigo.withValues(alpha: 0)],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
@@ -640,14 +635,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
                         padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(color: (action['color'] as Color).withOpacity(0.1), shape: BoxShape.circle),
+                        decoration: BoxDecoration(color: (action['color'] as Color).withValues(alpha: 0.1), shape: BoxShape.circle),
                         child: Icon(action['icon'] as IconData, color: action['color'] as Color, size: 24),
                       ),
                       const SizedBox(height: 8),
@@ -744,7 +739,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         ),
         child: Row(
           children: [
-            CircleAvatar(radius: 18, backgroundColor: (item['color'] as Color).withOpacity(0.1), child: Icon(item['icon'] as IconData, size: 16, color: item['color'] as Color)),
+            CircleAvatar(radius: 18, backgroundColor: (item['color'] as Color).withValues(alpha: 0.1), child: Icon(item['icon'] as IconData, size: 16, color: item['color'] as Color)),
             const SizedBox(width: 12),
             Expanded(
               child: Column(

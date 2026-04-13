@@ -107,7 +107,7 @@ class _StoreLoginScreenState extends State<StoreLoginScreen> {
           padding: const EdgeInsets.all(16),
 
           decoration: BoxDecoration(
-            color: StoreTheme.primaryColor.withOpacity(0.1),
+            color: StoreTheme.primaryColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(16),
           ),
 
@@ -211,10 +211,19 @@ class _StoreLoginScreenState extends State<StoreLoginScreen> {
         ),
 
         GestureDetector(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const StoreRegisterScreen()),
-          ),
+          onTap: () async {
+            final msg = await Navigator.push<String>(
+              context,
+              MaterialPageRoute(builder: (_) => const StoreRegisterScreen()),
+            );
+            if (!context.mounted || msg == null) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(msg),
+                backgroundColor: StoreTheme.primaryColor,
+              ),
+            );
+          },
 
           child: const Text(
             'Đăng ký ngay',

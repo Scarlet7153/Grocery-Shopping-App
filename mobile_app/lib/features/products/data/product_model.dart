@@ -15,6 +15,8 @@ class ProductModel {
   final String? storeId;
   final String? storeName;
   final bool? isActive;
+  /// Backend: AVAILABLE | OUT_OF_STOCK | HIDDEN (ProductResponse.status)
+  final String? status;
   @JsonKey(name: 'created_at')
   final String? createdAt;
   @JsonKey(name: 'updated_at')
@@ -32,6 +34,7 @@ class ProductModel {
     this.storeId,
     this.storeName,
     this.isActive,
+    this.status,
     this.createdAt,
     this.updatedAt,
   });
@@ -57,6 +60,7 @@ class ProductModel {
       unit = json['unit'] as String?;
     }
 
+    final statusStr = json['status'] as String?;
     return ProductModel(
       id: json['id']?.toString(),
       name: json['name'] as String?,
@@ -68,7 +72,8 @@ class ProductModel {
       unit: unit,
       storeId: (json['storeId'] ?? json['store_id'])?.toString(),
       storeName: json['storeName'] ?? json['store_name'],
-      isActive: json['isActive'] ?? (json['status'] == 'AVAILABLE'),
+      isActive: json['isActive'] ?? (statusStr != 'HIDDEN'),
+      status: statusStr,
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,
     );
@@ -86,6 +91,7 @@ class ProductModel {
     'storeId': storeId,
     'storeName': storeName,
     'isActive': isActive,
+    'status': status,
     'created_at': createdAt,
     'updated_at': updatedAt,
   };

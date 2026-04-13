@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../../auth/models/user_model.dart';
-import '../../../domain/repositories/user_repository.dart';
-import '../../../data/repositories/api_user_repository_impl.dart';
 import '../user_management/user_management_screen.dart';
 
 class CustomerManagementScreen extends StatelessWidget {
@@ -50,7 +48,7 @@ class CustomerManagementScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.1)),
+          border: Border.all(color: color.withValues(alpha: 0.1)),
         ),
         child: Column(
           children: [

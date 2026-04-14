@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/api/api_client.dart';
 import '../../core/theme/store_theme.dart';
 import '../../core/utils/app_localizations.dart';
+import '../../core/utils/log_silencer.dart';
 import '../../core/utils/logger.dart';
 import '../../features/auth/bloc/auth_bloc.dart';
 import '../../features/auth/repository/auth_repository.dart';
@@ -25,11 +26,13 @@ import 'screens/auth/store_register_screen.dart';
 import 'screens/home/store_home_screen.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  AppLogger.initialize();
-  final prefs = await SharedPreferences.getInstance();
-  final apiClient = ApiClient();
-  runApp(StoreApp(prefs: prefs, apiClient: apiClient));
+  await LogSilencer.runAsync(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    AppLogger.initialize();
+    final prefs = await SharedPreferences.getInstance();
+    final apiClient = ApiClient();
+    runApp(StoreApp(prefs: prefs, apiClient: apiClient));
+  });
 }
 
 class StoreApp extends StatelessWidget {

@@ -67,6 +67,19 @@ class AuthRepositoryImpl implements AuthRepository {
       final authResponse = AuthResponseModel.fromJson(response.data);
 
       if (authResponse.isAuthenticated) {
+        // --- ROLE VALIDATION GATEWAY ---
+        // Verify that the user has the correct role for the app they are accessing
+        final returnedRole = authResponse.user?.role.name.toUpperCase();
+        
+        if (appType == AppType.admin && returnedRole != 'ADMIN') {
+          AppLogger.warning('🚫 Access Denied: User with role $returnedRole attempted to log into Admin App');
+          await clearAuthData(); // Ensure no partial session remains
+          throw ServerException(
+            message: 'Tài khoản của bạn không có quyền truy cập vào hệ thống Quản trị.',
+            statusCode: 403,
+          );
+        }
+        
         AppLogger.info('✅ Login successful - User: ${authResponse.user?.fullName}, Role: ${authResponse.user?.role.name}');
         
         await _saveAuthData(authResponse);

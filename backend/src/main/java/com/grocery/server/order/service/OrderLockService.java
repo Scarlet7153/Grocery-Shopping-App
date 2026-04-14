@@ -2,6 +2,7 @@ package com.grocery.server.order.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -12,25 +13,20 @@ import java.util.concurrent.TimeUnit;
  * Service: OrderLockService
  * Mục đích: Distributed lock sử dụng Redis SET NX để ngăn race condition khi nhiều shipper cùng nhận đơn
  * Phase: 6 - Distributed Lock
- * 
- * Cơ chế:
- * - SET NX (Not Exists): Chỉ set key nếu chưa tồn tại
- * - TTL (Time To Live): Tự động expire sau thờigian nhất định
- * - Value unique: Mỗi lock có giá trị unique để tránh xóa nhầm lock của ngườikhác
- * 
- * Flow:
- * 1. Shipper A gọi tryLock(orderId) → SET lock:order:123 "uuid-a" EX 10 NX
- * 2. Nếu return OK → Lock acquired, shipper A có quyền nhận đơn
- * 3. Shipper B gọi tryLock(orderId) → SET lock:order:123 "uuid-b" EX 10 NX
- * 4. Nếu return nil → Lock failed, order đang được xử lý bởi ngườikhác
- * 5. Sau khi xử lý xong, shipper A gọi unlock(orderId, uuid-a) để release lock
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class OrderLockService {
 
     private final StringRedisTemplate redisTemplate;
+
+    @Autowired
+    public OrderLockService(@Autowired(required = false) StringRedisTemplate redisTemplate) {
+        this.redisTemplate = redisTemplate;
+        if (redisTemplate == null) {
+            log.warn("Redis is disabled. OrderLockService will use mock locks (always succeed).");
+        }
+    }
 
     private static final String LOCK_PREFIX = "lock:order:";
     private static final long LOCK_TTL_SECONDS = 10; // 10 giây
@@ -43,6 +39,10 @@ public class OrderLockService {
      * @return LockToken nếu thành công, null nếu lock đã tồn tại
      */
     public LockToken tryLock(Long orderId) {
+        if (redisTemplate == null) {
+            log.trace("Redis disabled, returning mock lock for order {}", orderId);
+            return new LockToken(orderId, "mock-token-" + UUID.randomUUID());
+        }
         String lockKey = LOCK_PREFIX + orderId;
         String lockValue = generateLockValue();
 
@@ -69,6 +69,10 @@ public class OrderLockService {
      * @return LockToken nếu thành công, null nếu lock đã tồn tại
      */
     public LockToken tryLock(Long orderId, long timeoutMs) {
+        if (redisTemplate == null) {
+            log.trace("Redis disabled, returning mock lock for order {}", orderId);
+            return new LockToken(orderId, "mock-token-" + UUID.randomUUID());
+        }
         String lockKey = LOCK_PREFIX + orderId;
         String lockValue = generateLockValue();
 
@@ -95,6 +99,10 @@ public class OrderLockService {
      * @return true nếu unlock thành công
      */
     public boolean unlock(Long orderId, String lockValue) {
+        if (redisTemplate == null) {
+            log.trace("Redis disabled, skipping unlock for order {}", orderId);
+            return true;
+        }
         String lockKey = LOCK_PREFIX + orderId;
 
         // Kiểm tra xem lock có tồn tại và value có khớp không
@@ -142,6 +150,7 @@ public class OrderLockService {
      * @return true nếu đang bị lock
      */
     public boolean isLocked(Long orderId) {
+        if (redisTemplate == null) return false;
         String lockKey = LOCK_PREFIX + orderId;
         String currentValue = redisTemplate.opsForValue().get(lockKey);
         return currentValue != null;
@@ -154,6 +163,7 @@ public class OrderLockService {
      * @return LockValue nếu tồn tại, null nếu không có lock
      */
     public String getLockValue(Long orderId) {
+        if (redisTemplate == null) return null;
         String lockKey = LOCK_PREFIX + orderId;
         return redisTemplate.opsForValue().get(lockKey);
     }
@@ -169,6 +179,7 @@ public class OrderLockService {
         if (token == null) {
             return false;
         }
+        if (redisTemplate == null) return true;
 
         String lockKey = LOCK_PREFIX + token.getOrderId();
         String currentValue = redisTemplate.opsForValue().get(lockKey);

@@ -28,7 +28,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> with Sing
     'Đã hủy',
   ];
 
-  int _discoveredCount = 0;
+  final int _discoveredCount = 0;
   bool _isSyncing = false;
   Future<List<OrderModel>>? _ordersFuture;
 
@@ -46,9 +46,6 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> with Sing
     try {
       await _orderService.discoverRealOrders(
         forceRefresh: force,
-        onProgress: (count) {
-          if (mounted) setState(() => _discoveredCount = count);
-        },
       );
     } catch (e) {
       debugPrint('Sync error: $e');

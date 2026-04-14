@@ -49,26 +49,32 @@ class ApiRoutes {
   static const String orders = '/orders';
   static const String myOrders = '/orders/my-orders';
   static const String myStoreOrders = '/orders/my-store-orders';
+// ─── Orders ───────────────────────────────────────────────────────────
   static const String myDeliveries = '/orders/my-deliveries';
   static const String availableOrders = '/orders/available';
   static const String adminOrders = '/orders/admin/all';
-  static String orderById(dynamic id) => '/orders/$id';
-  static String updateOrderStatus(dynamic id) => '/orders/$id/status';
-  static String assignShipper(dynamic id) => '/orders/$id/assign-shipper';
+  // Dùng String id theo chuẩn của nhánh main
+  static String orderById(String id) => '/orders/$id';
+  static String updateOrderStatus(String id) => '/orders/$id/status';
+  static String assignShipper(String id) => '/orders/$id/assign-shipper';
 
-  // ─── Reviews ──────────────────────────────────────────────────────────
+  // ─── Reviews (Từ nhánh store-fe-api-update) ─────────────────────────
   static const String reviews = '/reviews';
   static const String myReviews = '/reviews/my-reviews';
-  static String reviewById(dynamic id) => '/reviews/$id';
-  static String storeReviews(dynamic storeId) => '/reviews/store/$storeId';
-  static String storeRating(dynamic storeId) =>
-      '/reviews/store/$storeId/rating';
+  static String reviewById(String id) => '/reviews/$id';
+  static String storeReviews(String storeId) => '/reviews/store/$storeId';
+  static String storeRating(String storeId) => '/reviews/store/$storeId/rating';
 
-  // ─── Upload ───────────────────────────────────────────────────────────
+  // ─── Monitoring (Từ nhánh main) ───────────────────────────────────────
+  static const String stats = '/admin/stats';
+  static const String activities = '/admin/activities';
+
+  // ─── Uploads (Gộp từ cả 2 nhánh) ──────────────────────────────────────
   static const String uploadAvatar = '/upload/avatar';
-  static String uploadProductImage(dynamic productId) =>
-      '/upload/product/$productId';
-  static String uploadStoreImage(dynamic storeId) =>
-      '/upload/store/$storeId';
-  static String uploadPOD(dynamic orderId) => '/upload/pod/$orderId';
+  static const String uploadProduct = '/upload/product'; // Từ main
+  
+  // Gộp cách gọi hàm (Có thể sửa lại tên hàm tuỳ theo cách bạn đang dùng ở code gọi API)
+  static String uploadProductImage(String productId) => '/upload/product/$productId'; 
+  static String uploadStoreImage(String storeId) => '/upload/store/$storeId'; 
+  static String uploadPOD(String orderId) => '/upload/pod/$orderId'; // Từ store-fe-api-update
 }

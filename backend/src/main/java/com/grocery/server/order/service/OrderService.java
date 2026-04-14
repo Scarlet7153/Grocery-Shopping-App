@@ -52,7 +52,8 @@ public class OrderService {
 
     /**
      * Tạo đơn hàng mới
-     * @param request Thông tin đơn hàng
+     * 
+     * @param request    Thông tin đơn hàng
      * @param customerId ID khách hàng
      * @return Thông tin đơn hàng vừa tạo
      */
@@ -140,6 +141,7 @@ public class OrderService {
 
     /**
      * Lấy đơn hàng theo ID
+     * 
      * @param orderId ID đơn hàng
      * @return Thông tin đơn hàng
      */
@@ -151,6 +153,7 @@ public class OrderService {
 
     /**
      * Lấy tất cả đơn hàng của khách hàng
+     * 
      * @param customerId ID khách hàng
      * @return Danh sách đơn hàng
      */
@@ -163,6 +166,7 @@ public class OrderService {
 
     /**
      * Lấy tất cả đơn hàng của cửa hàng
+     * 
      * @param storeId ID cửa hàng
      * @return Danh sách đơn hàng
      */
@@ -175,6 +179,7 @@ public class OrderService {
 
     /**
      * Lấy tất cả đơn hàng của cửa hàng thuộc store owner hiện tại
+     * 
      * @param userId ID của store owner
      * @return Danh sách đơn hàng
      */
@@ -199,6 +204,7 @@ public class OrderService {
 
     /**
      * Lấy tất cả đơn hàng của tài xế
+     * 
      * @param shipperId ID tài xế
      * @return Danh sách đơn hàng
      */
@@ -211,6 +217,7 @@ public class OrderService {
 
     /**
      * Lấy danh sách đơn hàng có thể nhận (cho tài xế)
+     * 
      * @return Danh sách đơn hàng đang chờ tài xế
      */
     public List<OrderResponse> getAvailableOrders() {
@@ -222,9 +229,10 @@ public class OrderService {
 
     /**
      * Cập nhật trạng thái đơn hàng
+     * 
      * @param orderId ID đơn hàng
      * @param request Thông tin cập nhật
-     * @param userId ID người thực hiện
+     * @param userId  ID người thực hiện
      * @return Thông tin đơn hàng sau khi cập nhật
      */
     @Transactional
@@ -239,13 +247,13 @@ public class OrderService {
         validateStatusTransition(order, request.getNewStatus(), user);
 
         // Validate required fields
-        if (request.getNewStatus() == OrderStatus.CANCELLED && 
-            (request.getCancelReason() == null || request.getCancelReason().isBlank())) {
+        if (request.getNewStatus() == OrderStatus.CANCELLED &&
+                (request.getCancelReason() == null || request.getCancelReason().isBlank())) {
             throw new BadRequestException("Lý do hủy đơn không được để trống");
         }
 
-        if (request.getNewStatus() == OrderStatus.DELIVERED && 
-            (request.getPodImageUrl() == null || request.getPodImageUrl().isBlank())) {
+        if (request.getNewStatus() == OrderStatus.DELIVERED &&
+                (request.getPodImageUrl() == null || request.getPodImageUrl().isBlank())) {
             throw new BadRequestException("Ảnh chứng minh giao hàng không được để trống");
         }
 
@@ -270,7 +278,8 @@ public class OrderService {
 
     /**
      * Tài xế nhận đơn
-     * @param orderId ID đơn hàng
+     * 
+     * @param orderId   ID đơn hàng
      * @param shipperId ID tài xế
      * @return Thông tin đơn hàng
      */
@@ -389,21 +398,21 @@ public class OrderService {
             case PENDING:
                 if (newStatus == OrderStatus.CONFIRMED) {
                     // Chỉ Store owner mới confirm
-                    if (!user.getRole().equals(User.UserRole.STORE) || 
-                        !order.getStore().getOwner().getId().equals(user.getId())) {
+                    if (!user.getRole().equals(User.UserRole.STORE) ||
+                            !order.getStore().getOwner().getId().equals(user.getId())) {
                         throw new UnauthorizedException("Chỉ chủ cửa hàng mới có thể xác nhận đơn hàng");
                     }
                 } else if (newStatus == OrderStatus.CANCELLED) {
                     // Customer hoặc Store có thể hủy
                     boolean isCustomer = order.getCustomer().getId().equals(user.getId());
-                    boolean isStoreOwner = user.getRole().equals(User.UserRole.STORE) && 
-                                           order.getStore().getOwner().getId().equals(user.getId());
+                    boolean isStoreOwner = user.getRole().equals(User.UserRole.STORE) &&
+                            order.getStore().getOwner().getId().equals(user.getId());
                     if (!isCustomer && !isStoreOwner) {
                         throw new UnauthorizedException("Bạn không có quyền hủy đơn hàng này");
                     }
                 } else {
                     throw new BadRequestException(
-                        "Đơn hàng chỉ có thể chuyển từ PENDING sang CONFIRMED hoặc CANCELLED");
+                            "Đơn hàng chỉ có thể chuyển từ PENDING sang CONFIRMED hoặc CANCELLED");
                 }
                 break;
 
@@ -413,14 +422,14 @@ public class OrderService {
                 } else if (newStatus == OrderStatus.CANCELLED) {
                     // Customer hoặc Store có thể hủy
                     boolean isCustomer = order.getCustomer().getId().equals(user.getId());
-                    boolean isStoreOwner = user.getRole().equals(User.UserRole.STORE) && 
-                                           order.getStore().getOwner().getId().equals(user.getId());
+                    boolean isStoreOwner = user.getRole().equals(User.UserRole.STORE) &&
+                            order.getStore().getOwner().getId().equals(user.getId());
                     if (!isCustomer && !isStoreOwner) {
                         throw new UnauthorizedException("Bạn không có quyền hủy đơn hàng này");
                     }
                 } else {
                     throw new BadRequestException(
-                        "Đơn hàng chỉ có thể chuyển từ CONFIRMED sang PICKING_UP hoặc CANCELLED");
+                            "Đơn hàng chỉ có thể chuyển từ CONFIRMED sang PICKING_UP hoặc CANCELLED");
                 }
                 break;
 
@@ -432,7 +441,7 @@ public class OrderService {
                     }
                 } else {
                     throw new BadRequestException(
-                        "Đơn hàng chỉ có thể chuyển từ PICKING_UP sang DELIVERING");
+                            "Đơn hàng chỉ có thể chuyển từ PICKING_UP sang DELIVERING");
                 }
                 break;
 
@@ -444,7 +453,7 @@ public class OrderService {
                     }
                 } else {
                     throw new BadRequestException(
-                        "Đơn hàng đang giao không thể hủy. Chỉ có thể chuyển sang DELIVERED");
+                            "Đơn hàng đang giao không thể hủy. Chỉ có thể chuyển sang DELIVERED");
                 }
                 break;
 

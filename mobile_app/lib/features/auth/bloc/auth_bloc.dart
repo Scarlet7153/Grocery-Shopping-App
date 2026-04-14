@@ -60,6 +60,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
         AppLogger.info('✅ Login successful for ${user.fullName}');
 
+        // Enforce Admin role for Admin App
+        if (event.appType == AppType.admin && user.role != UserRole.admin) {
+          AppLogger.warning('🚫 Non-admin user ${user.fullName} attempted to login to Admin App');
+          emit(const AuthError(
+            message: 'Bạn không có quyền truy cập vào ứng dụng Admin. Vui lòng sử dụng tài khoản Admin.',
+            errorCode: 'insufficient_permissions',
+          ));
+          return;
+        }
+
         emit(AuthAuthenticated(user: user, token: token));
 
         // Start token refresh timer if needed

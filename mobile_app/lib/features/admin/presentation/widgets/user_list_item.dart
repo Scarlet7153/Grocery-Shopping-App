@@ -35,14 +35,19 @@ class UserListItem extends StatelessWidget {
                 CircleAvatar(
                   radius: 28,
                   backgroundColor: _getRoleColor(user.role).withValues(alpha: 0.2),
-                  child: Text(
-                    user.fullName.substring(0, 1).toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: _getRoleColor(user.role),
-                    ),
-                  ),
+                  backgroundImage: user.avatarUrl != null && user.avatarUrl!.isNotEmpty
+                      ? NetworkImage(user.avatarUrl!)
+                      : null,
+                  child: user.avatarUrl == null || user.avatarUrl!.isEmpty
+                      ? Text(
+                          user.fullName.substring(0, 1).toUpperCase(),
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: _getRoleColor(user.role),
+                          ),
+                        )
+                      : null,
                 ),
                 const SizedBox(width: 16),
                 Expanded(

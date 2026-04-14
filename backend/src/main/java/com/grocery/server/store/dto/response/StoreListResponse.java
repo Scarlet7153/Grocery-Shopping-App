@@ -21,6 +21,7 @@ public class StoreListResponse {
     private String address;
     private Boolean isOpen;
     private String ownerName;
+    private String imageUrl;
     
     /**
      * Chuyển từ Store entity sang StoreListResponse DTO
@@ -32,6 +33,7 @@ public class StoreListResponse {
                 .address(store.getAddress())
                 .isOpen(store.getIsOpen())
                 .ownerName(store.getOwner().getFullName())
+                .imageUrl(store.getImageUrl())
                 .build();
     }
 }

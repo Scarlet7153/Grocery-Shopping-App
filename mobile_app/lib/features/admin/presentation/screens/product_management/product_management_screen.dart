@@ -3,6 +3,9 @@ import 'package:intl/intl.dart';
 import 'package:grocery_shopping_app/features/products/data/product_model.dart';
 import 'package:grocery_shopping_app/features/products/data/product_service.dart';
 import 'package:grocery_shopping_app/core/utils/export_service.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:grocery_shopping_app/core/api/upload_service.dart';
+import 'package:grocery_shopping_app/core/api/api_routes.dart';
 
 class ProductManagementScreen extends StatefulWidget {
   const ProductManagementScreen({super.key});
@@ -13,9 +16,13 @@ class ProductManagementScreen extends StatefulWidget {
 
 class _ProductManagementScreenState extends State<ProductManagementScreen> {
   final ProductService _productService = ProductService();
+  final UploadService _uploadService = UploadService();
+  final ImagePicker _picker = ImagePicker();
+  
   final _currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
   String _searchQuery = '';
   String? _selectedCategory;
+  bool _isUploading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +49,17 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
             child: FutureBuilder<List<ProductModel>>(
               future: _productService.getProducts(search: _searchQuery, category: _selectedCategory),
               builder: (context, snapshot) {
+                if (_isUploading) {
+                  return const Center(child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(color: Colors.indigo),
+                      SizedBox(height: 16),
+                      Text('Đang tải ảnh lên...'),
+                    ],
+                  ));
+                }
+                
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator(color: Colors.indigo));
                 }
@@ -208,7 +226,7 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                 if (value == 'detail') {
                   showDialog(
                     context: context,
-                    builder: (_) => AlertDialog(
+                    builder: (context) => AlertDialog(
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       title: Text(product.name ?? 'Sản phẩm', style: const TextStyle(fontWeight: FontWeight.bold)),
                       content: SingleChildScrollView(
@@ -219,7 +237,13 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                             if (product.imageUrl != null)
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
-                                child: Image.network(product.imageUrl!, height: 150, width: double.infinity, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox()),
+                                child: Image.network(
+                                  product.imageUrl!, 
+                                  height: 150, 
+                                  width: double.infinity, 
+                                  fit: BoxFit.cover, 
+                                  errorBuilder: (_, __, ___) => const Icon(Icons.image_outlined, color: Colors.grey),
+                                ),
                               ),
                             const SizedBox(height: 12),
                             _buildDetailRow('Danh mục', product.category ?? 'N/A'),
@@ -233,10 +257,19 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
                       actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Đóng'))],
                     ),
                   );
+                } else if (value == 'image') {
+                  _pickAndUploadImage(product);
                 }
               },
-              itemBuilder: (_) => const [
-                PopupMenuItem(value: 'detail', child: Row(children: [Icon(Icons.info_outline, size: 18), SizedBox(width: 8), Text('Chi tiết')])),
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'detail', 
+                  child: Row(children: [Icon(Icons.info_outline, size: 18), SizedBox(width: 8), Text('Chi tiết')])
+                ),
+                const PopupMenuItem(
+                  value: 'image', 
+                  child: Row(children: [Icon(Icons.image_outlined, size: 18, color: Colors.blue), SizedBox(width: 8), Text('Đổi ảnh')])
+                ),
               ],
               icon: const Icon(Icons.more_vert, color: Colors.grey),
             ),
@@ -244,6 +277,34 @@ class _ProductManagementScreenState extends State<ProductManagementScreen> {
         ),
       ),
     );
+  }
+
+  void _pickAndUploadImage(ProductModel product) async {
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+      if (image == null) return;
+
+      setState(() => _isUploading = true);
+      
+      final String endpoint = ApiRoutes.uploadProductWithId(product.id.toString());
+      await _uploadService.uploadImage(endpoint, image);
+
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cập nhật ảnh sản phẩm thành công!'), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isUploading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi upload: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   Widget _buildStatusBadge(bool isActive) {

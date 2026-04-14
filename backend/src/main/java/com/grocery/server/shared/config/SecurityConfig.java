@@ -44,9 +44,11 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource))
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/auth/**", "/public/**").permitAll()
                 .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/api/ws/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/units/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/stores", "/stores/open", "/stores/search").permitAll()
                 .requestMatchers(HttpMethod.GET, "/stores/*", "/categories/**", "/products/**").permitAll()
 

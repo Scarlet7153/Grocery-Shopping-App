@@ -21,6 +21,7 @@ public class UserProfileUpdatedEvent implements Serializable {
     private static final long serialVersionUID = 1L;
 
     // Event metadata
+    @Builder.Default
     private String eventType = "USER_PROFILE_UPDATED";
     private Long timestamp;
 

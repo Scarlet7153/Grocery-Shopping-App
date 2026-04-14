@@ -44,10 +44,19 @@ public class CreateProductRequest {
     @AllArgsConstructor
     @Builder
     public static class ProductUnitRequest {
+
+        @NotBlank(message = "Mã đơn vị không được để trống")
+        @Size(max = 50, message = "Mã đơn vị không được vượt quá 50 ký tự")
+        private String unitCode;
         
         @NotBlank(message = "Tên đơn vị không được để trống")
-        @Size(max = 50, message = "Tên đơn vị không được vượt quá 50 ký tự")
+        @Size(max = 100, message = "Tên đơn vị không được vượt quá 100 ký tự")
         private String unitName;
+
+        private Double baseQuantity;
+
+        @Size(max = 20, message = "Đơn vị cơ sở không được vượt quá 20 ký tự")
+        private String baseUnit;
         
         private Double price;
         

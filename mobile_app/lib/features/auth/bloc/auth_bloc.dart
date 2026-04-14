@@ -108,11 +108,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         appType: event.appType,
       );
 
-      if (authResponse.isAuthenticated) {
+      if (authResponse.success) {
         AppLogger.info('✅ Registration successful');
         emit(
-          const AuthRegistrationSuccess(
-            message: 'Đăng ký thành công! Vui lòng đăng nhập.',
+          AuthRegistrationSuccess(
+            message: authResponse.message,
           ),
         );
       } else {
@@ -199,8 +199,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     try {
-      AppLogger.debug('🔍 Checking authentication status');
-
       final isAuthenticated = await _authRepository.isAuthenticated();
 
       if (isAuthenticated) {
@@ -217,7 +215,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           emit(const AuthUnauthenticated());
         }
       } else {
-        AppLogger.debug('🚫 User not authenticated');
         emit(const AuthUnauthenticated());
       }
     } catch (e) {

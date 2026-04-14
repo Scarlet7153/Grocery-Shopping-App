@@ -72,12 +72,14 @@ public class AuthService {
         }
         
         // 4. Tạo user mới
+        boolean isStoreRegistration = request.getRole() == User.UserRole.STORE;
+
         User user = User.builder()
                 .phoneNumber(request.getPhoneNumber())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .fullName(request.getFullName())
                 .role(request.getRole())
-                .status(User.UserStatus.ACTIVE)
+            .status(isStoreRegistration ? User.UserStatus.PENDING : User.UserStatus.ACTIVE)
                 .address(request.getAddress())
                 .avatarUrl(request.getAvatarUrl())
                 .build();
@@ -86,25 +88,25 @@ public class AuthService {
         user = userRepository.save(user);
         
         // 5. Nếu role = STORE → tự động tạo Store
-        if (request.getRole() == User.UserRole.STORE) {
+        if (isStoreRegistration) {
             Store store = Store.builder()
                     .owner(user)
                     .storeName(request.getStoreName())
                     .address(request.getStoreAddress())
-                    .isOpen(true) // Mặc định cửa hàng mở cửa
+                .isOpen(false)
                     .build();
             
             storeRepository.save(store);
             
-            log.info("User registered with STORE role: {} - Store created: {}", 
+            log.info("User registered with STORE role (PENDING): {} - Store created: {}", 
                     user.getPhoneNumber(), store.getStoreName());
         } else {
             log.info("User registered successfully: {} with role {}", 
                     user.getPhoneNumber(), user.getRole());
         }
-        
-        // 6. Tạo JWT token
-        String token = tokenProvider.generateToken(user.getPhoneNumber());
+
+        // 6. Chỉ cấp token ngay cho role không cần phê duyệt
+        String token = isStoreRegistration ? null : tokenProvider.generateToken(user.getPhoneNumber());
         
         // Trả về response
         return AuthResponse.builder()
@@ -134,7 +136,10 @@ public class AuthService {
         
         // Kiểm tra trạng thái tài khoản ACTIVE
         if (user.getStatus() == User.UserStatus.PENDING) {
-            throw new BadRequestException("Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email để kích hoạt.");
+            if (user.getRole() == User.UserRole.STORE) {
+                throw new BadRequestException("Tài khoản cửa hàng đang chờ Admin phê duyệt. Vui lòng thử lại sau.");
+            }
+            throw new BadRequestException("Tài khoản chưa được kích hoạt. Vui lòng liên hệ quản trị viên.");
         }
         
         // Authenticate user

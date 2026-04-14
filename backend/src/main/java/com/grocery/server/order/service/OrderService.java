@@ -12,7 +12,7 @@ import com.grocery.server.order.entity.Order;
 import com.grocery.server.order.entity.Order.OrderStatus;
 import com.grocery.server.order.entity.OrderItem;
 import com.grocery.server.order.repository.OrderRepository;
-import com.grocery.server.product.entity.ProductUnit;
+import com.grocery.server.product.entity.ProductUnitMapping;
 import com.grocery.server.product.repository.ProductRepository;
 import com.grocery.server.shared.exception.BadRequestException;
 import com.grocery.server.shared.exception.ResourceNotFoundException;
@@ -90,42 +90,42 @@ public class OrderService {
                 .build();
 
         for (var itemRequest : request.getItems()) {
-            // Validate ProductUnit
-            ProductUnit productUnit = productRepository.findProductUnitById(itemRequest.getProductUnitId())
+            // Validate ProductUnitMapping
+            ProductUnitMapping productUnitMapping = productRepository.findProductUnitMappingById(itemRequest.getProductUnitMappingId())
                     .orElseThrow(() -> new ResourceNotFoundException(
-                            "Không tìm thấy đơn vị sản phẩm ID: " + itemRequest.getProductUnitId()));
+                    "Không tìm thấy biến thể sản phẩm ID: " + itemRequest.getProductUnitMappingId()));
 
             // Kiểm tra sản phẩm có thuộc cửa hàng này không
-            if (!productUnit.getProduct().getStore().getId().equals(request.getStoreId())) {
+            if (!productUnitMapping.getProduct().getStore().getId().equals(request.getStoreId())) {
                 throw new BadRequestException(
-                        "Sản phẩm '" + productUnit.getProduct().getName() + "' không thuộc cửa hàng này");
+                "Sản phẩm '" + productUnitMapping.getProduct().getName() + "' không thuộc cửa hàng này");
             }
 
             // Kiểm tra tồn kho
-            if (productUnit.getStockQuantity() < itemRequest.getQuantity()) {
+            if (productUnitMapping.getStockQuantity() < itemRequest.getQuantity()) {
                 throw new BadRequestException(
-                        "Sản phẩm '" + productUnit.getProduct().getName() + " - " + productUnit.getUnitName() +
-                                "' chỉ còn " + productUnit.getStockQuantity() + " (yêu cầu: "
-                                + itemRequest.getQuantity() + ")");
+                "Sản phẩm '" + productUnitMapping.getProduct().getName() + " - " + productUnitMapping.getDisplayUnitName() +
+                    "' chỉ còn " + productUnitMapping.getStockQuantity() + " (yêu cầu: " + itemRequest.getQuantity() + ")"
+                );
             }
 
             // Tạo OrderItem
             OrderItem orderItem = OrderItem.builder()
                     .order(order)
-                    .productUnit(productUnit)
+                .productUnitMapping(productUnitMapping)
                     .quantity(itemRequest.getQuantity())
-                    .unitPrice(productUnit.getPrice())
+                .unitPrice(productUnitMapping.getPrice())
                     .build();
 
             orderItems.add(orderItem);
             totalAmount = totalAmount.add(orderItem.getSubtotal());
 
             // Trừ tồn kho
-            productUnit.setStockQuantity(productUnit.getStockQuantity() - itemRequest.getQuantity());
-            log.info("Trừ {} sản phẩm '{}', còn lại: {}",
-                    itemRequest.getQuantity(),
-                    productUnit.getProduct().getName(),
-                    productUnit.getStockQuantity());
+                productUnitMapping.setStockQuantity(productUnitMapping.getStockQuantity() - itemRequest.getQuantity());
+            log.info("Trừ {} sản phẩm '{}', còn lại: {}", 
+                    itemRequest.getQuantity(), 
+                    productUnitMapping.getProduct().getName(), 
+                    productUnitMapping.getStockQuantity());
         }
 
         order.setTotalAmount(totalAmount);
@@ -473,10 +473,10 @@ public class OrderService {
         List<OrderItemResponse> items = order.getOrderItems().stream()
                 .map(item -> OrderItemResponse.builder()
                         .id(item.getId())
-                        .productId(item.getProductUnit().getProduct().getId())
-                        .productName(item.getProductUnit().getProduct().getName())
-                        .productImageUrl(item.getProductUnit().getProduct().getImageUrl())
-                        .unitName(item.getProductUnit().getUnitName())
+                .productId(item.getProductUnitMapping().getProduct().getId())
+                .productName(item.getProductUnitMapping().getProduct().getName())
+                .productImageUrl(item.getProductUnitMapping().getProduct().getImageUrl())
+                .unitName(item.getProductUnitMapping().getDisplayUnitName())
                         .unitPrice(item.getUnitPrice())
                         .quantity(item.getQuantity())
                         .subtotal(item.getSubtotal())

@@ -54,6 +54,10 @@ public class StoreService {
         if (request.getAddress() != null && !request.getAddress().trim().isEmpty()) {
             store.setAddress(request.getAddress());
         }
+
+        if (request.getImageUrl() != null && !request.getImageUrl().trim().isEmpty()) {
+            store.setImageUrl(request.getImageUrl().trim());
+        }
         
         Store updatedStore = storeRepository.save(store);
         log.info("Updated store: {}", updatedStore.getId());

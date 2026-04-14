@@ -5,9 +5,11 @@ import com.grocery.server.product.dto.request.UpdateProductRequest;
 import com.grocery.server.product.dto.response.ProductResponse;
 import com.grocery.server.product.entity.Category;
 import com.grocery.server.product.entity.Product;
-import com.grocery.server.product.entity.ProductUnit;
+import com.grocery.server.product.entity.ProductUnitMapping;
+import com.grocery.server.product.entity.Unit;
 import com.grocery.server.product.repository.CategoryRepository;
 import com.grocery.server.product.repository.ProductRepository;
+import com.grocery.server.product.repository.UnitRepository;
 import com.grocery.server.shared.exception.BadRequestException;
 import com.grocery.server.shared.exception.ResourceNotFoundException;
 import com.grocery.server.shared.exception.UnauthorizedException;
@@ -22,7 +24,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -37,13 +44,15 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
     private final StoreRepository storeRepository;
+    private final UnitRepository unitRepository;
     private final UserRepository userRepository;
     
     /**
      * Lấy tất cả products (Public)
      */
     public List<ProductResponse> getAllProducts() {
-        List<Product> products = productRepository.findAll();
+        // Sử dụng JOIN FETCH để lấy cả units trong 1 query
+        List<Product> products = productRepository.findAllWithUnits();
         log.info("Get all products, total: {}", products.size());
         
         return products.stream()
@@ -55,7 +64,8 @@ public class ProductService {
      * Lấy products theo store ID (Public)
      */
     public List<ProductResponse> getProductsByStore(Long storeId) {
-        List<Product> products = productRepository.findByStoreId(storeId);
+        // Sử dụng JOIN FETCH để lấy cả units trong 1 query
+        List<Product> products = productRepository.findByStoreIdWithUnits(storeId);
         log.info("Get products by store: {}, total: {}", storeId, products.size());
         
         return products.stream()
@@ -142,17 +152,31 @@ public class ProductService {
                 .status(Product.ProductStatus.AVAILABLE)
                 .build();
         
-        // Tạo product units
-        List<ProductUnit> units = request.getUnits().stream()
-                .map(unitReq -> ProductUnit.builder()
-                        .product(product)
-                        .unitName(unitReq.getUnitName())
-                        .price(BigDecimal.valueOf(unitReq.getPrice()))
-                        .stockQuantity(unitReq.getStockQuantity() != null ? unitReq.getStockQuantity() : 0)
-                        .build())
-                .collect(Collectors.toList());
-        
-        product.setUnits(units);
+        // Tạo mapping đơn vị bán cho sản phẩm
+        List<ProductUnitMapping> mappings = new ArrayList<>();
+        for (int i = 0; i < request.getUnits().size(); i++) {
+            CreateProductRequest.ProductUnitRequest unitReq = request.getUnits().get(i);
+            Unit resolvedUnit = resolveUnit(unitReq.getUnitCode(), unitReq.getUnitName());
+            Double inputQuantity = unitReq.getBaseQuantity();
+            BigDecimal baseQuantity = resolveBaseQuantity(inputQuantity, resolvedUnit);
+            String baseUnit = resolveBaseUnit(unitReq.getBaseUnit(), resolvedUnit, baseQuantity);
+            String unitLabel = resolveUnitLabel(unitReq.getUnitName(), resolvedUnit, inputQuantity);
+
+            ProductUnitMapping mapping = ProductUnitMapping.builder()
+                .product(product)
+                .unit(resolvedUnit)
+                .unitLabel(unitLabel)
+                .baseQuantity(baseQuantity)
+                .baseUnit(baseUnit)
+                .price(BigDecimal.valueOf(unitReq.getPrice()))
+                .stockQuantity(unitReq.getStockQuantity() != null ? unitReq.getStockQuantity() : 0)
+                .isDefault(i == 0)
+                .isActive(true)
+                .build();
+            mappings.add(mapping);
+        }
+
+        product.setProductUnitMappings(mappings);
         
         Product savedProduct = productRepository.save(product);
         log.info("Created new product: {} for store: {}", savedProduct.getName(), store.getStoreName());
@@ -192,6 +216,56 @@ public class ProductService {
             Category category = categoryRepository.findById(request.getCategoryId())
                     .orElseThrow(() -> new ResourceNotFoundException("Category", "id", request.getCategoryId()));
             product.setCategory(category);
+        }
+
+        if (request.getUnits() != null && !request.getUnits().isEmpty()) {
+            if (product.getProductUnitMappings() == null) {
+                product.setProductUnitMappings(new ArrayList<>());
+            }
+
+            Map<Long, ProductUnitMapping> existingById = new HashMap<>();
+            for (ProductUnitMapping existingMapping : product.getProductUnitMappings()) {
+                if (existingMapping.getId() != null) {
+                    existingById.put(existingMapping.getId(), existingMapping);
+                }
+            }
+
+            List<ProductUnitMapping> nextMappings = new ArrayList<>();
+
+            for (int i = 0; i < request.getUnits().size(); i++) {
+                UpdateProductRequest.ProductUnitRequest unitReq = request.getUnits().get(i);
+                Unit resolvedUnit = resolveUnit(unitReq.getUnitCode(), unitReq.getUnitName());
+                Double inputQuantity = unitReq.getBaseQuantity();
+                BigDecimal baseQuantity = resolveBaseQuantity(inputQuantity, resolvedUnit);
+                String baseUnit = resolveBaseUnit(unitReq.getBaseUnit(), resolvedUnit, baseQuantity);
+                String unitLabel = resolveUnitLabel(unitReq.getUnitName(), resolvedUnit, inputQuantity);
+
+                ProductUnitMapping mapping = null;
+                if (unitReq.getId() != null && unitReq.getId() > 0) {
+                    mapping = existingById.get(unitReq.getId());
+                }
+                if (mapping == null) {
+                    mapping = ProductUnitMapping.builder()
+                            .product(product)
+                            .unit(resolvedUnit)
+                            .build();
+                } else {
+                    mapping.setUnit(resolvedUnit);
+                }
+
+                mapping.setUnitLabel(unitLabel);
+                mapping.setBaseQuantity(baseQuantity);
+                mapping.setBaseUnit(baseUnit);
+                mapping.setPrice(BigDecimal.valueOf(unitReq.getPrice() != null ? unitReq.getPrice() : 0));
+                mapping.setStockQuantity(unitReq.getStockQuantity() != null ? unitReq.getStockQuantity() : 0);
+                mapping.setIsDefault(Boolean.TRUE.equals(unitReq.getIsDefault()) || i == 0);
+                mapping.setIsActive(unitReq.getIsActive() == null || unitReq.getIsActive());
+
+                nextMappings.add(mapping);
+            }
+
+            product.getProductUnitMappings().clear();
+            product.getProductUnitMappings().addAll(nextMappings);
         }
         
         Product updatedProduct = productRepository.save(product);
@@ -251,12 +325,25 @@ public class ProductService {
      * Helper: Convert Product entity to ProductResponse DTO
      */
     private ProductResponse convertToResponse(Product product) {
-        List<ProductResponse.ProductUnitResponse> unitResponses = product.getUnits().stream()
-                .map(unit -> ProductResponse.ProductUnitResponse.builder()
-                        .id(unit.getId())
-                        .unitName(unit.getUnitName())
-                        .price(unit.getPrice())
-                        .stockQuantity(unit.getStockQuantity())
+        // Lấy danh sách productUnitMappings và chuyển đổi sang response
+        List<ProductUnitMapping> mappings = product.getProductUnitMappings();
+        if (mappings == null) {
+            mappings = new ArrayList<>();
+        }
+        
+        List<ProductResponse.ProductUnitResponse> unitResponses = mappings.stream()
+                .filter(mapping -> mapping != null && mapping.getIsActive())
+                .map(mapping -> ProductResponse.ProductUnitResponse.builder()
+                        .id(mapping.getId())
+                    .unitCode(mapping.getUnit() != null ? mapping.getUnit().getCode() : null)
+                        .unitName(mapping.getUnitLabel() != null ? mapping.getUnitLabel() : 
+                                  (mapping.getUnit() != null ? mapping.getUnit().getName() : ""))
+                    .baseQuantity(mapping.getBaseQuantity())
+                    .baseUnit(mapping.getBaseUnit())
+                    .requiresQuantityInput(mapping.getUnit() != null
+                        && Boolean.TRUE.equals(mapping.getUnit().getRequiresQuantityInput()))
+                        .price(mapping.getPrice())
+                        .stockQuantity(mapping.getStockQuantity())
                         .build())
                 .collect(Collectors.toList());
         
@@ -270,6 +357,90 @@ public class ProductService {
                 .status(product.getStatus().name())
                 .units(unitResponses)
                 .build();
+    }
+
+    private Unit resolveUnit(String unitCode, String unitLabel) {
+        if (unitCode != null && !unitCode.isBlank()) {
+            return unitRepository.findByCode(unitCode.trim().toLowerCase())
+                    .orElseThrow(() -> new ResourceNotFoundException("Unit", "code", unitCode));
+        }
+
+        if (unitLabel == null || unitLabel.isBlank()) {
+            return unitRepository.findByCode("kg")
+                    .orElseThrow(() -> new ResourceNotFoundException("Unit", "code", "kg"));
+        }
+
+        String normalized = unitLabel.trim().toLowerCase();
+        String code = switch (normalized) {
+            case "kg", "kilogram" -> "kg";
+            case "g", "gram", "gam" -> "gram";
+            case "lang", "lạng" -> "lang";
+            case "bo", "bó" -> "bo";
+            case "goi", "gói" -> "goi";
+            case "chai" -> "chai";
+            case "lon" -> "lon";
+            default -> normalized;
+        };
+
+        return unitRepository.findByCode(code)
+                .or(() -> unitRepository.findByNameIgnoreCase(unitLabel.trim()))
+                .or(() -> unitRepository.findBySymbolIgnoreCase(unitLabel.trim()))
+                .orElseGet(() -> unitRepository.findByCode("kg")
+                        .orElseThrow(() -> new ResourceNotFoundException("Unit", "code", "kg")));
+    }
+
+    private BigDecimal resolveBaseQuantity(Double requestedBaseQuantity, Unit unit) {
+        boolean requiresInput = Boolean.TRUE.equals(unit.getRequiresQuantityInput());
+        if (!requiresInput) {
+            if (requestedBaseQuantity == null || requestedBaseQuantity <= 0) {
+                return null;
+            }
+            return BigDecimal.valueOf(requestedBaseQuantity).setScale(4, RoundingMode.HALF_UP);
+        }
+
+        if (requestedBaseQuantity == null || requestedBaseQuantity <= 0) {
+            throw new BadRequestException(
+                    "Đơn vị " + unit.getName() + " yêu cầu nhập độ lớn (baseQuantity > 0)");
+        }
+
+        BigDecimal inputQuantity = BigDecimal.valueOf(requestedBaseQuantity);
+        BigDecimal conversionRate = unit.getConversionRate() != null
+                ? unit.getConversionRate()
+                : BigDecimal.ONE;
+        if (conversionRate.compareTo(BigDecimal.ZERO) <= 0) {
+            conversionRate = BigDecimal.ONE;
+        }
+        return inputQuantity.multiply(conversionRate).setScale(4, RoundingMode.HALF_UP);
+    }
+
+    private String resolveBaseUnit(String requestedBaseUnit, Unit unit, BigDecimal baseQuantity) {
+        if (requestedBaseUnit != null && !requestedBaseUnit.isBlank()) {
+            return requestedBaseUnit.trim();
+        }
+        if (baseQuantity != null && unit.getBaseUnit() != null && !unit.getBaseUnit().isBlank()) {
+            return unit.getBaseUnit();
+        }
+        return null;
+    }
+
+    private String resolveUnitLabel(String requestedLabel, Unit unit, Double inputQuantity) {
+        boolean requiresInput = Boolean.TRUE.equals(unit.getRequiresQuantityInput());
+        if (requiresInput) {
+            if (inputQuantity == null || inputQuantity <= 0) {
+                throw new BadRequestException(
+                        "Đơn vị " + unit.getName() + " yêu cầu nhập độ lớn để tạo nhãn");
+            }
+            return formatQuantity(BigDecimal.valueOf(inputQuantity)) + unit.getSymbol();
+        }
+        if (requestedLabel != null && !requestedLabel.isBlank()) {
+            return requestedLabel.trim();
+        }
+        throw new BadRequestException("Đơn vị " + unit.getName() + " yêu cầu nhập nhãn hiển thị");
+    }
+
+    private String formatQuantity(BigDecimal value) {
+        DecimalFormat df = new DecimalFormat("0.####");
+        return df.format(value);
     }
     
     /**

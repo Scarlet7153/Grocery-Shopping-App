@@ -1,6 +1,5 @@
 package com.grocery.server.product.entity;
 
-import com.grocery.server.order.entity.OrderItem;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 /**
  * Entity: product_units
@@ -63,9 +61,4 @@ public class ProductUnit {
 
     // ========== RELATIONSHIPS ==========
 
-    /**
-     * Các lần xuất hiện trong đơn hàng
-     */
-    @OneToMany(mappedBy = "productUnit", cascade = CascadeType.ALL)
-    private List<OrderItem> orderItems;
 }

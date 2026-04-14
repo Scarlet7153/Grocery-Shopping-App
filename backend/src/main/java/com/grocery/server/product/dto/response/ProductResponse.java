@@ -59,7 +59,11 @@ public class ProductResponse {
     @Builder
     public static class ProductUnitResponse {
         private Long id;
+        private String unitCode;
         private String unitName;
+        private BigDecimal baseQuantity;
+        private String baseUnit;
+        private Boolean requiresQuantityInput;
         private BigDecimal price;
         private Integer stockQuantity;
         

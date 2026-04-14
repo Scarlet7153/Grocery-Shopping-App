@@ -25,6 +25,7 @@ class CustomerApp extends StatelessWidget {
         child: MaterialApp(
           title: 'Đi Chợ Hộ - Khách Hàng',
           theme: CustomerTheme.lightTheme,
+          darkTheme: CustomerTheme.darkTheme,
           debugShowCheckedModeBanner: false,
           home: const CustomerSplashScreen(),
         ),

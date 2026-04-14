@@ -10,13 +10,13 @@ extension AppTypeExtension on AppType {
   String get roleString {
     switch (this) {
       case AppType.customer:
-        return 'customer';
+        return 'CUSTOMER';
       case AppType.store:
-        return 'store_owner';
+        return 'STORE';
       case AppType.shipper:
-        return 'shipper';
+        return 'SHIPPER';
       case AppType.admin:
-        return 'admin';
+        return 'ADMIN';
     }
   }
 

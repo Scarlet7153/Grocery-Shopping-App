@@ -1,59 +1,114 @@
-import 'package:json_annotation/json_annotation.dart';
-
-part 'store_model.g.dart';
-
-@JsonSerializable()
+/// Store data model — maps to backend `StoreResponse`.
 class StoreModel {
-  final String? id;
-  final String? name;
+  final int? id;
+  final int? ownerId;
+  final String? ownerName;
+  final String? ownerPhone;
+  final String? storeName;
   final String? address;
-  final String? status;
-  final double? revenueToday;
-  final int? ordersToday;
   final String? phoneNumber;
+  final String? description;
   final String? imageUrl;
-  final double? latitude;
-  final double? longitude;
+  final bool? isOpen;
+  final String? createdAt;
+  final String? updatedAt;
 
   const StoreModel({
     this.id,
-    this.name,
+    this.ownerId,
+    this.ownerName,
+    this.ownerPhone,
+    this.storeName,
     this.address,
-    this.status,
-    this.revenueToday,
-    this.ordersToday,
     this.phoneNumber,
+    this.description,
     this.imageUrl,
-    this.latitude,
-    this.longitude,
+    this.isOpen,
+    this.createdAt,
+    this.updatedAt,
   });
 
-  factory StoreModel.fromJson(Map<String, dynamic> json) =>
-      _$StoreModelFromJson(json);
-  Map<String, dynamic> toJson() => _$StoreModelToJson(this);
+  factory StoreModel.fromJson(Map<String, dynamic> json) => StoreModel(
+        id: (json['id'] as num?)?.toInt(),
+        ownerId: (json['ownerId'] as num?)?.toInt(),
+        ownerName: json['ownerName'] as String?,
+        ownerPhone: json['ownerPhone'] as String?,
+        storeName: json['storeName'] ?? json['name'] as String?,
+        address: json['address'] as String?,
+        phoneNumber: json['phoneNumber'] as String?,
+        description: json['description'] as String?,
+        imageUrl: json['imageUrl'] as String?,
+        isOpen: json['isOpen'] as bool?,
+        createdAt: json['createdAt'] as String?,
+        updatedAt: json['updatedAt'] as String?,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'ownerId': ownerId,
+        'ownerName': ownerName,
+        'ownerPhone': ownerPhone,
+        'storeName': storeName,
+        'address': address,
+        'phoneNumber': phoneNumber,
+        'description': description,
+        'imageUrl': imageUrl,
+        'isOpen': isOpen,
+        'createdAt': createdAt,
+        'updatedAt': updatedAt,
+      };
+
+  StoreModel copyWith({
+    int? id,
+    int? ownerId,
+    String? ownerName,
+    String? ownerPhone,
+    String? storeName,
+    String? address,
+    String? phoneNumber,
+    String? description,
+    String? imageUrl,
+    bool? isOpen,
+    String? createdAt,
+    String? updatedAt,
+  }) =>
+      StoreModel(
+        id: id ?? this.id,
+        ownerId: ownerId ?? this.ownerId,
+        ownerName: ownerName ?? this.ownerName,
+        ownerPhone: ownerPhone ?? this.ownerPhone,
+        storeName: storeName ?? this.storeName,
+        address: address ?? this.address,
+        phoneNumber: phoneNumber ?? this.phoneNumber,
+        description: description ?? this.description,
+        imageUrl: imageUrl ?? this.imageUrl,
+        isOpen: isOpen ?? this.isOpen,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
 }
 
-@JsonSerializable()
+/// Request body for PUT /stores/{id}.
 class UpdateStoreProfileRequest {
-  final String? name;
+  final String? storeName;
   final String? address;
-  final String? status;
   final String? phoneNumber;
+  final String? description;
   final String? imageUrl;
-  final double? latitude;
-  final double? longitude;
 
   const UpdateStoreProfileRequest({
-    this.name,
+    this.storeName,
     this.address,
-    this.status,
     this.phoneNumber,
+    this.description,
     this.imageUrl,
-    this.latitude,
-    this.longitude,
   });
 
-  factory UpdateStoreProfileRequest.fromJson(Map<String, dynamic> json) =>
-      _$UpdateStoreProfileRequestFromJson(json);
-  Map<String, dynamic> toJson() => _$UpdateStoreProfileRequestToJson(this);
+  Map<String, dynamic> toJson() => {
+        if (storeName != null) 'storeName': storeName,
+        if (address != null) 'address': address,
+        if (phoneNumber != null) 'phoneNumber': phoneNumber,
+        if (description != null) 'description': description,
+        if (imageUrl != null) 'imageUrl': imageUrl,
+      };
 }

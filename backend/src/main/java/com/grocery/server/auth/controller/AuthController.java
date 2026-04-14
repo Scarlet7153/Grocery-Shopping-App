@@ -34,10 +34,14 @@ public class AuthController {
         log.info("POST /api/auth/register - Register new user: {}", request.getPhoneNumber());
         
         AuthResponse authResponse = authService.register(request);
+        String message = "Đăng ký thành công";
+        if ("STORE".equalsIgnoreCase(request.getRole().name())) {
+            message = "Đăng ký cửa hàng thành công. Vui lòng chờ Admin phê duyệt để đăng nhập.";
+        }
         
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Đăng ký thành công", authResponse));
+            .body(ApiResponse.success(message, authResponse));
     }
 
     @PostMapping("/login")

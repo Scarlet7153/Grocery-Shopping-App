@@ -246,10 +246,6 @@ class AuthRepositoryImpl implements AuthRepository {
       final token = await getAuthToken();
       final user = await getCurrentUser();
       final authenticated = token != null && user != null;
-
-      AppLogger.debug(
-        '🔍 Authentication check: ${authenticated ? 'authenticated' : 'not authenticated'}',
-      );
       return authenticated;
     } catch (e) {
       AppLogger.error('💥 Authentication check error: ${e.toString()}', e);
@@ -262,16 +258,11 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final userJson = _prefs.getString(_keyUser);
       if (userJson == null) {
-        AppLogger.debug('📝 No user data in storage');
         return null;
       }
 
       final userMap = jsonDecode(userJson) as Map<String, dynamic>;
       final user = UserModel.fromJson(userMap);
-
-      AppLogger.debug(
-        '👤 Retrieved user: ${user.fullName} (${user.role.name})',
-      );
       return user;
     } catch (e) {
       AppLogger.error('💥 Error retrieving user data: ${e.toString()}', e);
@@ -283,11 +274,6 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<String?> getAuthToken() async {
     try {
       final token = _prefs.getString(_keyAccessToken);
-      if (token != null) {
-        AppLogger.debug('🎫 Auth token retrieved from storage');
-      } else {
-        AppLogger.debug('🚫 No auth token in storage');
-      }
       return token;
     } catch (e) {
       AppLogger.error('💥 Error retrieving auth token: ${e.toString()}', e);
@@ -302,6 +288,7 @@ class AuthRepositoryImpl implements AuthRepository {
         _prefs.remove(_keyUser),
         _prefs.remove(_keyAccessToken),
         _prefs.remove(_keyUserId),
+        _apiClient.clearTokens(),
       ]);
 
       AppLogger.info('🧹 Auth data cleared from storage');

@@ -1,6 +1,7 @@
 package com.grocery.server.store.dto.response;
 
 import com.grocery.server.store.entity.Store;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,8 +23,9 @@ public class StoreResponse {
     private String ownerPhone;
     private String storeName;
     private String address;
-    private Boolean isOpen;
     private String imageUrl;
+    private LocalDateTime createdAt;
+    private Boolean isOpen;
     
     /**
      * Chuyển từ Store entity sang StoreResponse DTO
@@ -36,8 +38,9 @@ public class StoreResponse {
                 .ownerPhone(store.getOwner().getPhoneNumber())
                 .storeName(store.getStoreName())
                 .address(store.getAddress())
-                .isOpen(store.getIsOpen())
                 .imageUrl(store.getImageUrl())
+                .createdAt(store.getCreatedAt())
+                .isOpen(store.getIsOpen())
                 .build();
     }
 }

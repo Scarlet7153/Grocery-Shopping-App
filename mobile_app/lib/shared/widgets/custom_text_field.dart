@@ -114,7 +114,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
       child: TextFormField(
         controller: widget.controller,
         focusNode: _focusNode,
-        validator: (_) => null,
+        validator: _runValidator,
         onChanged: _onTextChanged,
         obscureText: widget.isPassword ? _obscureText : false,
         keyboardType: widget.keyboardType,
@@ -144,6 +144,25 @@ class _CustomTextFieldState extends State<CustomTextField> {
       _validationError = (error != null && error.isNotEmpty) ? error : null;
     });
     return _validationError == null;
+  }
+
+  String? _runValidator(String? value) {
+    final error = widget.validator?.call(value);
+    final normalizedError =
+        (error != null && error.isNotEmpty) ? error : null;
+
+    if (normalizedError != _validationError) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          _validationError = normalizedError;
+        });
+      });
+    }
+
+    // Return a non-null marker so FormState.validate() can block submit.
+    // Actual message rendering is handled by _buildErrorText().
+    return normalizedError != null ? ' ' : null;
   }
 
   Widget _buildErrorText() {

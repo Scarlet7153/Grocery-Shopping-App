@@ -84,21 +84,31 @@ public class CloudinaryUploadService {
         validateImageFile(file);
         
         // Upload options
-        Map<String, Object> uploadOptions = ObjectUtils.asMap(
+        Map<String, Object> uploadOptions = buildUploadOptions(folder);
+        
+        // Upload file
+        Map<String, Object> uploadResult = executeUpload(file, uploadOptions);
+        
+        String imageUrl = uploadResult.get("secure_url").toString();
+        log.info("Image uploaded successfully. URL: {}", imageUrl);
+        
+        return imageUrl;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> buildUploadOptions(String folder) {
+        return ObjectUtils.asMap(
             "folder", "grocery-app/" + folder,
             "resource_type", "image",
             "use_filename", true,
             "unique_filename", true,
             "overwrite", false
         );
-        
-        // Upload file
-        Map<?, ?> uploadResult = cloudinary.uploader().upload(file.getBytes(), uploadOptions);
-        
-        String imageUrl = uploadResult.get("secure_url").toString();
-        log.info("Image uploaded successfully. URL: {}", imageUrl);
-        
-        return imageUrl;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> executeUpload(MultipartFile file, Map<String, Object> uploadOptions) throws IOException {
+        return cloudinary.uploader().upload(file.getBytes(), uploadOptions);
     }
 
     /**

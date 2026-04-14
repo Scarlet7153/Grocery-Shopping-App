@@ -21,4 +21,6 @@ public class UpdateStoreRequest {
 
     @Size(max = 500, message = "Địa chỉ không được quá 500 ký tự")
     private String address;
+
+    private String imageUrl;
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/location/province_api.dart';
+import '../../services/province_api_v2.dart';
 import '../../../../core/theme/customer_theme.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../../bloc/customer_auth_bloc.dart';
@@ -22,7 +23,7 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
   bool _isLoading = false;
   bool _agreeToTerms = false;
 
-  final _provinceApi = ProvinceApi();
+  final _provinceApi = ProvinceApiV2();
   List<LocationItem> _provinces = [];
   List<LocationItem> _districts = [];
   List<LocationItem> _wards = [];
@@ -57,8 +58,19 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
     _updateAddressText();
     if (item == null) return;
     final districts = await _provinceApi.getDistricts(item.code);
-    if (mounted) {
-      setState(() => _districts = districts);
+    if (!mounted) return;
+    if (districts.isEmpty) {
+      final wards = await _provinceApi.getWardsByProvince(item.code);
+      if (!mounted) return;
+      setState(() {
+        _districts = [];
+        _wards = wards;
+      });
+    } else {
+      setState(() {
+        _districts = districts;
+        _wards = [];
+      });
     }
   }
 
@@ -82,11 +94,12 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
   }
 
   void _updateAddressText() {
-    final parts = [
-      _selectedWard?.name,
-      _selectedDistrict?.name,
-      _selectedProvince?.name,
-    ].where((e) => e != null && e.isNotEmpty).map((e) => e!).toList();
+    final parts = <String>[
+      if (_selectedWard?.name.isNotEmpty == true) _selectedWard!.name,
+      if (_districts.isNotEmpty && _selectedDistrict?.name.isNotEmpty == true)
+        _selectedDistrict!.name,
+      if (_selectedProvince?.name.isNotEmpty == true) _selectedProvince!.name,
+    ];
     _addressController.text = parts.join(', ');
   }
 
@@ -241,20 +254,25 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
         onChanged: _isLoadingLocation ? null : _onProvinceChanged,
         prefixIcon: Icons.location_city_outlined,
       ),
-      const SizedBox(height: 16),
-      _buildLocationDropdown(
-        label: 'Quận/Huyện *',
-        value: _selectedDistrict,
-        items: _districts,
-        onChanged: _selectedProvince == null ? null : _onDistrictChanged,
-        prefixIcon: Icons.map_outlined,
-      ),
+      if (_districts.isNotEmpty) ...[
+        const SizedBox(height: 16),
+        _buildLocationDropdown(
+          label: 'Quận/Huyện *',
+          value: _selectedDistrict,
+          items: _districts,
+          onChanged: _selectedProvince == null ? null : _onDistrictChanged,
+          prefixIcon: Icons.map_outlined,
+        ),
+      ],
       const SizedBox(height: 16),
       _buildLocationDropdown(
         label: 'Phường/Xã *',
         value: _selectedWard,
         items: _wards,
-        onChanged: _selectedDistrict == null ? null : _onWardChanged,
+        onChanged:
+            (_districts.isNotEmpty ? (_selectedDistrict == null) : (_selectedProvince == null))
+                ? null
+                : _onWardChanged,
         prefixIcon: Icons.place_outlined,
         validator: (value) {
           if (value == null) {

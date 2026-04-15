@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
@@ -9,6 +9,9 @@ import '../../../../shared/widgets/snackbar_utils.dart';
 import '../../../../core/auth/auth_session.dart';
 import '../auth/customer_login_screen.dart';
 import 'recipient_info_screen.dart';
+import '../cart/customer_payment_method_screen.dart';
+import '../../shared/customer_payment_method.dart';
+import '../../shared/customer_payment_preferences.dart';
 
 class CustomerProfileScreen extends StatefulWidget {
   const CustomerProfileScreen({super.key});
@@ -229,7 +232,24 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                   title: const Text(
                     'Ph\u01b0\u01a1ng th\u1ee9c thanh to\u00e1n',
                   ),
-                  onTap: () {},
+                  subtitle: ValueListenableBuilder<CustomerPaymentMethod>(
+                    valueListenable: CustomerPaymentPreferences.method,
+                    builder: (context, method, _) => Text(method.label),
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () async {
+                    final selected =
+                        await Navigator.of(context).push<CustomerPaymentMethod>(
+                      MaterialPageRoute(
+                        builder: (_) => CustomerPaymentMethodScreen(
+                          initial: CustomerPaymentPreferences.method.value,
+                        ),
+                      ),
+                    );
+                    if (selected != null) {
+                      CustomerPaymentPreferences.method.value = selected;
+                    }
+                  },
                 ),
                 const Divider(height: 1),
                 ListTile(

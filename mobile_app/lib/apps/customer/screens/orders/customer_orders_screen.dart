@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/format/formatters.dart';
-import '../../../../core/auth/auth_session.dart';
 import '../../../../core/network/api_client.dart';
+import 'customer_order_detail_screen.dart';
 
 class CustomerOrdersScreen extends StatefulWidget {
   const CustomerOrdersScreen({super.key});
@@ -15,6 +15,11 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
   bool _loading = true;
   String? _error;
   List<Map<String, dynamic>> _orders = const [];
+
+  num _asNum(dynamic v) {
+    if (v is num) return v;
+    return num.tryParse(v?.toString() ?? '') ?? 0;
+  }
 
   @override
   void initState() {
@@ -38,11 +43,8 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
       }
     } catch (e) {
       _error = 'Kh\u00f4ng th\u1ec3 t\u1ea3i \u0111\u01a1n h\u00e0ng';
-      _orders = AuthSession.localOrders;
+      _orders = const [];
     } finally {
-      if (_orders.isEmpty && AuthSession.localOrders.isNotEmpty) {
-        _orders = AuthSession.localOrders;
-      }
       if (mounted) {
         setState(() => _loading = false);
       }
@@ -96,74 +98,87 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2F80ED).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.receipt_long,
-                          color: Color(0xFF2F80ED),
-                        ),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () async {
+                    if (id.isEmpty) return;
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => CustomerOrderDetailScreen(orderId: id),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                    );
+                    await _loadOrders();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2F80ED).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.receipt_long,
+                            color: Color(0xFF2F80ED),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '\u0110\u01a1n #$id',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              if (storeName.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    storeName,
+                                    style: const TextStyle(
+                                      color: Colors.black54,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              if (createdAt.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    createdAt,
+                                    style: const TextStyle(
+                                      color: Colors.black38,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              '\u0110\u01a1n #$id',
+                              formatVnd(_asNum(total)),
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
-                                fontSize: 14,
+                                color: Colors.red,
                               ),
                             ),
-                            if (storeName.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 4),
-                                child: Text(
-                                  storeName,
-                                  style: const TextStyle(
-                                    color: Colors.black54,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                            if (createdAt.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 4),
-                                child: Text(
-                                  createdAt,
-                                  style: const TextStyle(
-                                    color: Colors.black38,
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              ),
+                            const SizedBox(height: 6),
+                            _StatusChip(status: status),
                           ],
                         ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            formatVnd(total as num),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: Colors.red,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          _StatusChip(status: status),
-                        ],
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               );
@@ -189,6 +204,9 @@ class _StatusChip extends StatelessWidget {
         break;
       case 'DELIVERING':
         color = Colors.orange;
+        break;
+      case 'PICKING_UP':
+        color = Colors.deepOrange;
         break;
       case 'CONFIRMED':
         color = Colors.blue;

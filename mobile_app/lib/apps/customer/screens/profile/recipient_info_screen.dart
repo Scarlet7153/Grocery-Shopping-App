@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 
 import '../../../../core/auth/auth_session.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../../shared/widgets/snackbar_utils.dart';
 import 'recipient_address_form_screen.dart';
 
 class RecipientInfoScreen extends StatefulWidget {
@@ -22,6 +25,49 @@ class _RecipientInfoScreenState extends State<RecipientInfoScreen> {
   void initState() {
     super.initState();
     _loadFromSession();
+  }
+
+  Future<void> _syncProfileToBackend() async {
+    final token = AuthSession.token;
+    if (token == null || token.isEmpty) return;
+
+    final fullName = (AuthSession.fullName == null || AuthSession.fullName!.isEmpty)
+        ? 'Khách hàng'
+        : AuthSession.fullName!;
+    final payload = <String, dynamic>{
+      'fullName': fullName,
+      'address': (AuthSession.address ?? '').toString(),
+      'avatarUrl': AuthSession.avatarUrl,
+    };
+
+    try {
+      final res = await ApiClient.dio.put('/users/profile', data: payload);
+      final data = res.data;
+      if (data is Map && data['success'] == true && data['data'] is Map) {
+        final profile = Map<String, dynamic>.from(data['data'] as Map);
+        AuthSession.fullName = (profile['fullName'] ?? fullName).toString();
+        AuthSession.address = (profile['address'] ?? AuthSession.address ?? '').toString();
+        AuthSession.avatarUrl = (profile['avatarUrl'] ?? AuthSession.avatarUrl ?? '').toString();
+        if (AuthSession.avatarUrl != null && AuthSession.avatarUrl!.isEmpty) {
+          AuthSession.avatarUrl = null;
+        }
+        return;
+      }
+    } on DioException catch (e) {
+      final data = e.response?.data;
+      if (mounted) {
+        SnackBarUtils.showError(
+          context: context,
+          message: (data is Map && data['message'] != null)
+              ? data['message'].toString()
+              : 'Không thể cập nhật địa chỉ',
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        SnackBarUtils.showError(context: context, message: 'Không thể cập nhật địa chỉ');
+      }
+    }
   }
 
   void _loadFromSession() {
@@ -156,6 +202,7 @@ class _RecipientInfoScreenState extends State<RecipientInfoScreen> {
         AuthSession.defaultOtherReceiverPhone = _defaultOtherReceiverPhone;
         AuthSession.defaultOtherReceiverTitle = _defaultOtherReceiverTitle;
       });
+      await _syncProfileToBackend();
     }
   }
 
@@ -190,6 +237,7 @@ class _RecipientInfoScreenState extends State<RecipientInfoScreen> {
         _selectedIndex = 1;
       }
     });
+    await _syncProfileToBackend();
   }
 
   void _syncExtraToSession() {
@@ -276,7 +324,7 @@ class _RecipientInfoScreenState extends State<RecipientInfoScreen> {
                 width: double.infinity,
                 height: 48,
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     final all = [
                       _SavedAddress(name: name, phone: phone, address: address),
                       ..._extraAddresses,
@@ -285,6 +333,7 @@ class _RecipientInfoScreenState extends State<RecipientInfoScreen> {
                       AuthSession.address = all[_selectedIndex].address;
                     }
                     AuthSession.selectedAddressIndex = _selectedIndex;
+                    await _syncProfileToBackend();
                     Navigator.pop(context);
                   },
                   child: const Text('Xác nhận'),

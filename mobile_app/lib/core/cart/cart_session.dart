@@ -5,6 +5,7 @@ import '../../features/customer/home/data/product_model.dart';
 class CartItem {
   CartItem({
     required this.productId,
+    required this.productUnitMappingId,
     required this.name,
     required this.unitPrice,
     required this.imageUrl,
@@ -13,6 +14,9 @@ class CartItem {
   });
 
   final int productId;
+  /// Backend expects `productUnitMappingId` when creating an order.
+  /// We default to the first unit of the product in UI flows.
+  final int productUnitMappingId;
   final String name;
   final num unitPrice;
   final String imageUrl;
@@ -22,6 +26,7 @@ class CartItem {
   CartItem copyWith({int? quantity}) {
     return CartItem(
       productId: productId,
+      productUnitMappingId: productUnitMappingId,
       name: name,
       unitPrice: unitPrice,
       imageUrl: imageUrl,
@@ -42,6 +47,7 @@ class CartSession {
     int quantity = 1,
     num? unitPrice,
   }) {
+    final unitMappingId = product.units.isNotEmpty ? product.units.first.id : 0;
     final current = List<CartItem>.from(items.value);
     final index = current.indexWhere((item) => item.productId == product.id);
     if (index >= 0) {
@@ -53,6 +59,7 @@ class CartSession {
       current.add(
         CartItem(
           productId: product.id,
+          productUnitMappingId: unitMappingId,
           name: product.name,
           unitPrice: unitPrice ?? product.displayPrice,
           imageUrl: product.imageUrl,

@@ -12,9 +12,6 @@ class OrderService {
 
   final ApiClient _client;
 
-  // Local persistence simulation for Admin Dashboard (Clearing as per user request)
-  static final List<OrderModel> _mockOrders = [];
-
   /// GET /orders/my-store-orders — backend không hỗ trợ page/limit/status query.
   Future<List<OrderModel>> getStoreOrders() async {
     try {
@@ -136,10 +133,10 @@ class OrderService {
       });
 
       _cachedDiscoveredOrders = finalOrders;
-      return finalOrders.isNotEmpty ? finalOrders : _mockOrders;
+      return finalOrders;
     } catch (e) {
       debugPrint('❌ Lỗi trong quá trình khám phá Đơn hàng theo User: $e');
-      return _cachedDiscoveredOrders ?? _mockOrders;
+      return _cachedDiscoveredOrders ?? <OrderModel>[];
     }
   }
 
@@ -281,25 +278,15 @@ class OrderService {
   }
 
   Future<bool> createOrderSimulated(OrderModel order) async {
-    // Create a copy with generated ID and timestamp
-    final newOrder = OrderModel(
-      id: 1000 + _mockOrders.length + 1,
-      status: order.status ?? 'PENDING',
-      totalAmount: order.totalAmount,
-      customerName: order.customerName,
-      customerPhone: order.customerPhone,
-      storeName: order.storeName,
-      shipperName: order.shipperName,
-      createdAt: DateTime.now().toIso8601String(),
-      items: order.items,
+    throw const ApiException(
+      message: 'Backend chưa hỗ trợ tạo đơn hàng từ Admin UI',
     );
-    _mockOrders.insert(0, newOrder);
-    return true;
   }
 
   Future<bool> deleteOrderSimulated(int id) async {
-    _mockOrders.removeWhere((o) => o.id == id);
-    return true;
+    throw const ApiException(
+      message: 'Backend chưa hỗ trợ xóa đơn hàng từ Admin UI',
+    );
   }
 
   /// PATCH /orders/{id}/status — body: newStatus, optional cancelReason / podImageUrl.

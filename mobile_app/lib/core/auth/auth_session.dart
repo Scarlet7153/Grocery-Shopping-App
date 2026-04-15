@@ -4,7 +4,6 @@ class AuthSession {
   static String? address;
   static String? phoneNumber;
   static String? avatarUrl;
-  static List<Map<String, dynamic>> localOrders = [];
   static List<Map<String, dynamic>> savedAddresses = [];
   static int selectedAddressIndex = 0;
   static bool defaultHasOtherReceiver = false;
@@ -18,7 +17,6 @@ class AuthSession {
     address = null;
     phoneNumber = null;
     avatarUrl = null;
-    localOrders = [];
     savedAddresses = [];
     selectedAddressIndex = 0;
     defaultHasOtherReceiver = false;

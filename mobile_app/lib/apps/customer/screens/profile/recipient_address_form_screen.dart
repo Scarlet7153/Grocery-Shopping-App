@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../../core/auth/auth_session.dart';
 import '../../../../core/location/province_api.dart';
+import '../../services/province_api_v2.dart';
 
 class RecipientAddressResult {
   final String address;
@@ -51,7 +52,7 @@ class RecipientAddressFormScreen extends StatefulWidget {
 class _RecipientAddressFormScreenState
     extends State<RecipientAddressFormScreen> {
   final _houseController = TextEditingController();
-  final _provinceApi = ProvinceApi();
+  final _provinceApi = ProvinceApiV2();
   List<LocationItem> _provinces = [];
   List<LocationItem> _districts = [];
   List<LocationItem> _wards = [];
@@ -97,18 +98,16 @@ class _RecipientAddressFormScreenState
   }
 
   String _normalizeLocationName(String value) {
-    final lower = value.toLowerCase();
-    final cleaned = lower
-        .replaceAll('thành phố', '')
-        .replaceAll('tỉnh', '')
-        .replaceAll('tp', '')
-        .replaceAll('q.', '')
-        .replaceAll('quận', '')
-        .replaceAll('huyện', '')
-        .replaceAll('phường', '')
-        .replaceAll('xã', '')
-        .replaceAll(RegExp(r'[^a-z0-9]'), '');
-    return cleaned;
+    var s = value.trim().toLowerCase();
+    s = s.replaceAll(RegExp(r'[àáạảãâầấậẩẫăằắặẳẵ]'), 'a');
+    s = s.replaceAll(RegExp(r'[èéẹẻẽêềếệểễ]'), 'e');
+    s = s.replaceAll(RegExp(r'[ìíịỉĩ]'), 'i');
+    s = s.replaceAll(RegExp(r'[òóọỏõôồốộổỗơờớợởỡ]'), 'o');
+    s = s.replaceAll(RegExp(r'[ùúụủũưừứựửữ]'), 'u');
+    s = s.replaceAll(RegExp(r'[ỳýỵỷỹ]'), 'y');
+    s = s.replaceAll(RegExp(r'[đ]'), 'd');
+    s = s.replaceAll(RegExp(r'[^a-z0-9]'), '');
+    return s;
   }
 
   LocationItem? _findByName(List<LocationItem> items, String? name) {
@@ -134,16 +133,18 @@ class _RecipientAddressFormScreenState
         _selectedProvince = matched;
         final districts = await _provinceApi.getDistricts(matched.code);
         _districts = districts;
-        if (_initialDistrictName != null) {
+        if (_districts.isEmpty) {
+          _wards = await _provinceApi.getWardsByProvince(matched.code);
+          _selectedWard = _findByName(_wards, _initialWardName ?? _initialDistrictName) ??
+              (_wards.isNotEmpty ? _wards.first : null);
+        } else if (_initialDistrictName != null) {
           final districtMatched =
               _findByName(_districts, _initialDistrictName) ?? _districts.first;
           _selectedDistrict = districtMatched;
-          final wards = await _provinceApi.getWards(districtMatched.code);
-          _wards = wards;
+          _wards = await _provinceApi.getWards(districtMatched.code);
           if (_initialWardName != null) {
-            final wardMatched =
-                _findByName(_wards, _initialWardName) ?? _wards.first;
-            _selectedWard = wardMatched;
+            _selectedWard = _findByName(_wards, _initialWardName) ??
+                (_wards.isNotEmpty ? _wards.first : null);
           }
         }
       }
@@ -162,8 +163,19 @@ class _RecipientAddressFormScreenState
     });
     if (item == null) return;
     final districts = await _provinceApi.getDistricts(item.code);
-    if (mounted) {
-      setState(() => _districts = districts);
+    if (!mounted) return;
+    if (districts.isEmpty) {
+      final wards = await _provinceApi.getWardsByProvince(item.code);
+      if (!mounted) return;
+      setState(() {
+        _districts = [];
+        _wards = wards;
+      });
+    } else {
+      setState(() {
+        _districts = districts;
+        _wards = [];
+      });
     }
   }
 
@@ -181,9 +193,11 @@ class _RecipientAddressFormScreenState
   }
 
   void _onComplete() {
-    if (_selectedProvince == null || _selectedDistrict == null) {
+    if (_selectedProvince == null ||
+        (_districts.isNotEmpty && _selectedDistrict == null) ||
+        _selectedWard == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng chọn tỉnh và quận/huyện')),
+        const SnackBar(content: Text('Vui lòng chọn đầy đủ địa chỉ')),
       );
       return;
     }
@@ -197,8 +211,8 @@ class _RecipientAddressFormScreenState
 
     final addressParts = <String>[
       house,
-      if (_selectedWard != null) _selectedWard!.name,
-      _selectedDistrict!.name,
+      _selectedWard!.name,
+      if (_selectedDistrict != null) _selectedDistrict!.name,
       _selectedProvince!.name,
     ];
     final address = addressParts.join(', ');
@@ -247,21 +261,21 @@ class _RecipientAddressFormScreenState
                     items: _provinces,
                     onChanged: _loading ? null : _onProvinceChanged,
                   ),
-                  const SizedBox(height: 12),
-                  _buildDropdown(
-                    label: 'Quận/Huyện',
-                    value: _selectedDistrict,
-                    items: _districts,
-                    onChanged: _selectedProvince == null
-                        ? null
-                        : _onDistrictChanged,
-                  ),
+                  if (_districts.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    _buildDropdown(
+                      label: 'Quận/Huyện',
+                      value: _selectedDistrict,
+                      items: _districts,
+                      onChanged: _selectedProvince == null ? null : _onDistrictChanged,
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   _buildDropdown(
                     label: 'Phường/Xã',
                     value: _selectedWard,
                     items: _wards,
-                    onChanged: _selectedDistrict == null
+                    onChanged: (_districts.isNotEmpty ? (_selectedDistrict == null) : (_selectedProvince == null))
                         ? null
                         : _onWardChanged,
                   ),
@@ -321,7 +335,7 @@ class _RecipientAddressFormScreenState
                         children: [
                           Expanded(
                             child: Text(
-                              'Người nhận: ${_formatReceiverName()} - $_otherReceiverPhone',
+                              'NgÆ°á»i nháº­n: ${_formatReceiverName()} - $_otherReceiverPhone',
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                               ),

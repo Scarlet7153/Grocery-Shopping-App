@@ -33,7 +33,7 @@ public class OrderItem {
 
 
     @Column(nullable = false)
-    private Integer quantity;
+    private BigDecimal quantity;
 
 
     @Column(name = "unit_price", nullable = false, precision = 10, scale = 2)
@@ -41,6 +41,6 @@ public class OrderItem {
 
 
     public BigDecimal getSubtotal() {
-        return unitPrice.multiply(BigDecimal.valueOf(quantity));
+        return unitPrice.multiply(quantity);
     }
 }

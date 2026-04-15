@@ -90,6 +90,8 @@ public class OrderService {
                 .build();
 
         for (var itemRequest : request.getItems()) {
+            BigDecimal requestedQuantity = itemRequest.getQuantity();
+
             // Validate ProductUnitMapping
             ProductUnitMapping productUnitMapping = productRepository.findProductUnitMappingById(itemRequest.getProductUnitMappingId())
                     .orElseThrow(() -> new ResourceNotFoundException(
@@ -102,18 +104,27 @@ public class OrderService {
             }
 
             // Kiểm tra tồn kho
-            if (productUnitMapping.getStockQuantity() < itemRequest.getQuantity()) {
+            BigDecimal availableStock = BigDecimal.valueOf(productUnitMapping.getStockQuantity());
+            if (availableStock.compareTo(requestedQuantity) < 0) {
                 throw new BadRequestException(
                 "Sản phẩm '" + productUnitMapping.getProduct().getName() + " - " + productUnitMapping.getDisplayUnitName() +
-                    "' chỉ còn " + productUnitMapping.getStockQuantity() + " (yêu cầu: " + itemRequest.getQuantity() + ")"
+                    "' chỉ còn " + productUnitMapping.getStockQuantity() + " (yêu cầu: " + requestedQuantity + ")"
                 );
+            }
+
+            int deductedStock;
+            try {
+                deductedStock = requestedQuantity.intValueExact();
+            } catch (ArithmeticException ex) {
+                throw new BadRequestException(
+                        "Số lượng đặt cho biến thể phải là số nguyên do tồn kho hiện được quản lý theo đơn vị nguyên");
             }
 
             // Tạo OrderItem
             OrderItem orderItem = OrderItem.builder()
                     .order(order)
                 .productUnitMapping(productUnitMapping)
-                    .quantity(itemRequest.getQuantity())
+                    .quantity(requestedQuantity)
                 .unitPrice(productUnitMapping.getPrice())
                     .build();
 
@@ -121,9 +132,9 @@ public class OrderService {
             totalAmount = totalAmount.add(orderItem.getSubtotal());
 
             // Trừ tồn kho
-                productUnitMapping.setStockQuantity(productUnitMapping.getStockQuantity() - itemRequest.getQuantity());
+                productUnitMapping.setStockQuantity(productUnitMapping.getStockQuantity() - deductedStock);
             log.info("Trừ {} sản phẩm '{}', còn lại: {}", 
-                    itemRequest.getQuantity(), 
+                    requestedQuantity, 
                     productUnitMapping.getProduct().getName(), 
                     productUnitMapping.getStockQuantity());
         }

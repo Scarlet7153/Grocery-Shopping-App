@@ -1,12 +1,14 @@
 package com.grocery.server.order.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
 
 /**
  * DTO: CreateOrderItemRequest
@@ -30,6 +32,6 @@ public class CreateOrderItemRequest {
      * Số lượng mua
      */
     @NotNull(message = "Số lượng không được để trống")
-    @Positive(message = "Số lượng phải lớn hơn 0")
-    private Integer quantity;
+    @DecimalMin(value = "0.01", message = "Số lượng phải lớn hơn 0")
+    private BigDecimal quantity;
 }

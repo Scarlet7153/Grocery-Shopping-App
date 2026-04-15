@@ -91,6 +91,7 @@ import '../../core/theme/admin_theme.dart';
 import '../../core/api/api_client.dart' as global_api;
 import '../../core/utils/logger.dart';
 import '../../core/utils/app_localizations.dart';
+import '../../core/utils/log_silencer.dart';
 
 import '../../features/auth/bloc/auth_bloc.dart';
 import '../../features/auth/repository/auth_repository_impl.dart';
@@ -102,13 +103,12 @@ import '../../features/auth/presentation/screens/admin_dashboard_screen.dart';
 import 'screens/auth/admin_splash_screen.dart'; 
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  
-  AppLogger.initialize();
-  
-  final prefs = await SharedPreferences.getInstance();
-  
-  runApp(AdminApp(prefs: prefs));
+  await LogSilencer.runAsync(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    AppLogger.initialize();
+    final prefs = await SharedPreferences.getInstance();
+    runApp(AdminApp(prefs: prefs));
+  });
 }
 
 class AdminApp extends StatelessWidget {

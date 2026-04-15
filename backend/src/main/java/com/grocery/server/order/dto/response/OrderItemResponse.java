@@ -50,7 +50,7 @@ public class OrderItemResponse {
     /**
      * Số lượng mua
      */
-    private Integer quantity;
+    private BigDecimal quantity;
 
     /**
      * Thành tiền (unitPrice * quantity)

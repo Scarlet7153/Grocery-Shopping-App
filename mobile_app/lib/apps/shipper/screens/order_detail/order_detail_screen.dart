@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../bloc/shipper_dashboard_bloc.dart';
 import '../../models/shipper_order.dart';
 import '../../repository/shipper_repository.dart';
+import '../../services/shipper_realtime_stomp_service.dart';
 import '../../../../core/theme/shipper_theme.dart';
 import '../delivery/proof_of_delivery_screen.dart';
 
@@ -19,17 +22,88 @@ class OrderDetailScreen extends StatefulWidget {
 class _OrderDetailScreenState extends State<OrderDetailScreen> {
   late ShipperOrder _order;
   bool _isLoading = false;
+  bool _isRealtimeSyncing = false;
+  StreamSubscription<ShipperRealtimeEvent>? _realtimeSubscription;
+  final ShipperRealtimeStompService _realtimeService =
+      ShipperRealtimeStompService();
 
   @override
   void initState() {
     super.initState();
     _order = widget.order;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _initRealtimeStreaming();
+      }
+    });
+  }
+
+  Future<void> _initRealtimeStreaming() async {
+    _realtimeSubscription?.cancel();
+    _realtimeSubscription = _realtimeService.events.listen((event) {
+      if (!_isEventForCurrentOrder(event)) return;
+
+      switch (event.type) {
+        case ShipperRealtimeEventType.orderAccepted:
+        case ShipperRealtimeEventType.orderStatusChanged:
+          _refreshOrderFromRealtime();
+          break;
+        case ShipperRealtimeEventType.error:
+          debugPrint('OrderDetail STOMP error: ${event.message}');
+          break;
+        case ShipperRealtimeEventType.connected:
+        case ShipperRealtimeEventType.disconnected:
+        case ShipperRealtimeEventType.orderCreated:
+        case ShipperRealtimeEventType.profileUpdated:
+          break;
+      }
+    });
+
+    await _realtimeService.connect();
+  }
+
+  bool _isEventForCurrentOrder(ShipperRealtimeEvent event) {
+    final payload = event.payload;
+    if (payload == null) return false;
+
+    final rawOrderId = payload['orderId'] ?? payload['id'];
+    final eventOrderId = rawOrderId is int
+        ? rawOrderId
+        : int.tryParse(rawOrderId?.toString() ?? '');
+
+    return eventOrderId == _order.id;
+  }
+
+  Future<void> _refreshOrderFromRealtime() async {
+    if (!mounted || _isRealtimeSyncing) return;
+
+    _isRealtimeSyncing = true;
+    try {
+      final repository = context.read<ShipperRepository>();
+      final refreshed = await repository.getOrderById(_order.id);
+      if (!mounted || refreshed == null) return;
+
+      setState(() {
+        _order = refreshed;
+      });
+    } catch (e) {
+      debugPrint('Realtime refresh failed in OrderDetail: $e');
+    } finally {
+      _isRealtimeSyncing = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _realtimeSubscription?.cancel();
+    _realtimeService.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ShipperTheme.backgroundColor,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
       appBar: AppBar(
         title: Text('Đơn #${_order.id}'),
         backgroundColor: ShipperTheme.primaryColor,
@@ -240,7 +314,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                     color: ShipperTheme.primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.delivery_dining,
                     color: ShipperTheme.primaryColor,
                     size: 22,
@@ -306,7 +380,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            ..._order.items.map((item) => _buildItemRow(item)).toList(),
+            ..._order.items.map((item) => _buildItemRow(item)),
           ],
         ),
       ),

@@ -24,7 +24,7 @@ class CustomerAuthRepository {
       if (data is Map && data['success'] == true) {
         final token = (data['data']?['token'] ?? '') as String;
         if (token.isNotEmpty) {
-          AuthSession.token = token;
+          await AuthSession.persistToken(token);
           await _loadProfile();
         }
         return true;
@@ -32,15 +32,15 @@ class CustomerAuthRepository {
       if (data is Map && data['message'] != null) {
         throw AuthException(data['message'].toString());
       }
-      throw AuthException('Đăng nhập thất bại');
+      throw AuthException('Login failed');
     } on DioException catch (e) {
       final data = e.response?.data;
       if (data is Map && data['message'] != null) {
         throw AuthException(data['message'].toString());
       }
-      throw AuthException('Không thể kết nối đến máy chủ');
+      throw AuthException('Cannot connect to server');
     } catch (_) {
-      throw AuthException('Đăng nhập thất bại');
+      throw AuthException('Login failed');
     }
     // return false;
   }
@@ -67,7 +67,7 @@ class CustomerAuthRepository {
       if (data is Map && data['success'] == true) {
         final token = (data['data']?['token'] ?? '') as String;
         if (token.isNotEmpty) {
-          AuthSession.token = token;
+          await AuthSession.persistToken(token);
           await _loadProfile();
         }
         return true;
@@ -75,17 +75,50 @@ class CustomerAuthRepository {
       if (data is Map && data['message'] != null) {
         throw AuthException(data['message'].toString());
       }
-      throw AuthException('Đăng ký thất bại');
+      throw AuthException('Sign up failed');
     } on DioException catch (e) {
       final data = e.response?.data;
       if (data is Map && data['message'] != null) {
         throw AuthException(data['message'].toString());
       }
-      throw AuthException('Không thể kết nối đến máy chủ');
+      throw AuthException('Cannot connect to server');
     } catch (_) {
-      throw AuthException('Đăng ký thất bại');
+      throw AuthException('Sign up failed');
     }
     // return false;
+  }
+
+  Future<bool> tryRestoreSession() async {
+    await AuthSession.restore();
+    final token = AuthSession.token;
+
+    if (token == null || token.isEmpty) {
+      return false;
+    }
+
+    try {
+      final response = await ApiClient.dio.get('/auth/me');
+      final data = response.data;
+      if (data is Map && data['data'] is Map) {
+        final profile = data['data'] as Map;
+        _applyProfile(profile);
+        return true;
+      }
+      await AuthSession.clearPersistedToken();
+      AuthSession.clear();
+      return false;
+    } on DioException catch (e) {
+      final statusCode = e.response?.statusCode ?? 0;
+      if (statusCode == 401 || statusCode == 403) {
+        await AuthSession.clearPersistedToken();
+        AuthSession.clear();
+        return false;
+      }
+      // Keep existing token for transient failures (timeout/offline/server down).
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<void> _loadProfile() async {
@@ -93,13 +126,20 @@ class CustomerAuthRepository {
       final response = await ApiClient.dio.get('/auth/me');
       final data = response.data;
       if (data is Map && data['data'] is Map) {
-        final profile = data['data'] as Map;
-        AuthSession.fullName = (profile['fullName'] ?? '').toString();
-        AuthSession.address = (profile['address'] ?? '').toString();
-        AuthSession.phoneNumber = (profile['phoneNumber'] ?? '').toString();
+        _applyProfile(data['data'] as Map);
       }
     } catch (_) {
       // ignore profile fetch errors
+    }
+  }
+
+  void _applyProfile(Map profile) {
+    AuthSession.fullName = (profile['fullName'] ?? '').toString();
+    AuthSession.address = (profile['address'] ?? '').toString();
+    AuthSession.phoneNumber = (profile['phoneNumber'] ?? '').toString();
+    AuthSession.avatarUrl = (profile['avatarUrl'] ?? '').toString();
+    if (AuthSession.avatarUrl != null && AuthSession.avatarUrl!.isEmpty) {
+      AuthSession.avatarUrl = null;
     }
   }
 }

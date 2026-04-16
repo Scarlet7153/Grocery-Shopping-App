@@ -81,8 +81,26 @@ Map<String, dynamic> _$OrderItemModelToJson(OrderItemModel instance) =>
 
 UpdateOrderStatusRequest _$UpdateOrderStatusRequestFromJson(
   Map<String, dynamic> json,
-) => UpdateOrderStatusRequest(status: json['status'] as String);
+) => UpdateOrderStatusRequest(
+      newStatus: json['newStatus'] as String,
+      cancelReason: json['cancelReason'] as String?,
+      podImageUrl: json['podImageUrl'] as String?,
+    );
 
 Map<String, dynamic> _$UpdateOrderStatusRequestToJson(
   UpdateOrderStatusRequest instance,
-) => <String, dynamic>{'status': instance.status};
+) {
+  final val = <String, dynamic>{
+    'newStatus': instance.newStatus,
+  };
+
+  void writeNotNull(String key, dynamic value) {
+    if (value != null) {
+      val[key] = value;
+    }
+  }
+
+  writeNotNull('cancelReason', instance.cancelReason);
+  writeNotNull('podImageUrl', instance.podImageUrl);
+  return val;
+}

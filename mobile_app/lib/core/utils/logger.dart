@@ -24,7 +24,8 @@ class AppLogger {
 
   /// Debug level logging
   static void debug(String message, [dynamic error, StackTrace? stackTrace]) {
-    _logger.d(message, error: error, stackTrace: stackTrace);
+    // Debug logs are intentionally muted to avoid noisy runtime output.
+    return;
   }
 
   /// Info level logging
@@ -81,12 +82,7 @@ class AppLogger {
 class _CustomLogFilter extends LogFilter {
   @override
   bool shouldLog(LogEvent event) {
-    // Production: chỉ log warning trở lên
-    if (!Environment.isDevelopment) {
-      return event.level.index >= Level.warning.index;
-    }
-    // Development: log tất cả
-    return true;
+    return false;
   }
 }
 

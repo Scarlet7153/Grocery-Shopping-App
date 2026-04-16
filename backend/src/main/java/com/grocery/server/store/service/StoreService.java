@@ -10,6 +10,7 @@ import com.grocery.server.store.entity.Store;
 import com.grocery.server.store.repository.StoreRepository;
 import com.grocery.server.user.entity.User;
 import com.grocery.server.user.repository.UserRepository;
+import com.grocery.server.review.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -30,6 +31,7 @@ public class StoreService {
 
     private final StoreRepository storeRepository;
     private final UserRepository userRepository;
+    private final ReviewRepository reviewRepository;
 
     /**
      * Cập nhật thông tin cửa hàng (chỉ owner mới được phép)
@@ -38,27 +40,33 @@ public class StoreService {
     public StoreResponse updateStore(Long storeId, UpdateStoreRequest request) {
         Store store = storeRepository.findById(storeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Store", "id", storeId));
-        
+
         User currentUser = getCurrentUser();
-        
+
         // Kiểm tra quyền: chỉ owner mới được cập nhật
         if (!store.getOwner().getId().equals(currentUser.getId())) {
             throw new UnauthorizedException("Bạn không có quyền cập nhật cửa hàng này");
         }
-        
+
         // Cập nhật thông tin
         if (request.getStoreName() != null && !request.getStoreName().trim().isEmpty()) {
             store.setStoreName(request.getStoreName());
         }
-        
+
         if (request.getAddress() != null && !request.getAddress().trim().isEmpty()) {
             store.setAddress(request.getAddress());
         }
-        
+
+        if (request.getImageUrl() != null && !request.getImageUrl().trim().isEmpty()) {
+            store.setImageUrl(request.getImageUrl().trim());
+        }
+
         Store updatedStore = storeRepository.save(store);
         log.info("Updated store: {}", updatedStore.getId());
-        
-        return StoreResponse.fromEntity(updatedStore);
+
+        Double avgRating = reviewRepository.calculateAverageRating(storeId);
+        Long totalReviews = reviewRepository.countByStoreId(storeId);
+        return StoreResponse.fromEntity(updatedStore, avgRating, totalReviews);
     }
 
     /**
@@ -66,11 +74,13 @@ public class StoreService {
      */
     public StoreResponse getMyStore() {
         User currentUser = getCurrentUser();
-        
+
         Store store = storeRepository.findByOwnerId(currentUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Store", "ownerId", currentUser.getId()));
-        
-        return StoreResponse.fromEntity(store);
+
+        Double avgRating = reviewRepository.calculateAverageRating(store.getId());
+        Long totalReviews = reviewRepository.countByStoreId(store.getId());
+        return StoreResponse.fromEntity(store, avgRating, totalReviews);
     }
 
     /**
@@ -79,8 +89,10 @@ public class StoreService {
     public StoreResponse getStoreById(Long storeId) {
         Store store = storeRepository.findById(storeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Store", "id", storeId));
-        
-        return StoreResponse.fromEntity(store);
+
+        Double avgRating = reviewRepository.calculateAverageRating(storeId);
+        Long totalReviews = reviewRepository.countByStoreId(storeId);
+        return StoreResponse.fromEntity(store, avgRating, totalReviews);
     }
 
     /**
@@ -88,9 +100,13 @@ public class StoreService {
      */
     public List<StoreListResponse> getAllStores() {
         List<Store> stores = storeRepository.findAll();
-        
+
         return stores.stream()
-                .map(StoreListResponse::fromEntity)
+                .map(store -> {
+                    Double avgRating = reviewRepository.calculateAverageRating(store.getId());
+                    Long totalReviews = reviewRepository.countByStoreId(store.getId());
+                    return StoreListResponse.fromEntity(store, avgRating, totalReviews);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -99,9 +115,13 @@ public class StoreService {
      */
     public List<StoreListResponse> getOpenStores() {
         List<Store> stores = storeRepository.findByIsOpen(true);
-        
+
         return stores.stream()
-                .map(StoreListResponse::fromEntity)
+                .map(store -> {
+                    Double avgRating = reviewRepository.calculateAverageRating(store.getId());
+                    Long totalReviews = reviewRepository.countByStoreId(store.getId());
+                    return StoreListResponse.fromEntity(store, avgRating, totalReviews);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -110,14 +130,18 @@ public class StoreService {
      */
     public List<StoreListResponse> searchStores(String keyword) {
         List<Store> stores = storeRepository.findByStoreNameContainingIgnoreCase(keyword);
-        
+
         // Nếu không tìm thấy theo tên, thử tìm theo địa chỉ
         if (stores.isEmpty()) {
             stores = storeRepository.findByAddressContainingIgnoreCase(keyword);
         }
-        
+
         return stores.stream()
-                .map(StoreListResponse::fromEntity)
+                .map(store -> {
+                    Double avgRating = reviewRepository.calculateAverageRating(store.getId());
+                    Long totalReviews = reviewRepository.countByStoreId(store.getId());
+                    return StoreListResponse.fromEntity(store, avgRating, totalReviews);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -128,21 +152,23 @@ public class StoreService {
     public StoreResponse toggleStoreStatus(Long storeId) {
         Store store = storeRepository.findById(storeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Store", "id", storeId));
-        
+
         User currentUser = getCurrentUser();
-        
+
         // Kiểm tra quyền: chỉ owner mới được toggle
         if (!store.getOwner().getId().equals(currentUser.getId())) {
             throw new UnauthorizedException("Bạn không có quyền thay đổi trạng thái cửa hàng này");
         }
-        
+
         // Toggle trạng thái
         store.setIsOpen(!store.getIsOpen());
         Store updatedStore = storeRepository.save(store);
-        
+
         log.info("Toggled store status: {} to {}", storeId, updatedStore.getIsOpen());
-        
-        return StoreResponse.fromEntity(updatedStore);
+
+        Double avgRating = reviewRepository.calculateAverageRating(storeId);
+        Long totalReviews = reviewRepository.countByStoreId(storeId);
+        return StoreResponse.fromEntity(updatedStore, avgRating, totalReviews);
     }
 
     /**

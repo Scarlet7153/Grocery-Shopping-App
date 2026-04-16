@@ -65,7 +65,7 @@ class CustomerAuthBloc extends Bloc<CustomerAuthEvent, CustomerAuthState> {
       if (result) {
         emit(CustomerAuthSuccess());
       } else {
-        emit(CustomerAuthFailure('Sai số điện thoại hoặc mật khẩu'));
+        emit(CustomerAuthFailure('Invalid phone number or password'));
       }
     } catch (e) {
       emit(CustomerAuthFailure(e.toString()));
@@ -89,7 +89,7 @@ class CustomerAuthBloc extends Bloc<CustomerAuthEvent, CustomerAuthState> {
       if (result) {
         emit(CustomerAuthSuccess());
       } else {
-        emit(CustomerAuthFailure('Đăng ký thất bại'));
+        emit(CustomerAuthFailure('Sign up failed'));
       }
     } catch (e) {
       emit(CustomerAuthFailure(e.toString()));

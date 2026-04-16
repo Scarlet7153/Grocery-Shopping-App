@@ -1,6 +1,8 @@
 package com.grocery.server.review.repository;
 
 import com.grocery.server.review.entity.Review;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,6 +24,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
      * @return Danh sách đánh giá theo cửa hàng
      */
     List<Review> findByStoreId(Long storeId);
+
+    Page<Review> findByStoreId(Long storeId, Pageable pageable);
 
     /**
      * Tìm đánh giá theo ID người đánh giá

@@ -1,94 +1,154 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../home/store_home_screen.dart';
+import '../../../../core/enums/app_type.dart';
 import '../../../../core/theme/store_theme.dart';
+import '../../../../features/auth/bloc/auth_bloc.dart';
+import '../../../../features/auth/bloc/auth_event.dart';
+import '../../../../features/auth/bloc/auth_state.dart';
+import '../../../../features/auth/models/user_model.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
-
-import '../../block/store_auth_bloc.dart';
+import '../../utils/store_localizations.dart';
 import 'store_register_screen.dart';
 
 class StoreLoginScreen extends StatefulWidget {
   const StoreLoginScreen({super.key});
-
   @override
   State<StoreLoginScreen> createState() => _StoreLoginScreenState();
 }
 
 class _StoreLoginScreenState extends State<StoreLoginScreen> {
   final _formKey = GlobalKey<FormState>();
-
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
-
   bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<StoreAuthBloc, StoreAuthState>(
+    return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        if (state is StoreAuthLoading) {
-          setState(() {
-            _isLoading = true;
-          });
+        if (state is AuthLoading) setState(() => _isLoading = true);
+        if (state is AuthAuthenticated) {
+          setState(() => _isLoading = false);
+          if (state.user.role == UserRole.store) {
+            Navigator.pushReplacementNamed(context, '/store/home');
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(context.storeTr('store_no_permission')),
+                backgroundColor: Colors.red));
+          }
         }
-
-        if (state is StoreAuthSuccess) {
-          setState(() {
-            _isLoading = false;
-          });
-
-          final token = state.data["token"];
-
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => StoreHomeScreen(token: token)),
-          );
-        }
-
-        if (state is StoreAuthError) {
-          setState(() {
-            _isLoading = false;
-          });
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
-          );
+        if (state is AuthError) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(localizeStoreAuthMessage(context, state.message)),
+              backgroundColor: Colors.red));
         }
       },
-
       child: Scaffold(
-        backgroundColor: StoreTheme.backgroundColor,
-
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
         body: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
-
             child: Form(
               key: _formKey,
-
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-
                 children: [
                   const SizedBox(height: 40),
-
-                  _buildHeader(),
-
-                  const SizedBox(height: 48),
-
-                  _buildLoginForm(),
-
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                        color: StoreTheme.primaryColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(16)),
+                    child: const Icon(Icons.store,
+                        size: 48, color: StoreTheme.primaryColor),
+                  ),
+                  const SizedBox(height: 24),
+                    Text(context.storeTr('store_login_title'),
+                      style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: StoreTheme.primaryColor)),
+                  const SizedBox(height: 8),
+                    Text(context.storeTr('store_login_subtitle'),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant)),
                   const SizedBox(height: 32),
-
-                  _buildLoginButton(),
-
-                  const SizedBox(height: 16),
-
-                  _buildRegisterLink(),
-
-                  const SizedBox(height: 16),
-
-                  _buildForgotPasswordLink(),
+                  CustomTextField(
+                      label: context.storeTr('phone_number'),
+                      hint: context.storeTr('phone_hint'),
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      prefixIcon: Icons.phone,
+                      validator: (v) =>
+                        v == null || v.isEmpty
+                          ? context.storeTr('phone_required')
+                          : null),
+                  const SizedBox(height: 20),
+                  CustomTextField(
+                      label: context.storeTr('password'),
+                      hint: context.storeTr('password_hint'),
+                      controller: _passwordController,
+                      isPassword: true,
+                      prefixIcon: Icons.lock,
+                      validator: (v) =>
+                        v == null || v.isEmpty
+                          ? context.storeTr('password_required')
+                          : null),
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: _isLoading
+                          ? null
+                          : () {
+                              if (_formKey.currentState!.validate()) {
+                                context.read<AuthBloc>().add(LoginRequested(
+                                    identifier: _phoneController.text,
+                                    password: _passwordController.text,
+                                    appType: AppType.store));
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: StoreTheme.primaryColor,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12))),
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white))
+                          : Text(context.storeTr('sign_in'),
+                            style: const TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(context.storeTr('store_no_account'),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Theme.of(context)
+                              .colorScheme
+                              .onSurfaceVariant)),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const StoreRegisterScreen(),
+                            ),
+                          );
+                        },
+                        child: Text(context.storeTr('store_register_now')),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -98,196 +158,10 @@ class _StoreLoginScreenState extends State<StoreLoginScreen> {
     );
   }
 
-  Widget _buildHeader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-
-          decoration: BoxDecoration(
-            color: StoreTheme.primaryColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(16),
-          ),
-
-          child: const Icon(
-            Icons.store,
-            size: 48,
-            color: StoreTheme.primaryColor,
-          ),
-        ),
-
-        const SizedBox(height: 24),
-
-        const Text(
-          'Chào mừng Chủ cửa hàng!',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: StoreTheme.primaryColor,
-          ),
-        ),
-
-        const SizedBox(height: 8),
-
-        Text(
-          'Đăng nhập để quản lý cửa hàng và bán hàng hiệu quả.',
-          style: TextStyle(fontSize: 16, color: Colors.grey[600], height: 1.4),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLoginForm() {
-    return Column(
-      children: [
-        CustomTextField(
-          label: 'Số điện thoại',
-          hint: 'Nhập số điện thoại của cửa hàng',
-          controller: _phoneController,
-          keyboardType: TextInputType.phone,
-          prefixIcon: Icons.phone,
-          validator: _validatePhone,
-          focusColor: StoreTheme.primaryColor,
-        ),
-
-        const SizedBox(height: 20),
-
-        CustomTextField(
-          label: 'Mật khẩu',
-          hint: 'Nhập mật khẩu',
-          controller: _passwordController,
-          isPassword: true,
-          prefixIcon: Icons.lock,
-          validator: _validatePassword,
-          focusColor: StoreTheme.primaryColor,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLoginButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-
-      child: ElevatedButton(
-        onPressed: _isLoading ? null : _handleLogin,
-
-        style: ElevatedButton.styleFrom(
-          backgroundColor: StoreTheme.primaryColor,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-
-        child: _isLoading
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              )
-            : const Text(
-                'Đăng nhập',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-      ),
-    );
-  }
-
-  Widget _buildRegisterLink() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-
-      children: [
-        Text(
-          'Chưa có tài khoản cửa hàng? ',
-          style: TextStyle(color: Colors.grey[600]),
-        ),
-
-        GestureDetector(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const StoreRegisterScreen()),
-          ),
-
-          child: const Text(
-            'Đăng ký ngay',
-            style: TextStyle(
-              color: StoreTheme.primaryColor,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildForgotPasswordLink() {
-    return Center(
-      child: GestureDetector(
-        onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Tính năng đang phát triển')),
-          );
-        },
-
-        child: const Text(
-          'Quên mật khẩu?',
-          style: TextStyle(
-            color: StoreTheme.primaryColor,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ),
-    );
-  }
-
-  String? _validatePhone(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Vui lòng nhập số điện thoại';
-    }
-
-    if (value.length != 10 || !RegExp(r'^0[0-9]{9}$').hasMatch(value)) {
-      return 'Số điện thoại không hợp lệ';
-    }
-
-    return null;
-  }
-
-  String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Vui lòng nhập mật khẩu';
-    }
-
-    if (value.length < 6) {
-      return 'Mật khẩu phải có ít nhất 6 ký tự';
-    }
-
-    return null;
-  }
-
-  void _handleLogin() {
-    if (!_formKey.currentState!.validate()) return;
-
-    context.read<StoreAuthBloc>().add(
-      LoginStoreEvent(
-        phoneNumber: _phoneController.text,
-        password: _passwordController.text,
-      ),
-    );
-  }
-
   @override
   void dispose() {
     _phoneController.dispose();
     _passwordController.dispose();
-
     super.dispose();
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/cart/cart_session.dart';
+import '../../utils/customer_l10n.dart';
 
 class HomeBottomBar extends StatelessWidget {
   final int currentIndex;
@@ -14,30 +15,38 @@ class HomeBottomBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return BottomNavigationBar(
       currentIndex: currentIndex,
       onTap: onTap,
 
-      backgroundColor: Colors.white, // nền trắng
+      backgroundColor: scheme.surface,
 
-      selectedItemColor: Colors.blue, // icon được chọn
-      unselectedItemColor: Colors.grey, // icon chưa chọn
+      selectedItemColor: scheme.primary,
+      unselectedItemColor: scheme.onSurfaceVariant,
 
       type: BottomNavigationBarType.fixed,
 
       items: [
-        const BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-
-        BottomNavigationBarItem(icon: _CartBadgeIcon(), label: "Cart"),
-
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.receipt),
-          label: "Orders",
+        BottomNavigationBarItem(
+          icon: const Icon(Icons.home),
+          label: context.tr(vi: 'Trang chủ', en: 'Home'),
         ),
 
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: "Profile",
+        BottomNavigationBarItem(
+          icon: _CartBadgeIcon(),
+          label: context.tr(vi: 'Giỏ hàng', en: 'Cart'),
+        ),
+
+        BottomNavigationBarItem(
+          icon: const Icon(Icons.receipt),
+          label: context.tr(vi: 'Đơn hàng', en: 'Orders'),
+        ),
+
+        BottomNavigationBarItem(
+          icon: const Icon(Icons.person),
+          label: context.tr(vi: 'Hồ sơ', en: 'Profile'),
         ),
       ],
     );

@@ -129,11 +129,19 @@ class OrderItemModel {
   Map<String, dynamic> toJson() => _$OrderItemModelToJson(this);
 }
 
-@JsonSerializable()
+/// PATCH /orders/{id}/status — matches backend [UpdateOrderStatusRequest].
+@JsonSerializable(includeIfNull: false)
 class UpdateOrderStatusRequest {
-  final String status;
+  @JsonKey(name: 'newStatus')
+  final String newStatus;
+  final String? cancelReason;
+  final String? podImageUrl;
 
-  const UpdateOrderStatusRequest({required this.status});
+  const UpdateOrderStatusRequest({
+    required this.newStatus,
+    this.cancelReason,
+    this.podImageUrl,
+  });
 
   factory UpdateOrderStatusRequest.fromJson(Map<String, dynamic> json) =>
       _$UpdateOrderStatusRequestFromJson(json);

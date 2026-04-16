@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:grocery_shopping_app/core/theme/shipper_theme.dart';
+import 'package:grocery_shopping_app/core/utils/app_localizations.dart';
 
 /// Small card presenting three quick stats: orders today, earnings, rating.
 class StatsCard extends StatelessWidget {
@@ -16,6 +17,12 @@ class StatsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    String tr(String vi, String en) {
+      final l = AppLocalizations.of(context);
+      if (l == null) return vi;
+      return l.byLocale(vi: vi, en: en);
+    }
+
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       elevation: 4,
@@ -27,19 +34,19 @@ class StatsCard extends StatelessWidget {
             _buildItem(
               context: context,
               icon: Icons.list_alt,
-              label: 'Đơn hôm nay',
+              label: tr('Đơn hôm nay', 'Orders today'),
               value: orders.toString(),
             ),
             _buildItem(
               context: context,
               icon: Icons.attach_money,
-              label: 'Thu nhập',
+              label: tr('Thu nhập', 'Earnings'),
               value: '${earnings.toStringAsFixed(0)}₫',
             ),
             _buildItem(
               context: context,
               icon: Icons.star,
-              label: 'Đánh giá',
+              label: tr('Đánh giá', 'Rating'),
               value: rating.toStringAsFixed(1),
             ),
           ],
@@ -76,12 +83,12 @@ class StatsCard extends StatelessWidget {
           label,
           style:
               Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: Colors.grey[600],
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w500,
               ) ??
               TextStyle(
                 fontSize: 12,
-                color: Colors.grey[600],
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w500,
               ),
         ),

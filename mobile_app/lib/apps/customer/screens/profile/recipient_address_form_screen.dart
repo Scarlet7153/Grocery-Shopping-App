@@ -1,7 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../../core/auth/auth_session.dart';
 import '../../../../core/location/province_api.dart';
+import '../../services/province_api_v2.dart';
+import '../../utils/customer_l10n.dart';
 
 class RecipientAddressResult {
   final String address;
@@ -51,7 +53,7 @@ class RecipientAddressFormScreen extends StatefulWidget {
 class _RecipientAddressFormScreenState
     extends State<RecipientAddressFormScreen> {
   final _houseController = TextEditingController();
-  final _provinceApi = ProvinceApi();
+  final _provinceApi = ProvinceApiV2();
   List<LocationItem> _provinces = [];
   List<LocationItem> _districts = [];
   List<LocationItem> _wards = [];
@@ -97,18 +99,16 @@ class _RecipientAddressFormScreenState
   }
 
   String _normalizeLocationName(String value) {
-    final lower = value.toLowerCase();
-    final cleaned = lower
-        .replaceAll('thành phố', '')
-        .replaceAll('tỉnh', '')
-        .replaceAll('tp', '')
-        .replaceAll('q.', '')
-        .replaceAll('quận', '')
-        .replaceAll('huyện', '')
-        .replaceAll('phường', '')
-        .replaceAll('xã', '')
-        .replaceAll(RegExp(r'[^a-z0-9]'), '');
-    return cleaned;
+    var s = value.trim().toLowerCase();
+    s = s.replaceAll(RegExp(r'[àáạảãâầấậẩẫăằắặẳẵ]'), 'a');
+    s = s.replaceAll(RegExp(r'[èéẹẻẽêềếệểễ]'), 'e');
+    s = s.replaceAll(RegExp(r'[ìíịỉĩ]'), 'i');
+    s = s.replaceAll(RegExp(r'[òóọỏõôồốộổỗơờớợởỡ]'), 'o');
+    s = s.replaceAll(RegExp(r'[ùúụủũưừứựửữ]'), 'u');
+    s = s.replaceAll(RegExp(r'[ỳýỵỷỹ]'), 'y');
+    s = s.replaceAll(RegExp(r'[đ]'), 'd');
+    s = s.replaceAll(RegExp(r'[^a-z0-9]'), '');
+    return s;
   }
 
   LocationItem? _findByName(List<LocationItem> items, String? name) {
@@ -134,16 +134,18 @@ class _RecipientAddressFormScreenState
         _selectedProvince = matched;
         final districts = await _provinceApi.getDistricts(matched.code);
         _districts = districts;
-        if (_initialDistrictName != null) {
+        if (_districts.isEmpty) {
+          _wards = await _provinceApi.getWardsByProvince(matched.code);
+          _selectedWard = _findByName(_wards, _initialWardName ?? _initialDistrictName) ??
+              (_wards.isNotEmpty ? _wards.first : null);
+        } else if (_initialDistrictName != null) {
           final districtMatched =
               _findByName(_districts, _initialDistrictName) ?? _districts.first;
           _selectedDistrict = districtMatched;
-          final wards = await _provinceApi.getWards(districtMatched.code);
-          _wards = wards;
+          _wards = await _provinceApi.getWards(districtMatched.code);
           if (_initialWardName != null) {
-            final wardMatched =
-                _findByName(_wards, _initialWardName) ?? _wards.first;
-            _selectedWard = wardMatched;
+            _selectedWard = _findByName(_wards, _initialWardName) ??
+                (_wards.isNotEmpty ? _wards.first : null);
           }
         }
       }
@@ -162,8 +164,19 @@ class _RecipientAddressFormScreenState
     });
     if (item == null) return;
     final districts = await _provinceApi.getDistricts(item.code);
-    if (mounted) {
-      setState(() => _districts = districts);
+    if (!mounted) return;
+    if (districts.isEmpty) {
+      final wards = await _provinceApi.getWardsByProvince(item.code);
+      if (!mounted) return;
+      setState(() {
+        _districts = [];
+        _wards = wards;
+      });
+    } else {
+      setState(() {
+        _districts = districts;
+        _wards = [];
+      });
     }
   }
 
@@ -181,24 +194,40 @@ class _RecipientAddressFormScreenState
   }
 
   void _onComplete() {
-    if (_selectedProvince == null || _selectedDistrict == null) {
+    if (_selectedProvince == null ||
+        (_districts.isNotEmpty && _selectedDistrict == null) ||
+        _selectedWard == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng chọn tỉnh và quận/huyện')),
+        SnackBar(
+          content: Text(
+            context.tr(
+              vi: 'Vui lòng chọn đầy đủ địa chỉ',
+              en: 'Please select full address details',
+            ),
+          ),
+        ),
       );
       return;
     }
     final house = _houseController.text.trim();
     if (house.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập số nhà, tên đường')),
+        SnackBar(
+          content: Text(
+            context.tr(
+              vi: 'Vui lòng nhập số nhà, tên đường',
+              en: 'Please enter house number and street',
+            ),
+          ),
+        ),
       );
       return;
     }
 
     final addressParts = <String>[
       house,
-      if (_selectedWard != null) _selectedWard!.name,
-      _selectedDistrict!.name,
+      _selectedWard!.name,
+      if (_selectedDistrict != null) _selectedDistrict!.name,
       _selectedProvince!.name,
     ];
     final address = addressParts.join(', ');
@@ -225,15 +254,18 @@ class _RecipientAddressFormScreenState
   @override
   Widget build(BuildContext context) {
     final name = (AuthSession.fullName == null || AuthSession.fullName!.isEmpty)
-        ? 'Khách hàng'
+      ? context.tr(vi: 'Khách hàng', en: 'Customer')
         : AuthSession.fullName!;
     final phone =
         (AuthSession.phoneNumber == null || AuthSession.phoneNumber!.isEmpty)
-        ? 'Chưa có số điện thoại'
+        ? context.tr(vi: 'Chưa có số điện thoại', en: 'No phone number')
         : AuthSession.phoneNumber!;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Địa chỉ nhận hàng'), centerTitle: true),
+      appBar: AppBar(
+        title: Text(context.tr(vi: 'Địa chỉ nhận hàng', en: 'Delivery address')),
+        centerTitle: true,
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -242,26 +274,26 @@ class _RecipientAddressFormScreenState
                 padding: const EdgeInsets.all(16),
                 children: [
                   _buildDropdown(
-                    label: 'Tỉnh/Thành phố',
+                    label: context.tr(vi: 'Tỉnh/Thành phố', en: 'Province/City'),
                     value: _selectedProvince,
                     items: _provinces,
                     onChanged: _loading ? null : _onProvinceChanged,
                   ),
+                  if (_districts.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    _buildDropdown(
+                      label: context.tr(vi: 'Quận/Huyện', en: 'District'),
+                      value: _selectedDistrict,
+                      items: _districts,
+                      onChanged: _selectedProvince == null ? null : _onDistrictChanged,
+                    ),
+                  ],
                   const SizedBox(height: 12),
                   _buildDropdown(
-                    label: 'Quận/Huyện',
-                    value: _selectedDistrict,
-                    items: _districts,
-                    onChanged: _selectedProvince == null
-                        ? null
-                        : _onDistrictChanged,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildDropdown(
-                    label: 'Phường/Xã',
+                    label: context.tr(vi: 'Phường/Xã', en: 'Ward/Commune'),
                     value: _selectedWard,
                     items: _wards,
-                    onChanged: _selectedDistrict == null
+                    onChanged: (_districts.isNotEmpty ? (_selectedDistrict == null) : (_selectedProvince == null))
                         ? null
                         : _onWardChanged,
                   ),
@@ -269,7 +301,10 @@ class _RecipientAddressFormScreenState
                   TextField(
                     controller: _houseController,
                     decoration: InputDecoration(
-                      labelText: 'Số nhà, tên đường',
+                      labelText: context.tr(
+                        vi: 'Số nhà, tên đường',
+                        en: 'House number, street',
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -278,7 +313,10 @@ class _RecipientAddressFormScreenState
                   const SizedBox(height: 16),
                   if (!_otherReceiver)
                     Text(
-                      'Người nhận: $name - $phone',
+                      context.tr(
+                        vi: 'Người nhận: $name - $phone',
+                        en: 'Receiver: $name - $phone',
+                      ),
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -303,8 +341,13 @@ class _RecipientAddressFormScreenState
                           }
                         },
                       ),
-                      const Expanded(
-                        child: Text('Gọi người nhận khác nhận hàng (nếu có)'),
+                      Expanded(
+                        child: Text(
+                          context.tr(
+                            vi: 'Gọi người nhận khác nhận hàng (nếu có)',
+                            en: 'Call another receiver to take delivery (optional)',
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -321,7 +364,10 @@ class _RecipientAddressFormScreenState
                         children: [
                           Expanded(
                             child: Text(
-                              'Người nhận: ${_formatReceiverName()} - $_otherReceiverPhone',
+                              context.tr(
+                                vi: 'Người nhận: ${_formatReceiverName()} - $_otherReceiverPhone',
+                                en: 'Receiver: ${_formatReceiverName()} - $_otherReceiverPhone',
+                              ),
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                               ),
@@ -344,7 +390,7 @@ class _RecipientAddressFormScreenState
                 height: 48,
                 child: ElevatedButton(
                   onPressed: _onComplete,
-                  child: const Text('Hoàn tất'),
+                  child: Text(context.tr(vi: 'Hoàn tất', en: 'Done')),
                 ),
               ),
             ),
@@ -365,7 +411,7 @@ class _RecipientAddressFormScreenState
     LocationItem? value,
   }) {
     return DropdownButtonFormField<LocationItem>(
-      value: value,
+      initialValue: value,
       items: items
           .map(
             (item) => DropdownMenuItem<LocationItem>(
@@ -417,9 +463,12 @@ class _RecipientAddressFormScreenState
                 children: [
                   Row(
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          'Gọi người khác nhận hàng',
+                          context.tr(
+                            vi: 'Gọi người khác nhận hàng',
+                            en: 'Set another receiver',
+                          ),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -436,40 +485,38 @@ class _RecipientAddressFormScreenState
                   TextField(
                     controller: phoneController,
                     keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(
-                      labelText: 'Số điện thoại *',
+                    decoration: InputDecoration(
+                      labelText: context.tr(vi: 'Số điện thoại *', en: 'Phone number *'),
                       border: OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: RadioListTile<String>(
-                          title: const Text('Anh'),
-                          value: 'Anh',
-                          groupValue: selectedTitle,
-                          onChanged: (value) {
-                            setModalState(() => selectedTitle = value);
-                          },
+                  RadioGroup<String>(
+                    groupValue: selectedTitle,
+                    onChanged: (value) {
+                      setModalState(() => selectedTitle = value);
+                    },
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: RadioListTile<String>(
+                            title: Text(context.tr(vi: 'Anh', en: 'Mr.')),
+                            value: 'Anh',
+                          ),
                         ),
-                      ),
-                      Expanded(
-                        child: RadioListTile<String>(
-                          title: const Text('Chị'),
-                          value: 'Chị',
-                          groupValue: selectedTitle,
-                          onChanged: (value) {
-                            setModalState(() => selectedTitle = value);
-                          },
+                        Expanded(
+                          child: RadioListTile<String>(
+                            title: Text(context.tr(vi: 'Chị', en: 'Ms.')),
+                            value: 'Chị',
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   TextField(
                     controller: nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Họ và tên *',
+                    decoration: InputDecoration(
+                      labelText: context.tr(vi: 'Họ và tên *', en: 'Full name *'),
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -483,9 +530,12 @@ class _RecipientAddressFormScreenState
                         final name = nameController.text.trim();
                         if (!_isValidPhone(phone)) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
+                            SnackBar(
                               content: Text(
-                                'Số điện thoại không hợp lệ (10 số, bắt đầu bằng 0)',
+                                context.tr(
+                                  vi: 'Số điện thoại không hợp lệ (10 số, bắt đầu bằng 0)',
+                                  en: 'Invalid phone number (10 digits, starting with 0)',
+                                ),
                               ),
                             ),
                           );
@@ -493,8 +543,13 @@ class _RecipientAddressFormScreenState
                         }
                         if (name.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Vui lòng nhập họ và tên'),
+                            SnackBar(
+                              content: Text(
+                                context.tr(
+                                  vi: 'Vui lòng nhập họ và tên',
+                                  en: 'Please enter full name',
+                                ),
+                              ),
                             ),
                           );
                           return;
@@ -507,7 +562,7 @@ class _RecipientAddressFormScreenState
                         });
                         Navigator.pop(context, true);
                       },
-                      child: const Text('Hoàn tất'),
+                      child: Text(context.tr(vi: 'Hoàn tất', en: 'Done')),
                     ),
                   ),
                 ],

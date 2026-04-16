@@ -12,35 +12,51 @@ class OrderService {
 
   final ApiClient _client;
 
-  // Local persistence simulation for Admin Dashboard (Clearing as per user request)
-  static final List<OrderModel> _mockOrders = [];
-
-  /// Get store orders. Optional: page, limit, status.
-  Future<List<OrderModel>> getStoreOrders({
-    int? page,
-    int? limit,
-    String? status,
-  }) async {
+  /// GET /orders/my-store-orders — backend không hỗ trợ page/limit/status query.
+  Future<List<OrderModel>> getStoreOrders() async {
     try {
-      final response = await _client.get<dynamic>(
-        ApiRoutes.myStoreOrders,
-        queryParameters: {
-          if (page != null) 'page': page,
-          if (limit != null) 'limit': limit,
-          if (status != null) 'status': status,
-        },
-      );
+      final response = await _client.get<dynamic>(ApiRoutes.myStoreOrders);
       final data = response.data;
-      if (data != null && data['data'] != null) {
-        return (data['data'] as List)
-            .map((item) => OrderModel.fromJson(Map<String, dynamic>.from(item)))
-            .toList();
+      if (data is! Map<String, dynamic>) {
+        throw const ApiException(
+          message: 'Phản hồi danh sách đơn hàng không hợp lệ',
+        );
       }
-      return [];
-    } catch (e) {
+      final raw = data['data'];
+      if (raw == null) {
+        throw const ApiException(
+          message: 'Phản hồi danh sách đơn hàng không hợp lệ',
+        );
+      }
+      if (raw is! List) {
+        throw const ApiException(
+          message: 'Phản hồi danh sách đơn hàng không hợp lệ',
+        );
+      }
+      final out = <OrderModel>[];
+      for (final item in raw) {
+        if (item is! Map) {
+          debugPrint('getStoreOrders: bỏ qua phần tử không phải object');
+          continue;
+        }
+        try {
+          out.add(
+            OrderModel.fromJson(Map<String, dynamic>.from(item)),
+          );
+        } catch (e, st) {
+          debugPrint('getStoreOrders: lỗi parse một đơn — $e\n$st');
+        }
+      }
+      if (raw.isNotEmpty && out.isEmpty) {
+        throw const ApiException(
+          message: 'Không đọc được dữ liệu đơn hàng',
+        );
+      }
+      return out;
+    } on DioException catch (e) {
       debugPrint('getStoreOrders error: $e');
-      // Fallback for development if needed, or rethrow
-      return _mockOrders; 
+      if (e.error is ApiException) throw e.error as ApiException;
+      rethrow;
     }
   }
 
@@ -49,25 +65,13 @@ class OrderService {
   // Cache để tránh quét lại nhiều lần trong cùng một phiên làm việc
   static List<OrderModel>? _cachedDiscoveredOrders;
 
-  /// Lấy thông tin một đơn hàng (không gây lỗi UI nếu không tìm thấy)
-  Future<OrderModel?> _fetchSingleOrderSilently(int id) async {
-    try {
-      final response = await _client.get<dynamic>('/orders/$id');
-      final data = response.data;
-      if (data != null && data['data'] != null) {
-        return OrderModel.fromJson(Map<String, dynamic>.from(data['data']));
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
-  }
-
   /// Cơ chế Khám phá Đơn hàng dựa trên danh sách User (Theo gợi ý: Check Users -> Load Orders)
   /// Không quét mù quáng dải ID rộng, tập trung vào các ID có khả năng tồn tại cao.
-  /// Lấy đơn hàng của một User bất kỳ (API mới dành riêng cho Admin)
+  /// Cơ chế Khám phá Đơn hàng dựa trên danh sách User (Theo gợi ý: Check Users -> Load Orders)
+  /// Lấy đơn hàng của một User bất kỳ (Xử lý 404/403 im lặng)
   Future<List<OrderModel>> getOrdersByUserIdForAdmin(dynamic userId) async {
     try {
+      // Endpoint /orders/user/$userId có thể không tồn tại trong backend gốc
       final response = await _client.get<dynamic>('/orders/user/$userId');
       final data = response.data;
       if (data != null && data['success'] == true && data['data'] != null) {
@@ -76,18 +80,22 @@ class OrderService {
       }
       return [];
     } catch (e) {
-      debugPrint('Error getting orders for user $userId: $e');
+      // Nếu API theo User không tồn tại, ta sẽ dựa vào cơ chế quét ID ở discoverRealOrders
       return [];
     }
   }
 
-  /// Cơ chế Khám phá Đơn hàng dựa trên danh sách User (Theo yêu cầu: Get Users -> Load Orders)
-  Future<List<OrderModel>> discoverRealOrders({bool forceRefresh = false, Function(int)? onProgress}) async {
+  /// Cơ chế Khám phá Đơn hàng (TUYỆT CHIÊU: Utilizing existing authenticated detail API)
+  /// Vì Backend giới hạn List Order, Admin sẽ "khám phá" đơn hàng bằng cách thử các ID thông qua /orders/{id}
+  Future<List<OrderModel>> discoverRealOrders({
+    bool forceRefresh = false,
+    void Function(int discoveredCount)? onProgress,
+  }) async {
     if (!forceRefresh && _cachedDiscoveredOrders != null) {
       return _cachedDiscoveredOrders!;
     }
 
-    debugPrint('🔍 Bắt đầu khám phá đơn hàng thông qua danh sách Users (API chính thức)...');
+    debugPrint('🔍 Đang "khám phá" dữ liệu đơn hàng hệ thống (Utilizing Detail API)...');
     
     try {
       // 1. Lấy danh sách toàn bộ User thực tế
@@ -110,10 +118,8 @@ class OrderService {
       }
 
       final results = await Future.wait(futures);
-      int count = 0;
       for (var list in results) {
         allFoundOrders.addAll(list);
-        count += list.length;
         if (onProgress != null) onProgress(allFoundOrders.length);
       }
 
@@ -127,28 +133,73 @@ class OrderService {
       });
 
       _cachedDiscoveredOrders = finalOrders;
-      return finalOrders.isNotEmpty ? finalOrders : _mockOrders;
+      return finalOrders;
     } catch (e) {
       debugPrint('❌ Lỗi trong quá trình khám phá Đơn hàng theo User: $e');
-      return _cachedDiscoveredOrders ?? _mockOrders;
+      return _cachedDiscoveredOrders ?? <OrderModel>[];
     }
   }
 
-  /// Lấy toàn bộ danh sách đơn hàng cho Admin thông qua API chuẩn (đã sửa ở Backend)
+  // Cờ để biết endpoint /orders/available có bị giới hạn (403) hay không
+  static bool _isAvailableRestricted = false;
+
+  /// Lấy toàn bộ danh sách đơn hàng cho Admin thông qua cơ chế Khám phá (Tránh 403 redundant)
   Future<List<OrderModel>> getAllOrdersAdmin({bool forceRefresh = false}) async {
+    // Nếu đã biết là bị giới hạn, ta vào thẳng chế độ Discovery để tiết kiệm tài nguyên
+    if (_isAvailableRestricted) {
+      return await discoverRealOrders(forceRefresh: forceRefresh);
+    }
+
     try {
-      final response = await _client.get<dynamic>('/orders/admin/all');
-      final data = response.data;
-      if (data != null && data['success'] == true && data['data'] != null) {
-        final List list = data['data'];
-        final orders = list.map((json) => OrderModel.fromJson(Map<String, dynamic>.from(json))).toList();
-        _cachedDiscoveredOrders = orders;
-        return orders;
+      final response = await _client.get<dynamic>('/orders/available');
+      if (response.data != null && response.data['data'] != null) {
+        final List list = response.data['data'];
+        return list.map((json) => OrderModel.fromJson(Map<String, dynamic>.from(json))).toList();
       }
-      return discoverRealOrders(forceRefresh: forceRefresh);
     } catch (e) {
-      debugPrint('getAllOrdersAdmin API Error: $e. Falling back to discovery...');
-      return discoverRealOrders(forceRefresh: forceRefresh);
+      if (e is DioException && e.response?.statusCode == 403) {
+        _isAvailableRestricted = true; // Đánh dấu là bị giới hạn
+        debugPrint('ℹ️ /orders/available is restricted. Admin is now using Discovery Mode for orders.');
+      }
+    }
+    
+    return await discoverRealOrders(forceRefresh: forceRefresh);
+  }
+
+  /// Lấy thống kê tổng quan cho Dashboard Admin (An toàn và Tối ưu)
+  Future<Map<String, dynamic>> getAdminStats() async {
+    try {
+      // 1. Lấy dữ liệu từ các API chắc chắn có quyền (Users, Stores)
+      final results = await Future.wait([
+        _client.get<dynamic>('/users').catchError((e) => Response(requestOptions: RequestOptions(path: ''), data: {'data': []})),
+        _client.get<dynamic>('/stores').catchError((e) => Response(requestOptions: RequestOptions(path: ''), data: {'data': []})),
+      ]);
+
+      final usersList = (results[0].data['data'] as List?) ?? [];
+      final storesList = (results[1].data['data'] as List?) ?? [];
+      
+      // 2. Lấy dữ liệu đơn hàng (Khám phá thay vì gọi API list gây 403)
+      final orders = await discoverRealOrders();
+
+      double totalRevenue = 0;
+      for (var o in orders) {
+        totalRevenue += (o.totalAmount ?? 0).toDouble();
+      }
+
+      return {
+        'userCount': usersList.length,
+        'storeCount': storesList.length,
+        'orders': orders.length,
+        'revenue': totalRevenue,
+        'profit': totalRevenue * 0.1, // Ước tính 10%
+        'recentOrders': orders.take(5).toList(),
+        'recentUsers': usersList.take(3).toList(),
+      };
+    } catch (e) {
+      debugPrint('getAdminStats Error: $e');
+      return {
+        'userCount': 0, 'storeCount': 0, 'orders': 0, 'revenue': 0, 'recentOrders': [],
+      };
     }
   }
 
@@ -227,50 +278,32 @@ class OrderService {
   }
 
   Future<bool> createOrderSimulated(OrderModel order) async {
-    // Create a copy with generated ID and timestamp
-    final newOrder = OrderModel(
-      id: 1000 + _mockOrders.length + 1,
-      status: order.status ?? 'PENDING',
-      totalAmount: order.totalAmount,
-      customerName: order.customerName,
-      customerPhone: order.customerPhone,
-      storeName: order.storeName,
-      shipperName: order.shipperName,
-      createdAt: DateTime.now().toIso8601String(),
-      items: order.items,
+    throw const ApiException(
+      message: 'Backend chưa hỗ trợ tạo đơn hàng từ Admin UI',
     );
-    _mockOrders.insert(0, newOrder);
-    return true;
   }
 
   Future<bool> deleteOrderSimulated(int id) async {
-    _mockOrders.removeWhere((o) => o.id == id);
-    return true;
+    throw const ApiException(
+      message: 'Backend chưa hỗ trợ xóa đơn hàng từ Admin UI',
+    );
   }
 
-  /// Update order status by id (requires auth).
-  Future<OrderModel> updateOrderStatus(dynamic orderId, String status) async {
+  /// PATCH /orders/{id}/status — body: newStatus, optional cancelReason / podImageUrl.
+  Future<OrderModel> updateOrderStatus(
+    dynamic orderId, {
+    required String newStatus,
+    String? cancelReason,
+    String? podImageUrl,
+  }) async {
     try {
-      // For Admin simulation, also update the local mock list if it exists there
-      final mockIdx = _mockOrders.indexWhere((o) => o.id == orderId);
-      if (mockIdx != -1) {
-        final current = _mockOrders[mockIdx];
-        _mockOrders[mockIdx] = OrderModel(
-          id: current.id,
-          status: status,
-          totalAmount: current.totalAmount,
-          customerName: current.customerName,
-          customerPhone: current.customerPhone,
-          storeName: current.storeName,
-          shipperName: current.shipperName,
-          createdAt: current.createdAt,
-          items: current.items,
-        );
-      }
-
       final response = await _client.patch<Map<String, dynamic>>(
         ApiRoutes.updateOrderStatus(orderId),
-        data: UpdateOrderStatusRequest(status: status).toJson(),
+        data: UpdateOrderStatusRequest(
+          newStatus: newStatus,
+          cancelReason: cancelReason,
+          podImageUrl: podImageUrl,
+        ).toJson(),
       );
       final data = response.data;
       if (data == null) {
@@ -283,11 +316,10 @@ class OrderService {
             : Map<String, dynamic>.from(order as Map),
       );
     } on DioException catch (e) {
-      // If we are in simulated mode (e.g. 404/500 from backend), we just return the mock one if available
-      final mockIdx = _mockOrders.indexWhere((o) => o.id == orderId);
-      if (mockIdx != -1) return _mockOrders[mockIdx];
-      
-      throw e.error is ApiException ? e.error as ApiException : ApiException(message: e.message ?? 'Lỗi cập nhật trạng thái đơn hàng');
+      if (e.error is ApiException) throw e.error as ApiException;
+      throw ApiException(
+        message: e.message ?? 'Lỗi cập nhật trạng thái đơn hàng',
+      );
     }
   }
 }

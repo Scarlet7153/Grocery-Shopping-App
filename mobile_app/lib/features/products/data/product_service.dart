@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:typed_data';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_error.dart';
@@ -31,6 +32,7 @@ class ProductService {
         queryParameters: query.isNotEmpty ? query : null,
       );
       final data = response.data;
+
       if (data == null) return [];
 
       if (data is List) {
@@ -59,11 +61,9 @@ class ProductService {
         }
       }
       return [];
-    } on DioException catch (e) {
-      debugPrint('getProducts failed: $e');
+    } on DioException {
       return [];
-    } catch (e) {
-      debugPrint('getProducts unexpected error: $e');
+    } catch (_) {
       return [];
     }
   }
@@ -75,18 +75,20 @@ class ProductService {
       final data = response.data;
       if (data == null) return [];
 
-      final list = data is List ? data : (data is Map<String, dynamic> ? (data['data'] ?? []) : []);
+      final list = data is List
+          ? data
+          : (data is Map<String, dynamic> ? (data['data'] ?? []) : []);
       if (list is List) {
         return list
-            .map((e) => ProductModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e as Map)))
+            .map((e) => ProductModel.fromJson(e is Map<String, dynamic>
+                ? e
+                : Map<String, dynamic>.from(e as Map)))
             .toList();
       }
       return [];
-    } on DioException catch (e) {
-      debugPrint('getProductsByStore failed: $e');
+    } on DioException {
       return [];
-    } catch (e) {
-      debugPrint('getProductsByStore unexpected error: $e');
+    } catch (_) {
       return [];
     }
   }
@@ -150,6 +152,40 @@ class ProductService {
       throw e.error is ApiException
           ? e.error as ApiException
           : ApiException(message: e.message ?? 'Lỗi xóa sản phẩm');
+    }
+  }
+
+  /// Upload and update product image on backend.
+  Future<String> uploadProductImage(
+    String productId,
+    Uint8List bytes, {
+    String filename = 'product.jpg',
+  }) async {
+    try {
+      final formData = FormData.fromMap({
+        'file': MultipartFile.fromBytes(bytes, filename: filename),
+      });
+
+      final response = await _client.post<Map<String, dynamic>>(
+        '/upload/product/$productId',
+        data: formData,
+      );
+
+      final data = response.data;
+      if (data == null) {
+        throw const ApiException(message: 'Phản hồi upload ảnh trống');
+      }
+
+      final imageUrl = data['data']?.toString();
+      if (imageUrl == null || imageUrl.isEmpty) {
+        throw const ApiException(
+            message: 'Không lấy được URL ảnh sau khi upload');
+      }
+      return imageUrl;
+    } on DioException catch (e) {
+      throw e.error is ApiException
+          ? e.error as ApiException
+          : ApiException(message: e.message ?? 'Lỗi upload ảnh sản phẩm');
     }
   }
 }

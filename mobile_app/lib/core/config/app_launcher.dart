@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../enums/app_type.dart'; 
-import 'app_config.dart';
 
 class AppLauncher extends StatelessWidget {
   const AppLauncher({super.key});
@@ -19,9 +18,10 @@ class AppLauncher extends StatelessWidget {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
-    const apps = AppType.values; 
+    // final apps = AppType.values; // Not used directly
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dev Menu: Khởi động App'),
@@ -88,7 +88,6 @@ class AppLauncher extends StatelessWidget {
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
-                textAlign: TextAlign.center,
               ),
               const SizedBox(height: 6),
               Text(
@@ -118,7 +117,7 @@ class AppLauncher extends StatelessWidget {
     }
   }
 
-void _launchApp(
+  void _launchApp(
     BuildContext context, 
     AppType appType, 
     String appName, 
@@ -134,3 +133,4 @@ void _launchApp(
       ),
     );
   }
+}

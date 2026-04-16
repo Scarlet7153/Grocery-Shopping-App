@@ -49,7 +49,7 @@ class EarningsCard extends StatelessWidget {
                 ),
               ],
             ),
-            Icon(
+            const Icon(
               Icons.attach_money,
               size: 48,
               color: ShipperTheme.primaryColor,

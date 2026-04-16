@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -17,12 +18,20 @@ import org.springframework.stereotype.Service;
  * - location:order:{id} : Location updates cho đơn hàng
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class RedisMessagePublisher {
 
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
+
+    @Autowired
+    public RedisMessagePublisher(ObjectMapper objectMapper, @Autowired(required = false) StringRedisTemplate redisTemplate) {
+        this.objectMapper = objectMapper;
+        this.redisTemplate = redisTemplate;
+        if (redisTemplate == null) {
+            log.warn("Redis is disabled. RedisMessagePublisher will not publish any messages.");
+        }
+    }
 
     /**
      * Publish message đến Redis channel
@@ -31,6 +40,10 @@ public class RedisMessagePublisher {
      * @param message Message object (sẽ được serialize thành JSON)
      */
     public void publish(String channel, Object message) {
+        if (redisTemplate == null) {
+            log.trace("Redis disabled, skipping publish to channel {}: {}", channel, message);
+            return;
+        }
         try {
             String jsonMessage = objectMapper.writeValueAsString(message);
             redisTemplate.convertAndSend(channel, jsonMessage);
@@ -47,6 +60,10 @@ public class RedisMessagePublisher {
      * @param jsonMessage JSON string message
      */
     public void publish(String channel, String jsonMessage) {
+        if (redisTemplate == null) {
+            log.trace("Redis disabled, skipping publish to channel {}: {}", channel, jsonMessage);
+            return;
+        }
         redisTemplate.convertAndSend(channel, jsonMessage);
         log.debug("Published message to channel [{}]: {}", channel, jsonMessage);
     }

@@ -1,40 +1,43 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../../core/auth/auth_session.dart';
+import '../../utils/customer_l10n.dart';
 
 class SavedAddressesScreen extends StatelessWidget {
   const SavedAddressesScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     final name = (AuthSession.fullName == null || AuthSession.fullName!.isEmpty)
-        ? 'Khách hàng'
+        ? context.tr(vi: 'Khách hàng', en: 'Customer')
         : AuthSession.fullName!;
     final phone =
         (AuthSession.phoneNumber == null || AuthSession.phoneNumber!.isEmpty)
-        ? 'Chưa có số điện thoại'
-        : AuthSession.phoneNumber!;
+            ? context.tr(vi: 'Chưa có số điện thoại', en: 'No phone number')
+            : AuthSession.phoneNumber!;
     final defaultAddress =
         (AuthSession.address == null || AuthSession.address!.isEmpty)
-        ? 'Chưa có địa chỉ'
-        : AuthSession.address!;
+            ? context.tr(vi: 'Chưa có địa chỉ', en: 'No address yet')
+            : AuthSession.address!;
 
     final addresses = [
       _SavedAddress(
-        label: 'Nhà',
+        label: context.tr(vi: 'Nhà', en: 'Home'),
         name: name,
         phone: phone,
         address: defaultAddress,
         isDefault: true,
       ),
       _SavedAddress(
-        label: 'Công ty',
+        label: context.tr(vi: 'Công ty', en: 'Office'),
         name: name,
         phone: phone,
         address: 'Tòa nhà Bitexco, 2 Hải Triều, Quận 1, TP.HCM',
       ),
       _SavedAddress(
-        label: 'Nhà bố mẹ',
+        label: context.tr(vi: 'Nhà bố mẹ', en: 'Parents\' home'),
         name: name,
         phone: '0918 888 999',
         address: '456 Nguyễn Trãi, Phường 8, Quận 5, TP.HCM',
@@ -42,9 +45,9 @@ class SavedAddressesScreen extends StatelessWidget {
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8FB),
+      backgroundColor: scheme.surfaceContainerLowest,
       appBar: AppBar(
-        title: const Text('Địa chỉ đã lưu'),
+        title: Text(context.tr(vi: 'Địa chỉ đã lưu', en: 'Saved addresses')),
         centerTitle: true,
         actions: [
           IconButton(
@@ -61,7 +64,7 @@ class SavedAddressesScreen extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: () {},
             icon: const Icon(Icons.add_location_alt_outlined),
-            label: const Text('Thêm địa chỉ mới'),
+            label: Text(context.tr(vi: 'Thêm địa chỉ mới', en: 'Add new address')),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(
@@ -98,6 +101,8 @@ class _AddressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -108,7 +113,7 @@ class _AddressCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.home, color: Color(0xFF2F80ED)),
+                Icon(Icons.home, color: scheme.primary),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -123,32 +128,40 @@ class _AddressCard extends StatelessWidget {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE8F5E9),
+                      color: scheme.primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Text(
-                      'Mặc định',
+                    child: Text(
+                      context.tr(vi: 'Mặc định', en: 'Default'),
                       style: TextStyle(
-                        color: Color(0xFF2E7D32),
+                        color: scheme.primary,
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
                 const SizedBox(width: 6),
-                const Icon(Icons.edit_outlined, size: 18, color: Colors.grey),
+                Icon(
+                  Icons.edit_outlined,
+                  size: 18,
+                  color: scheme.onSurfaceVariant,
+                ),
               ],
             ),
             const SizedBox(height: 6),
             Text(
               '${item.name} · ${item.phone}',
-              style: const TextStyle(color: Colors.black54, fontSize: 12),
+              style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 12),
             ),
             const SizedBox(height: 6),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                Icon(
+                  Icons.location_on,
+                  size: 16,
+                  color: scheme.onSurfaceVariant,
+                ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(

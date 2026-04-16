@@ -44,9 +44,14 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource))
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/auth/**", "/public/**").permitAll()
+                .requestMatchers("/ws/**").permitAll()
+                .requestMatchers("/api/ws/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/units/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/stores", "/stores/open", "/stores/search").permitAll()
                 .requestMatchers(HttpMethod.GET, "/stores/*", "/categories/**", "/products/**").permitAll()
+                .requestMatchers("/payments/momo/**").permitAll()
 
                 .requestMatchers(HttpMethod.GET, "/stores/my-store").hasRole("STORE")
                 .requestMatchers(HttpMethod.PUT, "/stores/**").hasRole("STORE")
@@ -79,7 +84,8 @@ public class SecurityConfig {
                 .requestMatchers("/customer/**").hasRole("CUSTOMER")
                 .requestMatchers("/shipper/**").hasRole("SHIPPER")
 
-                .requestMatchers("/reviews").hasRole("CUSTOMER")
+                .requestMatchers(HttpMethod.POST, "/reviews").hasRole("CUSTOMER")
+                .requestMatchers(HttpMethod.DELETE, "/reviews/**").hasAnyRole("CUSTOMER", "ADMIN")
                 .requestMatchers("/reviews/**").permitAll()
 
                 .anyRequest().authenticated()

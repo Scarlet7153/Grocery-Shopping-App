@@ -5,6 +5,7 @@ import '../../../../core/theme/customer_theme.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 
 import '../../bloc/customer_auth_bloc.dart';
+import '../../utils/customer_l10n.dart';
 import '../home/customer_home_screen.dart';
 import 'customer_register_screen.dart';
 
@@ -24,6 +25,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return BlocListener<CustomerAuthBloc, CustomerAuthState>(
       listener: (context, state) {
         if (state is CustomerAuthLoading) {
@@ -43,12 +45,15 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
           setState(() => _isLoading = false);
 
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text(_localizedAuthError(state.message)),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       },
       child: Scaffold(
-        backgroundColor: CustomerTheme.backgroundColor,
+        backgroundColor: scheme.surfaceContainerLowest,
         body: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
@@ -77,115 +82,134 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
   }
 
   Widget _buildHeader() => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: CustomerTheme.primaryColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: const Icon(
-          Icons.shopping_cart,
-          size: 48,
-          color: CustomerTheme.primaryColor,
-        ),
-      ),
-      const SizedBox(height: 24),
-      const Text(
-        'Chào mừng trở lại!',
-        style: TextStyle(
-          fontSize: 28,
-          fontWeight: FontWeight.bold,
-          color: CustomerTheme.primaryColor,
-        ),
-      ),
-      const SizedBox(height: 8),
-      Text(
-        'Đăng nhập để bắt đầu mua sắm.',
-        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-      ),
-    ],
-  );
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: CustomerTheme.primaryColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(
+              Icons.shopping_cart,
+              size: 48,
+              color: CustomerTheme.primaryColor,
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'Welcome back!',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: CustomerTheme.primaryColor,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            context.tr(
+              vi: 'Đăng nhập để bắt đầu mua sắm.',
+              en: 'Sign in to start shopping.',
+            ),
+            style: TextStyle(
+              fontSize: 16,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      );
 
   Widget _buildLoginForm() => Column(
-    children: [
-      CustomTextField(
-        label: 'Số điện thoại',
-        hint: 'Nhập số điện thoại',
-        controller: _phoneController,
-        keyboardType: TextInputType.phone,
-        prefixIcon: Icons.phone,
-        validator: _validatePhone,
-        focusColor: CustomerTheme.primaryColor,
-      ),
-      const SizedBox(height: 20),
-      CustomTextField(
-        label: 'Mật khẩu',
-        hint: 'Nhập mật khẩu',
-        controller: _passwordController,
-        isPassword: true,
-        prefixIcon: Icons.lock,
-        validator: _validatePassword,
-        focusColor: CustomerTheme.primaryColor,
-      ),
-    ],
-  );
+        children: [
+          CustomTextField(
+            label: context.tr(vi: 'Số điện thoại', en: 'Phone number'),
+            hint:
+                context.tr(vi: 'Nhập số điện thoại', en: 'Enter phone number'),
+            controller: _phoneController,
+            keyboardType: TextInputType.phone,
+            prefixIcon: Icons.phone,
+            validator: _validatePhone,
+            focusColor: CustomerTheme.primaryColor,
+          ),
+          const SizedBox(height: 20),
+          CustomTextField(
+            label: context.tr(vi: 'Mật khẩu', en: 'Password'),
+            hint: context.tr(vi: 'Nhập mật khẩu', en: 'Enter password'),
+            controller: _passwordController,
+            isPassword: true,
+            prefixIcon: Icons.lock,
+            validator: _validatePassword,
+            focusColor: CustomerTheme.primaryColor,
+          ),
+        ],
+      );
 
   Widget _buildLoginButton() => SizedBox(
-    width: double.infinity,
-    height: 52,
-    child: ElevatedButton(
-      onPressed: _isLoading ? null : _handleLogin,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: CustomerTheme.primaryColor,
-        foregroundColor: Colors.white,
-      ),
-      child: _isLoading
-          ? const CircularProgressIndicator(color: Colors.white)
-          : const Text("Đăng nhập"),
-    ),
-  );
+        width: double.infinity,
+        height: 52,
+        child: ElevatedButton(
+          onPressed: _isLoading ? null : _handleLogin,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: CustomerTheme.primaryColor,
+            foregroundColor: Colors.white,
+          ),
+          child: _isLoading
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+              : Text(context.tr(vi: 'Đăng nhập', en: 'Sign in')),
+        ),
+      );
 
   Widget _buildRegisterLink() => Row(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      const Text("Chưa có tài khoản? "),
-      GestureDetector(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const CustomerRegisterScreen()),
-          );
-        },
-        child: const Text(
-          "Đăng ký",
-          style: TextStyle(
-            color: CustomerTheme.primaryColor,
-            fontWeight: FontWeight.bold,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            context.tr(vi: 'Chưa có tài khoản? ', en: 'No account yet? '),
+            style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
-        ),
-      ),
-    ],
-  );
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const CustomerRegisterScreen()),
+              );
+            },
+            child: Text(
+              context.tr(vi: 'Đăng ký', en: 'Sign up'),
+              style: TextStyle(
+                color: CustomerTheme.primaryColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      );
 
-  Widget _buildForgotPasswordLink() => const Center(
-    child: Text(
-      "Quên mật khẩu?",
-      style: TextStyle(color: CustomerTheme.primaryColor),
-    ),
-  );
+  Widget _buildForgotPasswordLink() => Center(
+        child: Text(
+          context.tr(vi: 'Quên mật khẩu?', en: 'Forgot password?'),
+          style: const TextStyle(color: CustomerTheme.primaryColor),
+        ),
+      );
 
   String? _validatePhone(String? value) {
     if (value == null || value.isEmpty) {
-      return "Nhập số điện thoại";
+      return context.tr(vi: 'Nhập số điện thoại', en: 'Enter phone number');
     }
     return null;
   }
 
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) {
-      return "Nhập mật khẩu";
+      return context.tr(vi: 'Nhập mật khẩu', en: 'Enter password');
     }
     return null;
   }
@@ -194,8 +218,29 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     context.read<CustomerAuthBloc>().add(
-      CustomerLoginEvent(_phoneController.text, _passwordController.text),
-    );
+          CustomerLoginEvent(_phoneController.text, _passwordController.text),
+        );
+  }
+
+  String _localizedAuthError(String message) {
+    if (message.contains('Sai số điện thoại hoặc mật khẩu') ||
+        message.contains('Thông tin đăng nhập không hợp lệ')) {
+      return context.tr(
+        vi: 'Sai số điện thoại hoặc mật khẩu',
+        en: 'Invalid phone number or password',
+      );
+    }
+    if (message.contains('Đăng nhập thất bại')) {
+      return context.tr(vi: 'Đăng nhập thất bại', en: 'Login failed');
+    }
+    if (message.contains('Không thể kết nối đến máy chủ')) {
+      return context.tr(
+          vi: 'Không thể kết nối đến máy chủ', en: 'Cannot connect to server');
+    }
+    if (message.contains('Dữ liệu không hợp lệ')) {
+      return context.tr(vi: 'Dữ liệu không hợp lệ', en: 'Invalid data');
+    }
+    return message;
   }
 
   @override

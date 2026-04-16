@@ -83,10 +83,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
             builder: (context, authState) {
             String userName = 'Admin';
             String userPhone = '0987654321';
+            String? avatarUrl;
             
             if (authState is AuthAuthenticated) {
               userName = authState.user.fullName;
               userPhone = authState.user.phoneNumber.isNotEmpty ? authState.user.phoneNumber : 'N/A';
+              avatarUrl = authState.user.avatarUrl;
             }
 
             return Scaffold(
@@ -102,7 +104,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 physics: const BouncingScrollPhysics(),
                 child: Column(
                   children: [
-                    _buildProfileHeader(context, userName, userPhone),
+                    _buildProfileHeader(context, userName, userPhone, avatarUrl),
                     const SizedBox(height: 8),
                     _buildSettingsSection(context, l.translate('settings_account'), [
                       _SettingsItem(
@@ -127,10 +129,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         color: Colors.purple,
                         title: l.translate('settings_notifications'),
                         subtitle: 'Quản lý thông báo đơn hàng mới',
-                        trailing: Switch(
+                          trailing: Switch(
                           value: _notificationsEnabled,
                           onChanged: (v) => setState(() => _notificationsEnabled = v),
-                          activeColor: Colors.indigo,
+                          activeThumbColor: Colors.indigo,
                         ),
                       ),
                       _SettingsItem(
@@ -141,7 +143,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         trailing: Switch(
                           value: isDarkMode,
                           onChanged: (v) => context.read<SettingsBloc>().add(ThemeChanged(v)),
-                          activeColor: Colors.teal,
+                          activeThumbColor: Colors.teal,
                         ),
                       ),
                       _SettingsItem(
@@ -373,7 +375,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildProfileHeader(BuildContext context, String name, String phone) {
+  Widget _buildProfileHeader(BuildContext context, String name, String phone, String? avatarUrl) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -386,13 +388,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Container(
             width: 60, height: 60,
             decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [Colors.indigo[400]!, Colors.indigo[700]!]),
+              gradient: avatarUrl == null || avatarUrl.isEmpty 
+                  ? LinearGradient(colors: [Colors.indigo[400]!, Colors.indigo[700]!])
+                  : null,
               borderRadius: BorderRadius.circular(18),
-              boxShadow: [BoxShadow(color: Colors.indigo.withOpacity(0.2), blurRadius: 8, offset: const Offset(0, 4))],
+                boxShadow: [BoxShadow(color: Colors.indigo.withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 4))],
+              image: avatarUrl != null && avatarUrl.isNotEmpty
+                  ? DecorationImage(image: NetworkImage(avatarUrl), fit: BoxFit.cover)
+                  : null,
             ),
-            child: Center(
-              child: Text(name.characters.first.toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-            ),
+            child: (avatarUrl == null || avatarUrl.isEmpty)
+                ? Center(
+                    child: Text(name.characters.first.toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                  )
+                : null,
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -405,7 +414,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                  decoration: BoxDecoration(color: Colors.indigo.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+                  decoration: BoxDecoration(color: Colors.indigo.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
                   child: const Text('Administrators', style: TextStyle(color: Colors.indigo, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
                 ),
               ],
@@ -430,7 +439,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
-            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))],
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))],
           ),
           child: Column(
             children: List.generate(items.length, (index) {
@@ -459,7 +468,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           foregroundColor: Colors.redAccent,
           minimumSize: const Size(double.infinity, 54),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: Colors.red[100]!, width: 1)),
-          backgroundColor: Colors.red[50]!.withOpacity(0.3),
+          backgroundColor: Colors.red[50]!.withValues(alpha: 0.3),
         ),
         child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
       ),
@@ -491,7 +500,7 @@ class _SettingsItem extends StatelessWidget {
       contentPadding: const EdgeInsets.only(left: 14, right: 10, top: 4, bottom: 4),
       leading: Container(
         padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(color: color.withOpacity(0.08), borderRadius: BorderRadius.circular(12)),
+        decoration: BoxDecoration(color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(12)),
         child: Icon(icon, color: color, size: 20),
       ),
       title: Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),

@@ -75,19 +75,20 @@ public class PaymentService {
             payment.setStatus(Payment.PaymentStatus.SUCCESS);
             payment.setTransactionCode(transactionCode);
             paymentRepository.save(payment);
-            // ⚡ Trigger tr_sync_payment_status_on_update sẽ tự động update orders.payment_status = SUCCESS
-            
+
             Order order = payment.getOrder();
-            order.setStatus(Order.OrderStatus.CONFIRMED);
+            order.setPaymentStatus(Payment.PaymentStatus.SUCCESS);
             orderRepository.save(order);
-            log.info("Payment #{} SUCCESS, order #{} set to CONFIRMED", paymentId, order.getId());
+            log.info("Payment #{} SUCCESS, order #{} payment_status updated to SUCCESS", paymentId, order.getId());
         } else {
             payment.setStatus(Payment.PaymentStatus.FAILED);
             payment.setTransactionCode(transactionCode);
             paymentRepository.save(payment);
-            // ⚡ Trigger tr_sync_payment_status_on_update sẽ tự động update orders.payment_status = FAILED
 
-            log.info("Payment #{} FAILED", paymentId);
+            Order order = payment.getOrder();
+            order.setPaymentStatus(Payment.PaymentStatus.FAILED);
+            orderRepository.save(order);
+            log.info("Payment #{} FAILED, order #{} payment_status updated to FAILED", paymentId, order.getId());
         }
     }
 }

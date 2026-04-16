@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
+import '../../core/config/environment.dart';
 import '../../core/theme/shipper_theme.dart';
+import '../../core/utils/app_localizations.dart';
+import '../../core/utils/log_silencer.dart';
 import 'bloc/shipper_auth_bloc.dart';
 import 'bloc/shipper_dashboard_bloc.dart';
+import 'bloc/shipper_language_cubit.dart';
+import 'bloc/shipper_theme_cubit.dart';
 import 'repository/shipper_repository.dart';
 import 'screens/auth/shipper_splash_screen.dart';
 
-void main() {
-  runApp(const ShipperApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Environment.load();
+  LogSilencer.run(() => runApp(const ShipperApp()));
 }
 
 class ShipperApp extends StatelessWidget {
@@ -25,12 +33,32 @@ class ShipperApp extends StatelessWidget {
           BlocProvider(
             create: (_) => ShipperDashboardBloc(repository: repository),
           ),
+          BlocProvider(create: (_) => ShipperThemeCubit()),
+          BlocProvider(create: (_) => ShipperLanguageCubit()),
         ],
-        child: MaterialApp(
-          title: 'Đi Chợ Hộ - Shipper',
-          theme: ShipperTheme.lightTheme,
-          home: const ShipperSplashScreen(),
-          debugShowCheckedModeBanner: false,
+        child: BlocBuilder<ShipperThemeCubit, ShipperThemeState>(
+          builder: (context, themeState) {
+            return BlocBuilder<ShipperLanguageCubit, ShipperLanguageState>(
+              builder: (context, languageState) {
+                return MaterialApp(
+                  title: 'Đi Chợ Hộ - Shipper',
+                  theme: ShipperTheme.lightTheme,
+                  darkTheme: ShipperTheme.darkTheme,
+                  themeMode: themeState.themeMode,
+                  locale: languageState.locale,
+                  supportedLocales: const [Locale('vi'), Locale('en')],
+                  localizationsDelegates: const [
+                    AppLocalizationsDelegate(),
+                    GlobalMaterialLocalizations.delegate,
+                    GlobalWidgetsLocalizations.delegate,
+                    GlobalCupertinoLocalizations.delegate,
+                  ],
+                  home: const ShipperSplashScreen(),
+                  debugShowCheckedModeBanner: false,
+                );
+              },
+            );
+          },
         ),
       ),
     );

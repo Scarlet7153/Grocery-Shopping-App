@@ -7,13 +7,15 @@ import com.grocery.server.payment.entity.Payment;
 import com.grocery.server.payment.service.PaymentService;
 import com.grocery.server.payment.config.PaymentProperties;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/payments")
+@RequestMapping("/payments")
 @RequiredArgsConstructor
+@Slf4j
 public class PaymentController {
 
     private final PaymentService paymentService;
@@ -52,26 +54,67 @@ public class PaymentController {
     }
 
     /**
-     * Endpoint giả lập callback Momo (POST)
-     * Body: { paymentId, success, transactionCode }
+     * Mobile app reports payment result directly after deep link callback
+     * This is used when MoMo IPN callback fails to reach backend (common with ngrok free)
+     */
+    @PostMapping("/report-result")
+    public ResponseEntity<?> reportPaymentResult(@RequestBody Map<String, Object> body) {
+        Long paymentId = null;
+        Object paymentIdObj = body.get("paymentId");
+        if (paymentIdObj != null) {
+            if (paymentIdObj instanceof Integer) {
+                paymentId = ((Integer) paymentIdObj).longValue();
+            } else if (paymentIdObj instanceof Long) {
+                paymentId = (Long) paymentIdObj;
+            } else {
+                try { paymentId = Long.valueOf(paymentIdObj.toString()); } catch (Exception ignored) {}
+            }
+        }
+
+        Boolean success = body.get("success") != null ? (Boolean) body.get("success") : false;
+        String transactionCode = body.get("transactionCode") != null ? body.get("transactionCode").toString() : "";
+
+        if (paymentId == null) {
+            return ResponseEntity.badRequest().body("Missing paymentId");
+        }
+
+        log.info("Mobile app reported payment #{} result: success={}, transId={}", paymentId, success, transactionCode);
+        paymentService.handlePaymentResult(paymentId, success, transactionCode);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * MoMo IPN callback endpoint (server-to-server)
+     * MoMo calls this when payment status changes
      */
     @PostMapping("/momo/callback")
     public ResponseEntity<?> momoCallback(@RequestParam Map<String, String> params) {
-        // Verify signature
-        boolean ok = momoClient.verifyCallback(params);
-        if (!ok) return ResponseEntity.status(400).body("Invalid signature");
+        log.debug("MoMo callback received: {}", params);
 
-        // Extract paymentId from extraData
+        boolean ok = momoClient.verifyCallback(params);
+        if (!ok) {
+            log.warn("MoMo callback signature verification failed");
+            return ResponseEntity.status(400).body("Invalid signature");
+        }
+
         String extraData = params.get("extraData");
         Long paymentId = null;
-        try { paymentId = Long.valueOf(extraData); } catch (Exception ignored) {}
+        if (extraData != null && !extraData.isEmpty()) {
+            try { paymentId = Long.valueOf(extraData); } catch (Exception e) {
+                log.warn("Cannot parse paymentId from extraData: {}", extraData);
+            }
+        }
 
-        // Determine success by errorCode/resultCode (Momo uses resultCode == 0)
-        String resultCode = params.getOrDefault("errorCode", params.getOrDefault("resultCode", ""));
-        boolean success = "0".equals(resultCode) || "".equals(resultCode) && "0".equals(params.getOrDefault("resultCode", ""));
-        String transactionCode = params.getOrDefault("transId", params.get("transactionCode"));
+        if (paymentId == null) {
+            return ResponseEntity.status(400).body("Missing payment id");
+        }
 
-        if (paymentId == null) return ResponseEntity.status(400).body("Missing payment id");
+        String errorCode = params.getOrDefault("errorCode", "");
+        boolean success = "0".equals(errorCode);
+        String transactionCode = params.getOrDefault("transId", "");
+
+        log.info("MoMo callback for payment #{}: errorCode={}, success={}, transId={}",
+                paymentId, errorCode, success, transactionCode);
 
         paymentService.handlePaymentResult(paymentId, success, transactionCode);
         return ResponseEntity.ok().build();

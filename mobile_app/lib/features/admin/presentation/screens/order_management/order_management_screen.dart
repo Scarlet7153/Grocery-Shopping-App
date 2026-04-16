@@ -28,7 +28,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> with Sing
     'Đã hủy',
   ];
 
-  int _discoveredCount = 0;
+  final int _discoveredCount = 0;
   bool _isSyncing = false;
   Future<List<OrderModel>>? _ordersFuture;
 
@@ -46,9 +46,6 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> with Sing
     try {
       await _orderService.discoverRealOrders(
         forceRefresh: force,
-        onProgress: (count) {
-          if (mounted) setState(() => _discoveredCount = count);
-        },
       );
     } catch (e) {
       debugPrint('Sync error: $e');
@@ -237,7 +234,7 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> with Sing
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -321,11 +318,12 @@ class _OrderManagementScreenState extends State<OrderManagementScreen> with Sing
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
       child: Text(text, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold)),
     );
   }
 
+  // ignore: unused_element
   void _exportOrders() async {
     try {
       final List<OrderModel> orders = await _orderService.getAllOrdersAdmin();

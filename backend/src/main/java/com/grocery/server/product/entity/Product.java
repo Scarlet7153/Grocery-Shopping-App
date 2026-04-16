@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * Entity: products
  * Mô tả: Bảng thông tin chung sản phẩm
- * Lưu ý: Giá và đơn vị nằm ở bảng product_units
+ * Lưu ý: Giá và variant nằm ở bảng product_unit_mappings
  */
 @Entity
 @Table(name = "products")
@@ -76,9 +76,10 @@ public class Product {
     /**
      * Các đơn vị bán khác nhau của sản phẩm
      * VD: Gói 300g, Khay 1kg, 1 Bó...
+     * Sử dụng ProductUnitMapping (bảng product_unit_mappings)
      */
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProductUnit> units;
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private List<ProductUnitMapping> productUnitMappings;
 
     // ========== ENUMS ==========
 

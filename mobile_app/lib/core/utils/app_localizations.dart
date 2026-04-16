@@ -35,6 +35,10 @@ class AppLocalizations {
       'full_name': 'Họ và tên',
       'dark_mode_on': 'Chế độ Tối',
       'dark_mode_off': 'Chế độ Sáng',
+      'greeting_morning': 'Chào buổi sáng',
+      'greeting_afternoon': 'Chào buổi chiều',
+      'greeting_evening': 'Chào buổi tối',
+      'greeting_welcome_back': 'Chào mừng bạn trở lại',
     },
     'en': {
       'app_title': 'Grocery Admin',
@@ -61,11 +65,19 @@ class AppLocalizations {
       'full_name': 'Full Name',
       'dark_mode_on': 'Dark Mode',
       'dark_mode_off': 'Light Mode',
+      'greeting_morning': 'Good Morning',
+      'greeting_afternoon': 'Good Afternoon',
+      'greeting_evening': 'Good Evening',
+      'greeting_welcome_back': 'Welcome back',
     },
   };
 
   String translate(String key) {
     return _localizedValues[locale.languageCode]?[key] ?? key;
+  }
+
+  String byLocale({required String vi, required String en}) {
+    return locale.languageCode == 'en' ? en : vi;
   }
 }
 

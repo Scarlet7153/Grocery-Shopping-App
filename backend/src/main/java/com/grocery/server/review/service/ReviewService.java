@@ -20,8 +20,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 /**
  * Service: ReviewService
@@ -148,6 +153,34 @@ public class ReviewService {
     }
 
     /**
+     * Phản hồi đánh giá từ cửa hàng
+     * Chỉ chủ cửa hàng mới có quyền phản hồi
+     * @param reviewId ID đánh giá
+     * @param request Thông tin phản hồi
+     * @param storeId ID cửa hàng
+     * @return ReviewResponse
+     */
+    @Transactional
+    public ReviewResponse replyToReview(Long reviewId, String reply, Long storeId) {
+        log.info("Replying to review: {} by store: {}", reviewId, storeId);
+
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("Review not found with id: " + reviewId));
+
+        if (!review.getStore().getId().equals(storeId)) {
+            throw new UnauthorizedException("You can only reply to reviews of your own store");
+        }
+
+        review.setStoreReply(reply);
+        review.setStoreReplyAt(LocalDateTime.now());
+
+        Review updatedReview = reviewRepository.save(review);
+        log.info("Review replied successfully: {}", reviewId);
+
+        return mapToResponse(updatedReview);
+    }
+
+    /**
      * Lấy thông tin đánh giá theo ID
      * @param reviewId ID đánh giá
      * @return ReviewResponse
@@ -161,13 +194,30 @@ public class ReviewService {
     }
 
     /**
-     * Lấy tất cả đánh giá của một cửa hàng
+     * Lấy tất cả đánh giá của một cửa hàng (phân trang)
+     * @param storeId ID cửa hàng
+     * @param page Số trang (0-based)
+     * @param size Kích thước trang
+     * @return Page<ReviewResponse>
+     */
+    @Transactional(readOnly = true)
+    public Page<ReviewResponse> getReviewsByStore(Long storeId, int page, int size) {
+        if (!storeRepository.existsById(storeId)) {
+            throw new ResourceNotFoundException("Store not found with id: " + storeId);
+        }
+
+        PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<Review> reviews = reviewRepository.findByStoreId(storeId, pageRequest);
+        return reviews.map(this::mapToResponse);
+    }
+
+    /**
+     * Lấy tất cả đánh giá của một cửa hàng (không phân trang - deprecated)
      * @param storeId ID cửa hàng
      * @return List<ReviewResponse>
      */
     @Transactional(readOnly = true)
     public List<ReviewResponse> getReviewsByStore(Long storeId) {
-        // Kiểm tra store tồn tại
         if (!storeRepository.existsById(storeId)) {
             throw new ResourceNotFoundException("Store not found with id: " + storeId);
         }
@@ -229,6 +279,8 @@ public class ReviewService {
                 .storeName(review.getStore().getStoreName())
                 .rating(review.getRating())
                 .comment(review.getComment())
+                .storeReply(review.getStoreReply())
+                .storeReplyAt(review.getStoreReplyAt())
                 .createdAt(review.getCreatedAt())
                 .build();
     }

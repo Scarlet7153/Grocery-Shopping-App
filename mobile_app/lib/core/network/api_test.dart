@@ -127,7 +127,7 @@ class ApiTester {
   /// Test với valid data
   Future<void> testValidAuth() async {
     try {
-      AppLogger.info('Testing auth with sample data...');
+      AppLogger.info('Testing auth...');
 
       final loginData = {'phoneNumber': '0901234567', 'password': '123456'};
 

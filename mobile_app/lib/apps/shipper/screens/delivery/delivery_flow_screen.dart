@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../bloc/shipper_dashboard_bloc.dart';
 import '../../models/shipper_order.dart';
 import '../../repository/shipper_repository.dart';
+import '../../services/shipper_realtime_stomp_service.dart';
 import '../../../../core/theme/shipper_theme.dart';
 import '../order_detail/order_detail_screen.dart';
 import 'order_map_screen.dart';
@@ -20,11 +23,109 @@ class DeliveryFlowScreen extends StatefulWidget {
 class _DeliveryFlowScreenState extends State<DeliveryFlowScreen> {
   late ShipperOrder _order;
   bool _isLoading = false;
+  bool _isRealtimeSyncing = false;
+  StreamSubscription<ShipperRealtimeEvent>? _realtimeSubscription;
+  final ShipperRealtimeStompService _realtimeService =
+      ShipperRealtimeStompService();
+
+  Future<void> _initRealtimeStreaming() async {
+    _realtimeSubscription?.cancel();
+    _realtimeSubscription = _realtimeService.events.listen((event) {
+      if (!_isEventForCurrentOrder(event)) return;
+
+      switch (event.type) {
+        case ShipperRealtimeEventType.orderAccepted:
+        case ShipperRealtimeEventType.orderStatusChanged:
+          _refreshOrderFromRealtime();
+          break;
+        case ShipperRealtimeEventType.error:
+          debugPrint('DeliveryFlow STOMP error: ${event.message}');
+          break;
+        case ShipperRealtimeEventType.connected:
+        case ShipperRealtimeEventType.disconnected:
+        case ShipperRealtimeEventType.orderCreated:
+        case ShipperRealtimeEventType.profileUpdated:
+          break;
+      }
+    });
+
+    await _realtimeService.connect();
+  }
+
+  bool _isEventForCurrentOrder(ShipperRealtimeEvent event) {
+    final payload = event.payload;
+    if (payload == null) return false;
+
+    final rawOrderId = payload['orderId'] ?? payload['id'];
+    final eventOrderId = rawOrderId is int
+        ? rawOrderId
+        : int.tryParse(rawOrderId?.toString() ?? '');
+
+    return eventOrderId == _order.id;
+  }
+
+  Future<void> _refreshOrderFromRealtime() async {
+    if (!mounted || _isRealtimeSyncing) return;
+
+    _isRealtimeSyncing = true;
+    try {
+      final repository = context.read<ShipperRepository>();
+      final refreshed = await repository.getOrderById(_order.id);
+      if (!mounted || refreshed == null) return;
+
+      setState(() {
+        _order = refreshed;
+      });
+    } catch (e) {
+      debugPrint('Realtime refresh failed in DeliveryFlow: $e');
+    } finally {
+      _isRealtimeSyncing = false;
+    }
+  }
+
+  Future<void> _openMapAndRefresh({required bool showDeliveryRoute}) async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => OrderMapScreen(
+          order: _order,
+          showDeliveryRoute: showDeliveryRoute,
+        ),
+      ),
+    );
+
+    if (!mounted || result != true) return;
+
+    context.read<ShipperDashboardBloc>().add(RefreshDashboardData());
+
+    try {
+      final refreshed = await context.read<ShipperRepository>().getOrderById(
+        _order.id,
+      );
+      if (refreshed != null && mounted) {
+        setState(() {
+          _order = refreshed;
+        });
+      }
+    } catch (_) {}
+  }
 
   @override
   void initState() {
     super.initState();
     _order = widget.order;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _initRealtimeStreaming();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _realtimeSubscription?.cancel();
+    _realtimeService.dispose();
+    super.dispose();
   }
 
   int get _currentStep {
@@ -45,7 +146,7 @@ class _DeliveryFlowScreenState extends State<DeliveryFlowScreen> {
     final isDelivered = _order.status == OrderStatus.DELIVERED;
 
     return Scaffold(
-      backgroundColor: ShipperTheme.backgroundColor,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
       appBar: AppBar(
         title: Text('Giao đơn #${_order.id}'),
         backgroundColor: ShipperTheme.primaryColor,
@@ -239,13 +340,7 @@ class _DeliveryFlowScreenState extends State<DeliveryFlowScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        OrderMapScreen(order: _order, showDeliveryRoute: false),
-                  ),
-                ),
+                onPressed: () => _openMapAndRefresh(showDeliveryRoute: false),
                 icon: const Icon(Icons.map, size: 18),
                 label: const Text('Xem bản đồ đến cửa hàng'),
                 style: ElevatedButton.styleFrom(
@@ -339,15 +434,8 @@ class _DeliveryFlowScreenState extends State<DeliveryFlowScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => OrderMapScreen(
-                          order: _order,
-                          showDeliveryRoute: true,
-                        ),
-                      ),
-                    ),
+                    onPressed: () =>
+                        _openMapAndRefresh(showDeliveryRoute: true),
                     icon: const Icon(Icons.directions, size: 18),
                     label: const Text('Chỉ đường'),
                     style: ElevatedButton.styleFrom(

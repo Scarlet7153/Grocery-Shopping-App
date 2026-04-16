@@ -1,6 +1,7 @@
 package com.grocery.server.review.controller;
 
 import com.grocery.server.review.dto.request.CreateReviewRequest;
+import com.grocery.server.review.dto.request.StoreReplyRequest;
 import com.grocery.server.review.dto.request.UpdateReviewRequest;
 import com.grocery.server.review.dto.response.ReviewResponse;
 import com.grocery.server.review.dto.response.StoreRatingResponse;
@@ -18,6 +19,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
+import org.springframework.data.domain.Page;
 
 /**
  * Controller: ReviewController
@@ -98,13 +101,16 @@ public class ReviewController {
     }
 
     /**
-     * Lấy tất cả đánh giá của một cửa hàng
-     * GET /api/reviews/store/{storeId}
+     * Lấy tất cả đánh giá của một cửa hàng (phân trang)
+     * GET /api/reviews/store/{storeId}?page=0&size=10
      * Role: Public
      */
     @GetMapping("/store/{storeId}")
-    public ResponseEntity<ApiResponse<List<ReviewResponse>>> getReviewsByStore(@PathVariable Long storeId) {
-        List<ReviewResponse> reviews = reviewService.getReviewsByStore(storeId);
+    public ResponseEntity<ApiResponse<Page<ReviewResponse>>> getReviewsByStore(
+            @PathVariable Long storeId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<ReviewResponse> reviews = reviewService.getReviewsByStore(storeId, page, size);
         return ResponseEntity.ok(ApiResponse.success("Lấy danh sách đánh giá thành công", reviews));
     }
 
@@ -130,6 +136,22 @@ public class ReviewController {
     public ResponseEntity<ApiResponse<StoreRatingResponse>> getStoreRating(@PathVariable Long storeId) {
         StoreRatingResponse response = reviewService.getStoreRating(storeId);
         return ResponseEntity.ok(ApiResponse.success("Lấy điểm đánh giá cửa hàng thành công", response));
+    }
+
+    /**
+     * Phản hồi đánh giá từ cửa hàng
+     * POST /api/reviews/{id}/reply
+     * Role: STORE (chủ cửa hàng)
+     */
+    @PostMapping("/{id}/reply")
+    @PreAuthorize("hasRole('STORE')")
+    public ResponseEntity<ApiResponse<ReviewResponse>> replyToReview(
+            @PathVariable Long id,
+            @Valid @RequestBody StoreReplyRequest request,
+            @RequestParam Long storeId,
+            Authentication authentication) {
+        ReviewResponse response = reviewService.replyToReview(id, request.getReply(), storeId);
+        return ResponseEntity.ok(ApiResponse.success("Phản hồi đánh giá thành công", response));
     }
 
     /**

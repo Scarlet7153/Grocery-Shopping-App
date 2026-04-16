@@ -12,7 +12,7 @@ class ShipperLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Image.asset(
-      'images/splash_logo.png',
+      'assets/images/splash_logo.png',
       width: size,
       height: size,
       errorBuilder: (context, error, stackTrace) {
@@ -83,8 +83,10 @@ class _ShipperSplashScreenState extends State<ShipperSplashScreen>
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: scheme.surfaceContainerLowest,
       body: Center(
         child: AnimatedBuilder(
           animation: _animationController,
@@ -94,15 +96,22 @@ class _ShipperSplashScreenState extends State<ShipperSplashScreen>
               child: FadeTransition(
                 opacity: _fadeAnimation,
                 child: Image.asset(
-                  'images/splash_logo.png',
+                  'assets/images/splash_logo.png',
                   width: 200,
                   height: 200,
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
                       width: 120,
                       height: 120,
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.image, size: 50),
+                      decoration: BoxDecoration(
+                        color: scheme.surfaceContainerHigh,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(
+                        Icons.image,
+                        size: 50,
+                        color: scheme.onSurfaceVariant,
+                      ),
                     );
                   },
                 ),

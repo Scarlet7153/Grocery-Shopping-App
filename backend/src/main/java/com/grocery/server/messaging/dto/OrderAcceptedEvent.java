@@ -24,6 +24,7 @@ public class OrderAcceptedEvent implements Serializable {
     private static final long serialVersionUID = 1L;
     
     // Event metadata
+    @Builder.Default
     private String eventType = "ORDER_ACCEPTED";
     private Long timestamp;
     

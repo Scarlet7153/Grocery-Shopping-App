@@ -9,6 +9,7 @@ import '../../bloc/shipper_dashboard_bloc.dart';
 import '../../models/shipper_order.dart';
 import '../../repository/shipper_repository.dart';
 import '../../services/routing_service.dart';
+import '../../services/shipper_realtime_stomp_service.dart';
 import '../../../../core/theme/shipper_theme.dart';
 import 'delivery_confirmation_screen.dart';
 import '../order_detail/order_detail_screen.dart';
@@ -48,7 +49,11 @@ class _OrderMapScreenState extends State<OrderMapScreen>
   String? _error;
   MultiStopRouteResult? _routeResult;
   StreamSubscription<Position>? _positionStream;
+  StreamSubscription<ShipperRealtimeEvent>? _realtimeSubscription;
   final GraphHopperRoutingService _routingService;
+  final ShipperRealtimeStompService _realtimeService =
+      ShipperRealtimeStompService();
+  bool _isRealtimeSyncing = false;
   bool _showDirections = false;
 
   // Animation controllers for navigation transition
@@ -73,6 +78,58 @@ class _OrderMapScreenState extends State<OrderMapScreen>
     _refreshOrderStatus();
     _initLocations();
     _startLocationTracking();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _initRealtimeStreaming();
+      }
+    });
+  }
+
+  Future<void> _initRealtimeStreaming() async {
+    _realtimeSubscription?.cancel();
+    _realtimeSubscription = _realtimeService.events.listen((event) {
+      if (!_isEventForCurrentOrder(event)) return;
+
+      switch (event.type) {
+        case ShipperRealtimeEventType.orderAccepted:
+        case ShipperRealtimeEventType.orderStatusChanged:
+          _refreshOrderStatusFromRealtime();
+          break;
+        case ShipperRealtimeEventType.error:
+          debugPrint('OrderMap STOMP error: ${event.message}');
+          break;
+        case ShipperRealtimeEventType.connected:
+        case ShipperRealtimeEventType.disconnected:
+        case ShipperRealtimeEventType.orderCreated:
+        case ShipperRealtimeEventType.profileUpdated:
+          break;
+      }
+    });
+
+    await _realtimeService.connect();
+  }
+
+  bool _isEventForCurrentOrder(ShipperRealtimeEvent event) {
+    final payload = event.payload;
+    if (payload == null) return false;
+
+    final rawOrderId = payload['orderId'] ?? payload['id'];
+    final eventOrderId = rawOrderId is int
+        ? rawOrderId
+        : int.tryParse(rawOrderId?.toString() ?? '');
+
+    return eventOrderId == _order.id;
+  }
+
+  Future<void> _refreshOrderStatusFromRealtime() async {
+    if (!mounted || _isRealtimeSyncing) return;
+
+    _isRealtimeSyncing = true;
+    try {
+      await _refreshOrderStatus();
+    } finally {
+      _isRealtimeSyncing = false;
+    }
   }
 
   Future<void> _refreshOrderStatus() async {
@@ -96,6 +153,8 @@ class _OrderMapScreenState extends State<OrderMapScreen>
   @override
   void dispose() {
     _positionStream?.cancel();
+    _realtimeSubscription?.cancel();
+    _realtimeService.dispose();
     _navAnimationController?.dispose();
     _mapController.dispose();
     super.dispose();
@@ -241,19 +300,6 @@ class _OrderMapScreenState extends State<OrderMapScreen>
         permission == LocationPermission.always;
   }
 
-  void _setupMarkers() {
-    _storeLocations.clear();
-    final order = widget.order;
-    if (order.stores.isNotEmpty) {
-      for (final store in order.stores) {
-        _storeLocations.add(_parseAddress(store.address));
-      }
-    } else {
-      _storeLocations.add(_parseAddress(order.storeAddress));
-    }
-    _destination = _parseAddress(order.deliveryAddress);
-  }
-
   Future<void> _setupMarkersAsync() async {
     _storeLocations.clear();
     final order = widget.order;
@@ -332,7 +378,7 @@ class _OrderMapScreenState extends State<OrderMapScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ShipperTheme.backgroundColor,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
       appBar: AppBar(
         title: const Text('Bản đồ giao hàng'),
         backgroundColor: ShipperTheme.primaryColor,
@@ -603,7 +649,7 @@ class _OrderMapScreenState extends State<OrderMapScreen>
                           ),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: ShipperTheme.primaryColor,
-                            side: BorderSide(color: ShipperTheme.primaryColor),
+                            side: const BorderSide(color: ShipperTheme.primaryColor),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -665,22 +711,31 @@ class _OrderMapScreenState extends State<OrderMapScreen>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          _order.status == OrderStatus.PICKING_UP
-                              ? Colors.orange
-                              : Colors.green,
+                    if (_order.status == OrderStatus.DELIVERED)
+                      const Icon(
+                        Icons.check_circle,
+                        size: 16,
+                        color: Colors.green,
+                      )
+                    else
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            _order.status == OrderStatus.PICKING_UP
+                                ? Colors.orange
+                                : Colors.green,
+                          ),
                         ),
                       ),
-                    ),
                     const SizedBox(width: 8),
                     Text(
                       _order.status == OrderStatus.PICKING_UP
                           ? 'Xác nhận nhận hàng'
+                          : _order.status == OrderStatus.DELIVERED
+                          ? 'Đã giao thành công'
                           : 'Đang giao hàng',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: _order.status == OrderStatus.PICKING_UP
@@ -706,7 +761,7 @@ class _OrderMapScreenState extends State<OrderMapScreen>
                   children: [
                     // Customer name - LARGE (18px)
                     Text(
-                      widget.order.customerName,
+                      _order.customerName,
                       style: Theme.of(context).textTheme.headlineSmall,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -720,7 +775,7 @@ class _OrderMapScreenState extends State<OrderMapScreen>
                           await launchUrl(
                             Uri(
                               scheme: 'tel',
-                              path: widget.order.customerPhone,
+                              path: _order.customerPhone,
                             ),
                           );
                         } catch (e) {
@@ -733,7 +788,7 @@ class _OrderMapScreenState extends State<OrderMapScreen>
                       },
                       child: Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.phone,
                             color: ShipperTheme.primaryColor,
                             size: 20,
@@ -741,7 +796,7 @@ class _OrderMapScreenState extends State<OrderMapScreen>
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              widget.order.customerPhone,
+                              _order.customerPhone,
                               style: Theme.of(context).textTheme.bodyLarge
                                   ?.copyWith(
                                     color: ShipperTheme.primaryColor,
@@ -758,11 +813,11 @@ class _OrderMapScreenState extends State<OrderMapScreen>
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.location_on, color: Colors.red, size: 20),
+                        const Icon(Icons.location_on, color: Colors.red, size: 20),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            widget.order.deliveryAddress,
+                            _order.deliveryAddress,
                             style: Theme.of(context).textTheme.bodyLarge,
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
@@ -787,7 +842,7 @@ class _OrderMapScreenState extends State<OrderMapScreen>
                           await launchUrl(
                             Uri(
                               scheme: 'tel',
-                              path: widget.order.customerPhone,
+                              path: _order.customerPhone,
                             ),
                           );
                         } catch (e) {
@@ -884,24 +939,33 @@ class _OrderMapScreenState extends State<OrderMapScreen>
                         ),
                       ),
                     )
-                  else
+                  else if (_order.status == OrderStatus.DELIVERING)
                     // Nút xác nhận giao hàng thành công
                     Expanded(
                       child: SizedBox(
                         height: 56,
                         child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.push(
+                          onPressed: () async {
+                            final updatedOrder = await Navigator.push<ShipperOrder>(
                               context,
                               MaterialPageRoute(
                                 builder: (_) => DeliveryConfirmationScreen(
-                                  order: widget.order,
-                                  onConfirm: () {
-                                    // TODO: Update order status to DELIVERED
-                                  },
+                                  order: _order,
                                 ),
                               ),
                             );
+
+                            if (!mounted || updatedOrder == null) {
+                              return;
+                            }
+
+                            context.read<ShipperDashboardBloc>().add(
+                              RefreshDashboardData(),
+                            );
+
+                            if (!mounted) return;
+
+                            Navigator.of(context).pop(true);
                           },
                           icon: const Icon(Icons.check_circle, size: 22),
                           label: const Text(
@@ -914,6 +978,32 @@ class _OrderMapScreenState extends State<OrderMapScreen>
                           style: ElevatedButton.styleFrom(
                             backgroundColor: ShipperTheme.successColor,
                             foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    Expanded(
+                      child: SizedBox(
+                        height: 56,
+                        child: ElevatedButton.icon(
+                          onPressed: null,
+                          icon: const Icon(Icons.check_circle, size: 22),
+                          label: const Text(
+                            'Đơn đã hoàn tất',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                            disabledBackgroundColor: Colors.green,
+                            disabledForegroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -1012,10 +1102,6 @@ class _OrderMapScreenState extends State<OrderMapScreen>
     }
   }
 
-  void _moveToLocation(LatLng location) {
-    _mapController.move(location, 16);
-  }
-
   Future<void> _startDelivery() async {
     // Chỉ đổi UI, KHÔNG gọi API đổi status
     setState(() {
@@ -1048,26 +1134,25 @@ class _OrderMapScreenState extends State<OrderMapScreen>
         'DELIVERING',
       );
 
+      if (!mounted) return;
+
       if (updated != null) {
         setState(() {
           _order = updated;
         });
 
         // Refresh dashboard data
-        if (mounted) {
-          context.read<ShipperDashboardBloc>().add(RefreshDashboardData());
-        }
+        context.read<ShipperDashboardBloc>().add(RefreshDashboardData());
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Đã xác nhận nhận hàng từ cửa hàng')),
         );
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
     } finally {
       if (mounted) {
         setState(() => _isUpdatingStatus = false);
@@ -1081,7 +1166,7 @@ class _OrderMapScreenState extends State<OrderMapScreen>
     // Get current camera state
     final currentZoom = _mapController.camera.zoom;
     final currentRotation = _mapController.camera.rotation;
-    final targetZoom = 18.0;
+    const targetZoom = 18.0;
 
     // Calculate shortest rotation angle (avoid spinning multiple circles)
     var targetRotation =
@@ -1089,8 +1174,12 @@ class _OrderMapScreenState extends State<OrderMapScreen>
     var rotationDiff = targetRotation - currentRotation;
 
     // Normalize to -180 to 180 range (shortest path)
-    while (rotationDiff > 180) rotationDiff -= 360;
-    while (rotationDiff < -180) rotationDiff += 360;
+    while (rotationDiff > 180) {
+      rotationDiff -= 360;
+    }
+    while (rotationDiff < -180) {
+      rotationDiff += 360;
+    }
 
     final endRotation = currentRotation + rotationDiff;
 
@@ -1366,9 +1455,9 @@ class _OrderMapScreenState extends State<OrderMapScreen>
           children: [
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: ShipperTheme.primaryColor,
-                borderRadius: const BorderRadius.vertical(
+                borderRadius: BorderRadius.vertical(
                   top: Radius.circular(12),
                 ),
               ),
@@ -1411,76 +1500,6 @@ class _OrderMapScreenState extends State<OrderMapScreen>
     );
   }
 
-  Widget _buildDirectionItem(RouteInstruction inst, int index) {
-    IconData icon;
-    switch (inst.sign) {
-      case -3:
-      case 3:
-        icon = Icons.turn_left;
-        break;
-      case -2:
-      case 2:
-        icon = Icons.turn_right;
-        break;
-      case -1:
-      case 1:
-        icon = Icons.straight;
-        break;
-      case 4:
-        icon = Icons.roundabout_left;
-        break;
-      case 5:
-        icon = Icons.roundabout_right;
-        break;
-      default:
-        icon = Icons.circle;
-    }
-
-    final distanceText = inst.distance >= 1000
-        ? '${(inst.distance / 1000).toStringAsFixed(1)} km'
-        : '${inst.distance.toInt()} m';
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
-        children: [
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: ShipperTheme.primaryColor.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                '${index + 1}',
-                style: TextStyle(
-                  color: ShipperTheme.primaryColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Icon(icon, size: 20, color: Colors.black54),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(inst.text, style: const TextStyle(fontSize: 13)),
-          ),
-          Text(
-            distanceText,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.black87,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildSegmentItem(RouteSegment seg, int index) {
     final segments = _routeResult?.segments ?? [];
     final isLast = index == segments.length - 1;
@@ -1508,7 +1527,7 @@ class _OrderMapScreenState extends State<OrderMapScreen>
             ),
           ),
           const SizedBox(width: 12),
-          Icon(Icons.directions, size: 20, color: Colors.black54),
+          const Icon(Icons.directions, size: 20, color: Colors.black54),
           const SizedBox(width: 8),
           Expanded(
             child: Column(

@@ -1,5 +1,7 @@
 package com.grocery.server.user.service;
 
+import com.grocery.server.messaging.dto.UserProfileUpdatedEvent;
+import com.grocery.server.messaging.publisher.RedisMessagePublisher;
 import com.grocery.server.shared.exception.BadRequestException;
 import com.grocery.server.shared.exception.ResourceNotFoundException;
 import com.grocery.server.shared.exception.UnauthorizedException;
@@ -17,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,6 +34,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RedisMessagePublisher messagePublisher;
 
     /**
      * Lấy thông tin user hiện tại (từ JWT token)
@@ -67,6 +71,7 @@ public class UserService {
         }
         
         User updatedUser = userRepository.save(user);
+        publishUserProfileUpdatedEvent(updatedUser);
         log.info("Updated profile for user: {}", user.getPhoneNumber());
         
         return UserProfileResponse.fromEntity(updatedUser);
@@ -82,6 +87,11 @@ public class UserService {
         // Kiểm tra mật khẩu cũ
         if (!passwordEncoder.matches(request.getOldPassword(), user.getPasswordHash())) {
             throw new BadRequestException("Mật khẩu cũ không đúng");
+        }
+
+        // Không cho phép dùng lại mật khẩu hiện tại
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPasswordHash())) {
+            throw new BadRequestException("Mật khẩu mới không được trùng mật khẩu cũ");
         }
         
         // Kiểm tra mật khẩu mới khớp với confirm password
@@ -184,6 +194,21 @@ public class UserService {
         
         return userRepository.findByPhoneNumber(phoneNumber)
                 .orElseThrow(() -> new UnauthorizedException("User không tồn tại hoặc đã bị xóa"));
+    }
+
+    private void publishUserProfileUpdatedEvent(User user) {
+        UserProfileUpdatedEvent event = UserProfileUpdatedEvent.builder()
+                .eventType("USER_PROFILE_UPDATED")
+                .timestamp(System.currentTimeMillis())
+                .userId(user.getId())
+                .phoneNumber(user.getPhoneNumber())
+                .fullName(user.getFullName())
+                .avatarUrl(user.getAvatarUrl())
+                .address(user.getAddress())
+                .updatedAt(user.getUpdatedAt() != null ? user.getUpdatedAt() : LocalDateTime.now())
+                .build();
+
+        messagePublisher.publish("user:profile:" + user.getId(), event);
     }
 
 

@@ -56,6 +56,23 @@ class OptimizedOrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final cardColor = isDark ? const Color(0xFF1A1A1F) : Colors.white;
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : ShipperTheme.borderColor;
+    final shadowColor = isDark
+        ? Colors.black.withValues(alpha: 0.22)
+        : Colors.black.withValues(alpha: 0.06);
+    final sectionBg = isDark ? const Color(0xFF22232A) : Colors.grey[50]!;
+    final primaryTextColor = isDark
+        ? Colors.white.withValues(alpha: 0.95)
+        : ShipperTheme.textDarkColor;
+    final secondaryTextColor = isDark
+        ? Colors.white.withValues(alpha: 0.72)
+        : ShipperTheme.textGreyColor;
+
     final statusColor = _getStatusColor();
     final statusIcon = _getStatusIcon();
     final statusLabel = _getStatusLabel();
@@ -63,12 +80,12 @@ class OptimizedOrderCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: ShipperTheme.borderColor),
+        border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: shadowColor,
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -119,10 +136,10 @@ class OptimizedOrderCard extends StatelessWidget {
                 // Order ID
                 Text(
                   '#${order.id}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: ShipperTheme.textGreyColor,
+                    color: secondaryTextColor,
                   ),
                 ),
               ],
@@ -138,10 +155,10 @@ class OptimizedOrderCard extends StatelessWidget {
                 // Customer name (LARGE - 18px)
                 Text(
                   order.customerName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: ShipperTheme.textDarkColor,
+                    color: primaryTextColor,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -151,15 +168,15 @@ class OptimizedOrderCard extends StatelessWidget {
                 // Store name (secondary - 14px)
                 Row(
                   children: [
-                    Icon(Icons.store, size: 16, color: Colors.orange),
+                    const Icon(Icons.store, size: 16, color: Colors.orange),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         order.storeName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
-                          color: ShipperTheme.textGreyColor,
+                          color: secondaryTextColor,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -172,15 +189,15 @@ class OptimizedOrderCard extends StatelessWidget {
                 // Delivery address (16px body)
                 Row(
                   children: [
-                    Icon(Icons.location_on, size: 16, color: Colors.red),
+                    const Icon(Icons.location_on, size: 16, color: Colors.red),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         order.deliveryAddress,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
-                          color: ShipperTheme.textDarkColor,
+                          color: primaryTextColor,
                           height: 1.4,
                         ),
                         maxLines: 2,
@@ -238,7 +255,7 @@ class OptimizedOrderCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.grey[50],
+                color: sectionBg,
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(14),
                   bottomRight: Radius.circular(14),

@@ -1,6 +1,7 @@
 package com.grocery.server.config;
 
 import com.grocery.server.messaging.listener.RedisOrderEventListener;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -22,6 +23,7 @@ import java.time.Duration;
  * Phase: 1 - Infrastructure Setup
  */
 @Configuration
+@ConditionalOnProperty(name = "spring.redis.enabled", havingValue = "true", matchIfMissing = true)
 public class RedisConfig {
 
     /**
@@ -90,6 +92,9 @@ public class RedisConfig {
         
         // Subscribe to location updates
         container.addMessageListener(orderEventListener, new PatternTopic("location:order:*"));
+
+        // Subscribe to user profile updates
+        container.addMessageListener(orderEventListener, new PatternTopic("user:profile:*"));
         
         return container;
     }

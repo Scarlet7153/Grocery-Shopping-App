@@ -62,6 +62,18 @@ public class Review {
     private String comment;
 
     /**
+     * Phản hồi từ cửa hàng
+     */
+    @Column(name = "store_reply", columnDefinition = "TEXT")
+    private String storeReply;
+
+    /**
+     * Thời gian phản hồi từ cửa hàng
+     */
+    @Column(name = "store_reply_at")
+    private LocalDateTime storeReplyAt;
+
+    /**
      * Thời gian viết đánh giá
      */
     @CreationTimestamp

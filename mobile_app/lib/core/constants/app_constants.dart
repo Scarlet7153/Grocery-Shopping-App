@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../config/environment.dart';
 
 /// App Constants - Core configuration values
 class AppConstants {
@@ -7,11 +8,7 @@ class AppConstants {
   static const String appVersion = '1.0.0';
 
   // API Configuration
-  /// Base URL is resolved per platform so that
-  /// - Web uses localhost directly
-  /// - Android emulator uses 10.0.2.2 to reach host machine
-  static String get baseUrl =>
-      kIsWeb ? 'http://localhost:8080/api' : 'http://10.0.2.2:8080/api';
+  static String get baseUrl => Environment.baseUrl;
   static const String apiVersion = 'v1';
 
   // Storage Keys

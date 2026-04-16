@@ -1,5 +1,9 @@
 package com.grocery.server.order.service;
 
+import com.grocery.server.messaging.dto.OrderAcceptedEvent;
+import com.grocery.server.messaging.dto.OrderCreatedEvent;
+import com.grocery.server.messaging.dto.OrderStatusChangedEvent;
+import com.grocery.server.messaging.publisher.RedisMessagePublisher;
 import com.grocery.server.order.dto.request.CreateOrderRequest;
 import com.grocery.server.order.dto.request.UpdateOrderStatusRequest;
 import com.grocery.server.order.dto.response.OrderItemResponse;
@@ -8,7 +12,7 @@ import com.grocery.server.order.entity.Order;
 import com.grocery.server.order.entity.Order.OrderStatus;
 import com.grocery.server.order.entity.OrderItem;
 import com.grocery.server.order.repository.OrderRepository;
-import com.grocery.server.product.entity.ProductUnit;
+import com.grocery.server.product.entity.ProductUnitMapping;
 import com.grocery.server.product.repository.ProductRepository;
 import com.grocery.server.shared.exception.BadRequestException;
 import com.grocery.server.shared.exception.ResourceNotFoundException;
@@ -23,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -40,13 +45,15 @@ public class OrderService {
     private final UserRepository userRepository;
     private final StoreRepository storeRepository;
     private final ProductRepository productRepository;
+    private final RedisMessagePublisher messagePublisher;
 
     // Phí ship cố định (VNĐ) - Có thể cấu hình trong application.properties sau
     private static final BigDecimal SHIPPING_FEE = new BigDecimal("15000.00");
 
     /**
      * Tạo đơn hàng mới
-     * @param request Thông tin đơn hàng
+     * 
+     * @param request    Thông tin đơn hàng
      * @param customerId ID khách hàng
      * @return Thông tin đơn hàng vừa tạo
      */
@@ -83,42 +90,53 @@ public class OrderService {
                 .build();
 
         for (var itemRequest : request.getItems()) {
-            // Validate ProductUnit
-            ProductUnit productUnit = productRepository.findProductUnitById(itemRequest.getProductUnitId())
+            BigDecimal requestedQuantity = itemRequest.getQuantity();
+
+            // Validate ProductUnitMapping
+            ProductUnitMapping productUnitMapping = productRepository.findProductUnitMappingById(itemRequest.getProductUnitMappingId())
                     .orElseThrow(() -> new ResourceNotFoundException(
-                            "Không tìm thấy đơn vị sản phẩm ID: " + itemRequest.getProductUnitId()));
+                    "Không tìm thấy biến thể sản phẩm ID: " + itemRequest.getProductUnitMappingId()));
 
             // Kiểm tra sản phẩm có thuộc cửa hàng này không
-            if (!productUnit.getProduct().getStore().getId().equals(request.getStoreId())) {
+            if (!productUnitMapping.getProduct().getStore().getId().equals(request.getStoreId())) {
                 throw new BadRequestException(
-                        "Sản phẩm '" + productUnit.getProduct().getName() + "' không thuộc cửa hàng này");
+                "Sản phẩm '" + productUnitMapping.getProduct().getName() + "' không thuộc cửa hàng này");
             }
 
             // Kiểm tra tồn kho
-            if (productUnit.getStockQuantity() < itemRequest.getQuantity()) {
+            BigDecimal availableStock = BigDecimal.valueOf(productUnitMapping.getStockQuantity());
+            if (availableStock.compareTo(requestedQuantity) < 0) {
                 throw new BadRequestException(
-                        "Sản phẩm '" + productUnit.getProduct().getName() + " - " + productUnit.getUnitName() +
-                                "' chỉ còn " + productUnit.getStockQuantity() + " (yêu cầu: " + itemRequest.getQuantity() + ")"
+                "Sản phẩm '" + productUnitMapping.getProduct().getName() + " - " + productUnitMapping.getDisplayUnitName() +
+                    "' chỉ còn " + productUnitMapping.getStockQuantity() + " (yêu cầu: " + requestedQuantity + ")"
                 );
+            }
+
+            int deductedStock;
+            try {
+                deductedStock = requestedQuantity.intValueExact();
+            } catch (ArithmeticException ex) {
+                throw new BadRequestException(
+                        "Số lượng đặt cho biến thể phải là số nguyên do tồn kho hiện được quản lý theo đơn vị nguyên");
             }
 
             // Tạo OrderItem
             OrderItem orderItem = OrderItem.builder()
                     .order(order)
-                    .productUnit(productUnit)
-                    .quantity(itemRequest.getQuantity())
-                    .unitPrice(productUnit.getPrice())
+                .productUnitMapping(productUnitMapping)
+                    .quantity(requestedQuantity)
+                .unitPrice(productUnitMapping.getPrice())
                     .build();
 
             orderItems.add(orderItem);
             totalAmount = totalAmount.add(orderItem.getSubtotal());
 
             // Trừ tồn kho
-            productUnit.setStockQuantity(productUnit.getStockQuantity() - itemRequest.getQuantity());
+                productUnitMapping.setStockQuantity(productUnitMapping.getStockQuantity() - deductedStock);
             log.info("Trừ {} sản phẩm '{}', còn lại: {}", 
-                    itemRequest.getQuantity(), 
-                    productUnit.getProduct().getName(), 
-                    productUnit.getStockQuantity());
+                    requestedQuantity, 
+                    productUnitMapping.getProduct().getName(), 
+                    productUnitMapping.getStockQuantity());
         }
 
         order.setTotalAmount(totalAmount);
@@ -127,12 +145,14 @@ public class OrderService {
         // Lưu đơn hàng
         Order savedOrder = orderRepository.save(order);
         log.info("Đã tạo đơn hàng #{} với tổng tiền: {} VNĐ", savedOrder.getId(), totalAmount);
+        publishOrderCreatedEvent(savedOrder);
 
         return mapToOrderResponse(savedOrder);
     }
 
     /**
      * Lấy đơn hàng theo ID
+     * 
      * @param orderId ID đơn hàng
      * @return Thông tin đơn hàng
      */
@@ -144,6 +164,7 @@ public class OrderService {
 
     /**
      * Lấy tất cả đơn hàng của khách hàng
+     * 
      * @param customerId ID khách hàng
      * @return Danh sách đơn hàng
      */
@@ -156,6 +177,7 @@ public class OrderService {
 
     /**
      * Lấy tất cả đơn hàng của cửa hàng
+     * 
      * @param storeId ID cửa hàng
      * @return Danh sách đơn hàng
      */
@@ -168,6 +190,7 @@ public class OrderService {
 
     /**
      * Lấy tất cả đơn hàng của cửa hàng thuộc store owner hiện tại
+     * 
      * @param userId ID của store owner
      * @return Danh sách đơn hàng
      */
@@ -192,6 +215,7 @@ public class OrderService {
 
     /**
      * Lấy tất cả đơn hàng của tài xế
+     * 
      * @param shipperId ID tài xế
      * @return Danh sách đơn hàng
      */
@@ -204,6 +228,7 @@ public class OrderService {
 
     /**
      * Lấy danh sách đơn hàng có thể nhận (cho tài xế)
+     * 
      * @return Danh sách đơn hàng đang chờ tài xế
      */
     public List<OrderResponse> getAvailableOrders() {
@@ -215,9 +240,10 @@ public class OrderService {
 
     /**
      * Cập nhật trạng thái đơn hàng
+     * 
      * @param orderId ID đơn hàng
      * @param request Thông tin cập nhật
-     * @param userId ID người thực hiện
+     * @param userId  ID người thực hiện
      * @return Thông tin đơn hàng sau khi cập nhật
      */
     @Transactional
@@ -232,13 +258,13 @@ public class OrderService {
         validateStatusTransition(order, request.getNewStatus(), user);
 
         // Validate required fields
-        if (request.getNewStatus() == OrderStatus.CANCELLED && 
-            (request.getCancelReason() == null || request.getCancelReason().isBlank())) {
+        if (request.getNewStatus() == OrderStatus.CANCELLED &&
+                (request.getCancelReason() == null || request.getCancelReason().isBlank())) {
             throw new BadRequestException("Lý do hủy đơn không được để trống");
         }
 
-        if (request.getNewStatus() == OrderStatus.DELIVERED && 
-            (request.getPodImageUrl() == null || request.getPodImageUrl().isBlank())) {
+        if (request.getNewStatus() == OrderStatus.DELIVERED &&
+                (request.getPodImageUrl() == null || request.getPodImageUrl().isBlank())) {
             throw new BadRequestException("Ảnh chứng minh giao hàng không được để trống");
         }
 
@@ -256,13 +282,15 @@ public class OrderService {
 
         orderRepository.save(order);
         log.info("Đơn hàng #{} đã chuyển từ {} sang {}", orderId, oldStatus, request.getNewStatus());
+        publishOrderStatusChangedEvent(order, oldStatus, request.getNewStatus(), request.getCancelReason());
 
         return mapToOrderResponse(order);
     }
 
     /**
      * Tài xế nhận đơn
-     * @param orderId ID đơn hàng
+     * 
+     * @param orderId   ID đơn hàng
      * @param shipperId ID tài xế
      * @return Thông tin đơn hàng
      */
@@ -291,9 +319,71 @@ public class OrderService {
 
         orderRepository.save(order);
         log.info("Tài xế {} đã nhận đơn hàng #{}", shipper.getFullName(), orderId);
+        publishOrderAcceptedEvent(order, shipper);
+        publishOrderStatusChangedEvent(order, OrderStatus.CONFIRMED, OrderStatus.PICKING_UP, null);
 
         return mapToOrderResponse(order);
     }
+
+        private void publishOrderCreatedEvent(Order order) {
+        OrderCreatedEvent event = OrderCreatedEvent.builder()
+            .eventType("ORDER_CREATED")
+            .timestamp(System.currentTimeMillis())
+            .orderId(order.getId())
+            .customerId(order.getCustomer().getId())
+            .storeId(order.getStore().getId())
+            .storeName(order.getStore().getStoreName())
+            .totalAmount(order.getTotalAmount())
+            .shippingFee(order.getShippingFee())
+            .deliveryAddress(order.getDeliveryAddress())
+            .deliveryLat(null)
+            .deliveryLng(null)
+            .createdAt(order.getCreatedAt())
+            .expiresAt(order.getCreatedAt() != null
+                ? order.getCreatedAt().plusMinutes(15)
+                : LocalDateTime.now().plusMinutes(15))
+            .build();
+
+        messagePublisher.publishOrderEvent("created", order.getId(), event);
+        }
+
+        private void publishOrderAcceptedEvent(Order order, User shipper) {
+        OrderAcceptedEvent event = OrderAcceptedEvent.builder()
+            .eventType("ORDER_ACCEPTED")
+            .timestamp(System.currentTimeMillis())
+            .orderId(order.getId())
+            .customerId(order.getCustomer().getId())
+            .storeId(order.getStore().getId())
+            .shipperId(shipper.getId())
+            .shipperName(shipper.getFullName())
+            .shipperPhone(shipper.getPhoneNumber())
+            .acceptedAt(LocalDateTime.now())
+            .build();
+
+        messagePublisher.publishOrderEvent("accepted", order.getId(), event);
+        }
+
+        private void publishOrderStatusChangedEvent(
+            Order order,
+            OrderStatus oldStatus,
+            OrderStatus newStatus,
+            String reason) {
+        OrderStatusChangedEvent event = OrderStatusChangedEvent.builder()
+            .eventType("ORDER_STATUS_CHANGED")
+            .timestamp(System.currentTimeMillis())
+            .orderId(order.getId())
+            .customerId(order.getCustomer().getId())
+            .storeId(order.getStore().getId())
+            .shipperId(order.getShipper() != null ? order.getShipper().getId() : null)
+            .oldStatus(oldStatus)
+            .newStatus(newStatus)
+            .statusDescription(newStatus.name())
+            .changedAt(LocalDateTime.now())
+            .reason(reason)
+            .build();
+
+        messagePublisher.publishOrderEvent("status", order.getId(), event);
+        }
 
     /**
      * Validate chuyển trạng thái có hợp lệ không
@@ -319,21 +409,21 @@ public class OrderService {
             case PENDING:
                 if (newStatus == OrderStatus.CONFIRMED) {
                     // Chỉ Store owner mới confirm
-                    if (!user.getRole().equals(User.UserRole.STORE) || 
-                        !order.getStore().getOwner().getId().equals(user.getId())) {
+                    if (!user.getRole().equals(User.UserRole.STORE) ||
+                            !order.getStore().getOwner().getId().equals(user.getId())) {
                         throw new UnauthorizedException("Chỉ chủ cửa hàng mới có thể xác nhận đơn hàng");
                     }
                 } else if (newStatus == OrderStatus.CANCELLED) {
                     // Customer hoặc Store có thể hủy
                     boolean isCustomer = order.getCustomer().getId().equals(user.getId());
-                    boolean isStoreOwner = user.getRole().equals(User.UserRole.STORE) && 
-                                           order.getStore().getOwner().getId().equals(user.getId());
+                    boolean isStoreOwner = user.getRole().equals(User.UserRole.STORE) &&
+                            order.getStore().getOwner().getId().equals(user.getId());
                     if (!isCustomer && !isStoreOwner) {
                         throw new UnauthorizedException("Bạn không có quyền hủy đơn hàng này");
                     }
                 } else {
                     throw new BadRequestException(
-                        "Đơn hàng chỉ có thể chuyển từ PENDING sang CONFIRMED hoặc CANCELLED");
+                            "Đơn hàng chỉ có thể chuyển từ PENDING sang CONFIRMED hoặc CANCELLED");
                 }
                 break;
 
@@ -343,14 +433,14 @@ public class OrderService {
                 } else if (newStatus == OrderStatus.CANCELLED) {
                     // Customer hoặc Store có thể hủy
                     boolean isCustomer = order.getCustomer().getId().equals(user.getId());
-                    boolean isStoreOwner = user.getRole().equals(User.UserRole.STORE) && 
-                                           order.getStore().getOwner().getId().equals(user.getId());
+                    boolean isStoreOwner = user.getRole().equals(User.UserRole.STORE) &&
+                            order.getStore().getOwner().getId().equals(user.getId());
                     if (!isCustomer && !isStoreOwner) {
                         throw new UnauthorizedException("Bạn không có quyền hủy đơn hàng này");
                     }
                 } else {
                     throw new BadRequestException(
-                        "Đơn hàng chỉ có thể chuyển từ CONFIRMED sang PICKING_UP hoặc CANCELLED");
+                            "Đơn hàng chỉ có thể chuyển từ CONFIRMED sang PICKING_UP hoặc CANCELLED");
                 }
                 break;
 
@@ -362,7 +452,7 @@ public class OrderService {
                     }
                 } else {
                     throw new BadRequestException(
-                        "Đơn hàng chỉ có thể chuyển từ PICKING_UP sang DELIVERING");
+                            "Đơn hàng chỉ có thể chuyển từ PICKING_UP sang DELIVERING");
                 }
                 break;
 
@@ -374,7 +464,7 @@ public class OrderService {
                     }
                 } else {
                     throw new BadRequestException(
-                        "Đơn hàng đang giao không thể hủy. Chỉ có thể chuyển sang DELIVERED");
+                            "Đơn hàng đang giao không thể hủy. Chỉ có thể chuyển sang DELIVERED");
                 }
                 break;
 
@@ -394,10 +484,10 @@ public class OrderService {
         List<OrderItemResponse> items = order.getOrderItems().stream()
                 .map(item -> OrderItemResponse.builder()
                         .id(item.getId())
-                        .productId(item.getProductUnit().getProduct().getId())
-                        .productName(item.getProductUnit().getProduct().getName())
-                        .productImageUrl(item.getProductUnit().getProduct().getImageUrl())
-                        .unitName(item.getProductUnit().getUnitName())
+                .productId(item.getProductUnitMapping().getProduct().getId())
+                .productName(item.getProductUnitMapping().getProduct().getName())
+                .productImageUrl(item.getProductUnitMapping().getProduct().getImageUrl())
+                .unitName(item.getProductUnitMapping().getDisplayUnitName())
                         .unitPrice(item.getUnitPrice())
                         .quantity(item.getQuantity())
                         .subtotal(item.getSubtotal())

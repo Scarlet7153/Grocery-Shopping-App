@@ -55,6 +55,16 @@ class ApiEndpoints {
   static const String orderStatus = '/orders/{id}/status';
   static const String assignShipper = '/orders/{id}/assign-shipper';
 
+  // Upload endpoints
+  static const String uploadProductTemp = '/upload/product';
+  static const String uploadProductImage = '/upload/product/{productId}';
+  static const String uploadStoreImage = '/upload/store/{storeId}';
+  static const String uploadAvatar = '/upload/avatar';
+    static const String uploadAvatarSignature = '/upload/avatar/signature';
+    static const String saveAvatarUrl = '/upload/avatar';
+  static const String uploadPOD = '/upload/pod/{orderId}';
+  static const String deleteImage = '/upload/image';
+
   // Review endpoints
   static const String reviews = '/reviews';
   static const String reviewById = '/reviews/{id}';

@@ -58,6 +58,16 @@ public class ReviewResponse {
     private String comment;
 
     /**
+     * Phản hồi từ cửa hàng
+     */
+    private String storeReply;
+
+    /**
+     * Thời gian phản hồi từ cửa hàng
+     */
+    private LocalDateTime storeReplyAt;
+
+    /**
      * Thời gian tạo đánh giá
      */
     private LocalDateTime createdAt;

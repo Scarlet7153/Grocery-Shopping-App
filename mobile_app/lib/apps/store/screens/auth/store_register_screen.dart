@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../../../core/enums/app_type.dart';
+import '../../../../core/location/province_api.dart';
 import '../../../../core/theme/store_theme.dart';
+import '../../../../features/auth/bloc/auth_bloc.dart';
+import '../../../../features/auth/bloc/auth_event.dart';
+import '../../../../features/auth/bloc/auth_state.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
+import '../../utils/store_localizations.dart';
 
 class StoreRegisterScreen extends StatefulWidget {
   const StoreRegisterScreen({super.key});
@@ -11,420 +19,365 @@ class StoreRegisterScreen extends StatefulWidget {
 
 class _StoreRegisterScreenState extends State<StoreRegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _ownerNameController = TextEditingController();
+  final ProvinceApi _provinceApi = ProvinceApi();
+
+  final _fullNameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _emailController = TextEditingController();
   final _storeNameController = TextEditingController();
-  final _storeAddressController = TextEditingController();
-  final _businessLicenseController = TextEditingController();
+  final _streetController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+
+  List<LocationItem> _provinces = const [];
+  List<LocationItem> _wards = const [];
+  LocationItem? _selectedProvince;
+  LocationItem? _selectedWard;
+
+  bool _isLoadingProvince = true;
+  bool _isLoadingWard = false;
+  String? _locationError;
+
   bool _isLoading = false;
-  bool _agreeToTerms = false;
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: StoreTheme.backgroundColor,
-    appBar: AppBar(
-      title: const Text('Đăng ký cửa hàng'),
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      foregroundColor: StoreTheme.primaryColor,
-    ),
-    body: SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 32),
-              _buildPersonalInfo(),
-              const SizedBox(height: 24),
-              _buildStoreInfo(),
-              const SizedBox(height: 24),
-              _buildSecurityInfo(),
-              const SizedBox(height: 20),
-              _buildTermsCheckbox(),
-              const SizedBox(height: 32),
-              _buildRegisterButton(),
-              const SizedBox(height: 20),
-              _buildLoginLink(),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
-
-  Widget _buildHeader() => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Text(
-        'Đăng ký cửa hàng',
-        style: TextStyle(
-          fontSize: 28,
-          fontWeight: FontWeight.bold,
-          color: StoreTheme.primaryColor,
-        ),
-      ),
-      const SizedBox(height: 8),
-      Text(
-        'Tạo tài khoản để bán hàng trên nền tảng của chúng tôi',
-        style: TextStyle(fontSize: 16, color: Colors.grey[600], height: 1.5),
-      ),
-    ],
-  );
-
-  Widget _buildPersonalInfo() => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Text(
-        'Thông tin chủ cửa hàng',
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: StoreTheme.primaryColor,
-        ),
-      ),
-      const SizedBox(height: 16),
-      CustomTextField(
-        label: 'Họ và tên chủ cửa hàng *',
-        hint: 'Nhập họ và tên đầy đủ',
-        controller: _ownerNameController,
-        keyboardType: TextInputType.name,
-        prefixIcon: Icons.person,
-        validator: _validateName,
-        focusColor: StoreTheme.primaryColor,
-      ),
-      const SizedBox(height: 20),
-      CustomTextField(
-        label: 'Số điện thoại *',
-        hint: 'Nhập số điện thoại',
-        controller: _phoneController,
-        keyboardType: TextInputType.phone,
-        prefixIcon: Icons.phone,
-        validator: _validatePhone,
-        focusColor: StoreTheme.primaryColor,
-      ),
-      const SizedBox(height: 20),
-      CustomTextField(
-        label: 'Email',
-        hint: 'Nhập địa chỉ email (tùy chọn)',
-        controller: _emailController,
-        keyboardType: TextInputType.emailAddress,
-        prefixIcon: Icons.email,
-        validator: _validateEmail,
-        focusColor: StoreTheme.primaryColor,
-      ),
-    ],
-  );
-
-  Widget _buildStoreInfo() => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Text(
-        'Thông tin cửa hàng',
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: StoreTheme.primaryColor,
-        ),
-      ),
-      const SizedBox(height: 16),
-      CustomTextField(
-        label: 'Tên cửa hàng *',
-        hint: 'Nhập tên cửa hàng',
-        controller: _storeNameController,
-        prefixIcon: Icons.store,
-        validator: _validateStoreName,
-        focusColor: StoreTheme.primaryColor,
-      ),
-      const SizedBox(height: 20),
-      CustomTextField(
-        label: 'Địa chỉ cửa hàng *',
-        hint: 'Nhập địa chỉ cửa hàng',
-        controller: _storeAddressController,
-        prefixIcon: Icons.location_on,
-        validator: _validateStoreAddress,
-        focusColor: StoreTheme.primaryColor,
-      ),
-      const SizedBox(height: 20),
-      CustomTextField(
-        label: 'Số giấy phép kinh doanh *',
-        hint: 'Nhập số giấy phép kinh doanh',
-        controller: _businessLicenseController,
-        prefixIcon: Icons.business,
-        validator: _validateBusinessLicense,
-        focusColor: StoreTheme.primaryColor,
-      ),
-    ],
-  );
-
-  Widget _buildSecurityInfo() => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Text(
-        'Bảo mật',
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: StoreTheme.primaryColor,
-        ),
-      ),
-      const SizedBox(height: 16),
-      CustomTextField(
-        label: 'Mật khẩu *',
-        hint: 'Nhập mật khẩu (tối thiểu 8 ký tự)',
-        controller: _passwordController,
-        isPassword: true,
-        prefixIcon: Icons.lock,
-        validator: _validatePassword,
-        focusColor: StoreTheme.primaryColor,
-      ),
-      const SizedBox(height: 20),
-      CustomTextField(
-        label: 'Xác nhận mật khẩu *',
-        hint: 'Nhập lại mật khẩu',
-        controller: _confirmPasswordController,
-        isPassword: true,
-        prefixIcon: Icons.lock_outline,
-        validator: _validateConfirmPassword,
-        focusColor: StoreTheme.primaryColor,
-      ),
-    ],
-  );
-
-  Widget _buildTermsCheckbox() => Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Checkbox(
-        value: _agreeToTerms,
-        onChanged: (value) => setState(() => _agreeToTerms = value ?? false),
-        activeColor: StoreTheme.primaryColor,
-      ),
-      Expanded(
-        child: GestureDetector(
-          onTap: () => setState(() => _agreeToTerms = !_agreeToTerms),
-          child: RichText(
-            text: TextSpan(
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[700],
-                height: 1.4,
-              ),
-              children: const [
-                // Fixed - Added const to children array
-                TextSpan(text: 'Tôi đồng ý với '), // Fixed - Added const
-                TextSpan(
-                  text: 'Điều khoản sử dụng',
-                  style: TextStyle(
-                    color: Color(
-                      0xFF4CAF50,
-                    ), // Fixed - Use hardcoded color instead of StoreTheme.primaryColor
-                    fontWeight: FontWeight.w500,
-                    decoration: TextDecoration.underline,
-                  ),
-                ), // Fixed - Added const
-                TextSpan(text: ' và '), // Fixed - Added const
-                TextSpan(
-                  text: 'Chính sách bán hàng',
-                  style: TextStyle(
-                    color: Color(
-                      0xFF4CAF50,
-                    ), // Fixed - Use hardcoded color instead of StoreTheme.primaryColor
-                    fontWeight: FontWeight.w500,
-                    decoration: TextDecoration.underline,
-                  ),
-                ), // Fixed - Added const
-                TextSpan(text: ' của ứng dụng.'), // Fixed - Added const
-              ],
-            ),
-          ),
-        ),
-      ),
-    ],
-  );
-
-  Widget _buildRegisterButton() => SizedBox(
-    width: double.infinity,
-    height: 52,
-    child: ElevatedButton(
-      onPressed: (_isLoading || !_agreeToTerms) ? null : _handleRegister,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: StoreTheme.primaryColor,
-        foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      child: _isLoading
-          ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
-              ),
-            )
-          : const Text(
-              'Đăng ký cửa hàng',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-    ),
-  );
-
-  Widget _buildLoginLink() => Row(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      Text('Đã có tài khoản? ', style: TextStyle(color: Colors.grey[600])),
-      GestureDetector(
-        onTap: () => Navigator.pop(context),
-        child: const Text(
-          'Đăng nhập ngay',
-          style: TextStyle(
-            color: StoreTheme.primaryColor,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    ],
-  );
-
-  // Validation methods
-  String? _validateName(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Vui lòng nhập họ và tên';
-    }
-    if (value.trim().length < 2) {
-      return 'Họ tên phải có ít nhất 2 ký tự';
-    }
-    return null;
+  void initState() {
+    super.initState();
+    _loadProvinces();
   }
 
-  String? _validatePhone(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Vui lòng nhập số điện thoại';
+  Future<void> _loadProvinces() async {
+    try {
+      final provinces = await _provinceApi.getProvincesV2();
+      provinces.sort((a, b) => a.name.compareTo(b.name));
+
+      if (!mounted) return;
+      setState(() {
+        _provinces = provinces;
+        _isLoadingProvince = false;
+        _locationError = null;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingProvince = false;
+        _locationError = context.storeTr('load_province_error');
+      });
     }
-    if (value.length != 10 || !RegExp(r'^0[0-9]{9}$').hasMatch(value)) {
-      return 'Số điện thoại không hợp lệ (10 số, bắt đầu bằng 0)';
-    }
-    return null;
   }
 
-  String? _validateEmail(String? value) {
-    if (value == null || value.isEmpty) {
-      return null; // Email is optional
-    }
-    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-      return 'Địa chỉ email không hợp lệ';
-    }
-    return null;
-  }
-
-  String? _validateStoreName(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Vui lòng nhập tên cửa hàng';
-    }
-    if (value.trim().length < 2) {
-      return 'Tên cửa hàng phải có ít nhất 2 ký tự';
-    }
-    return null;
-  }
-
-  String? _validateStoreAddress(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Vui lòng nhập địa chỉ cửa hàng';
-    }
-    if (value.trim().length < 5) {
-      return 'Địa chỉ phải có ít nhất 5 ký tự';
-    }
-    return null;
-  }
-
-  String? _validateBusinessLicense(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Vui lòng nhập số giấy phép kinh doanh';
-    }
-    if (value.trim().length < 8) {
-      return 'Số giấy phép kinh doanh không hợp lệ';
-    }
-    return null;
-  }
-
-  String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Vui lòng nhập mật khẩu';
-    }
-    if (value.length < 8) {
-      return 'Mật khẩu phải có ít nhất 8 ký tự';
-    }
-    if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])').hasMatch(value)) {
-      return 'Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường và 1 số';
-    }
-    return null;
-  }
-
-  String? _validateConfirmPassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Vui lòng xác nhận mật khẩu';
-    }
-    if (value != _passwordController.text) {
-      return 'Mật khẩu xác nhận không khớp';
-    }
-    return null;
-  }
-
-  Future<void> _handleRegister() async {
-    if (!_formKey.currentState!.validate()) return;
-    if (!_agreeToTerms) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng đồng ý với điều khoản sử dụng')),
-      );
-      return;
-    }
-
-    setState(() => _isLoading = true);
+  Future<void> _loadWards(int provinceCode) async {
+    setState(() {
+      _isLoadingWard = true;
+      _wards = const [];
+      _selectedWard = null;
+    });
 
     try {
-      // Mock store registration API call
-      await Future.delayed(const Duration(seconds: 3));
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đăng ký cửa hàng thành công! Vui lòng chờ duyệt.'),
-            backgroundColor: StoreTheme.primaryColor,
-          ),
-        );
-        Navigator.pop(context); // Back to login
-      }
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Đăng ký thất bại: $error'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      final wards = await _provinceApi.getWardsByProvince(provinceCode);
+      if (!mounted) return;
+      setState(() {
+        _wards = wards;
+        _isLoadingWard = false;
+        _locationError = null;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingWard = false;
+        _locationError = context.storeTr('load_ward_error');
+      });
     }
   }
 
   @override
   void dispose() {
-    _ownerNameController.dispose();
+    _fullNameController.dispose();
     _phoneController.dispose();
-    _emailController.dispose();
     _storeNameController.dispose();
-    _storeAddressController.dispose();
-    _businessLicenseController.dispose();
+    _streetController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  void _submit() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    if (_selectedProvince == null || _selectedWard == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(context.storeTr('province_ward_required')),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final fullAddress =
+        '${_streetController.text.trim()}, ${_selectedWard!.name}, ${_selectedProvince!.name}';
+
+    context.read<AuthBloc>().add(
+          RegisterRequested(
+            appType: AppType.store,
+            userData: {
+              'fullName': _fullNameController.text.trim(),
+              'phoneNumber': _phoneController.text.trim(),
+              'password': _passwordController.text,
+              'storeName': _storeNameController.text.trim(),
+              'storeAddress': fullAddress,
+              'address': fullAddress,
+            },
+          ),
+        );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthRegistering) {
+          setState(() => _isLoading = true);
+        }
+        if (state is AuthRegistrationSuccess) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(localizeStoreAuthMessage(context, state.message)),
+              backgroundColor: StoreTheme.primaryColor,
+            ),
+          );
+          Navigator.pop(context);
+        }
+        if (state is AuthRegistrationError) {
+          setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(localizeStoreAuthMessage(context, state.message)),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
+        appBar: AppBar(
+          title: Text(context.storeTr('sign_up_store')),
+          backgroundColor: StoreTheme.primaryColor,
+          foregroundColor: Colors.white,
+        ),
+        body: SafeArea(
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              padding: const EdgeInsets.all(24),
+              children: [
+                Text(
+                  context.storeTr('store_register_title'),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: StoreTheme.primaryColor,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  context.storeTr('store_register_desc'),
+                  style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant),
+                ),
+                const SizedBox(height: 24),
+                CustomTextField(
+                  label: context.storeTr('full_name'),
+                  hint: context.storeTr('full_name_hint'),
+                  controller: _fullNameController,
+                  prefixIcon: Icons.person,
+                  validator: (v) {
+                    final text = v?.trim() ?? '';
+                    if (text.isEmpty) return context.storeTr('full_name_required');
+                    if (text.length < 2) return context.storeTr('full_name_too_short');
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                CustomTextField(
+                  label: context.storeTr('phone_number'),
+                  hint: context.storeTr('phone_hint'),
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  prefixIcon: Icons.phone,
+                  validator: (v) {
+                    final text = v?.trim() ?? '';
+                    if (text.isEmpty) return context.storeTr('phone_required');
+                    if (text.length < 9) return context.storeTr('phone_invalid');
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                CustomTextField(
+                  label: context.storeTr('store_name'),
+                  hint: context.storeTr('store_name_example_hint'),
+                  controller: _storeNameController,
+                  prefixIcon: Icons.store,
+                  validator: (v) {
+                    final text = v?.trim() ?? '';
+                    if (text.isEmpty) return context.storeTr('store_name_required_msg');
+                    if (text.length < 2) return context.storeTr('store_name_too_short_msg');
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<LocationItem>(
+                  initialValue: _selectedProvince,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: context.storeTr('province_city'),
+                    prefixIcon: const Icon(Icons.map_outlined),
+                  ),
+                  items: _provinces
+                      .map(
+                        (item) => DropdownMenuItem<LocationItem>(
+                          value: item,
+                          child: Text(item.name, overflow: TextOverflow.ellipsis),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: _isLoadingProvince
+                      ? null
+                      : (value) {
+                          if (value == null) return;
+                          setState(() {
+                            _selectedProvince = value;
+                            _selectedWard = null;
+                          });
+                          _loadWards(value.code);
+                        },
+                  validator: (value) {
+                    if (value == null) {
+                      return context.storeTr('province_required');
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<LocationItem>(
+                  initialValue: _selectedWard,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: context.storeTr('ward_district'),
+                    prefixIcon: const Icon(Icons.location_city_outlined),
+                  ),
+                  items: _wards
+                      .map(
+                        (item) => DropdownMenuItem<LocationItem>(
+                          value: item,
+                          child: Text(item.name, overflow: TextOverflow.ellipsis),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (_selectedProvince == null || _isLoadingWard)
+                      ? null
+                      : (value) {
+                          setState(() {
+                            _selectedWard = value;
+                          });
+                        },
+                  validator: (value) {
+                    if (value == null) {
+                      return context.storeTr('ward_required');
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                CustomTextField(
+                  label: context.storeTr('street'),
+                  hint: context.storeTr('street_example_hint'),
+                  controller: _streetController,
+                  prefixIcon: Icons.route,
+                  validator: (v) {
+                    final text = v?.trim() ?? '';
+                    if (text.isEmpty) return context.storeTr('street_required');
+                    if (text.length < 3) return context.storeTr('street_too_short');
+                    return null;
+                  },
+                ),
+                if (_isLoadingProvince || _isLoadingWard) ...[
+                  const SizedBox(height: 10),
+                  const LinearProgressIndicator(),
+                ],
+                if (_locationError != null) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    _locationError!,
+                    style: const TextStyle(color: Colors.red, fontSize: 12),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                CustomTextField(
+                  label: context.storeTr('password'),
+                  hint: context.storeTr('password_hint'),
+                  controller: _passwordController,
+                  isPassword: true,
+                  prefixIcon: Icons.lock,
+                  validator: (v) {
+                    final text = v ?? '';
+                    if (text.isEmpty) return context.storeTr('password_required');
+                    if (text.length < 6) return context.storeTr('password_min_6');
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                CustomTextField(
+                  label: context.storeTr('confirm_password'),
+                  hint: context.storeTr('confirm_password_hint'),
+                  controller: _confirmPasswordController,
+                  isPassword: true,
+                  prefixIcon: Icons.lock_outline,
+                  validator: (v) {
+                    if ((v ?? '').isEmpty) {
+                      return context.storeTr('confirm_password_required');
+                    }
+                    if (v != _passwordController.text) {
+                      return context.storeTr('confirm_password_mismatch');
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 28),
+                SizedBox(
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: StoreTheme.primaryColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(
+                            context.storeTr('sign_up_store'),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

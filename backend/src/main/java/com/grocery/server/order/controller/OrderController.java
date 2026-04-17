@@ -3,6 +3,7 @@ package com.grocery.server.order.controller;
 import com.grocery.server.order.dto.request.CreateOrderRequest;
 import com.grocery.server.order.dto.request.UpdateOrderStatusRequest;
 import com.grocery.server.order.dto.response.OrderResponse;
+import com.grocery.server.order.entity.Order;
 import com.grocery.server.order.service.OrderService;
 import com.grocery.server.shared.dto.ApiResponse;
 import com.grocery.server.shared.exception.UnauthorizedException;

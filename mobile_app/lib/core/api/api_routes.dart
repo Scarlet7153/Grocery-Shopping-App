@@ -67,6 +67,13 @@ class ApiRoutes {
   static const String stats = '/admin/stats';
   static const String activities = '/admin/activities';
 
+  // ─── Notifications ───────────────────────────────────────────────────
+  static const String notifications = '/notifications';
+  static const String notificationUnreadCount = '/notifications/unread-count';
+  static const String markAllNotificationsRead = '/notifications/read-all';
+  static String markNotificationRead(String id) => '/notifications/$id/read';
+  static String deleteNotification(String id) => '/notifications/$id';
+
   // ─── Uploads ─────────────────────────────────────────────────────────
   static const String uploadAvatar = '/upload/avatar';
   static const String uploadProduct = '/upload/product';

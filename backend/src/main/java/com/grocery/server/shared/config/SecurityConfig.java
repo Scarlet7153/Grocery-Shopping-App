@@ -91,6 +91,9 @@ public class SecurityConfig {
                 // Chat endpoints - cho phép SHIPPER và CUSTOMER
                 .requestMatchers("/chat/**").hasAnyRole("SHIPPER", "CUSTOMER", "ADMIN")
 
+                // Notification endpoints - cho phép tất cả authenticated users
+                .requestMatchers("/notifications/**").authenticated()
+
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

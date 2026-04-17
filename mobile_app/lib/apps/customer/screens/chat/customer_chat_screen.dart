@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/services/chat_websocket_service.dart';
+import '../../../../core/services/chat_unread_service.dart';
 import '../../../../features/customer/home/data/chat_api.dart';
 import '../../../../features/customer/home/data/chat_model.dart';
 import '../../utils/customer_l10n.dart';
@@ -53,13 +54,27 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
     _messageReceivedListener = (message) {
       debugPrint('📩 Received message: ${message.id}');
       if (message.conversationId == widget.conversationId && mounted) {
-        if (!_messageIds.contains(message.id)) {
-          setState(() {
+        // Deduplicate optimistic message: find a local message with same
+        // senderType & content and a timestamp close to server timestamp.
+        final idx = _messages.indexWhere((m) {
+          final sameSender = m.senderType == message.senderType;
+          final sameContent = m.content == message.content;
+          final timeDiff = message.timestamp.difference(m.timestamp).inSeconds.abs();
+          return sameSender && sameContent && timeDiff <= 5;
+        });
+
+        setState(() {
+          if (idx != -1) {
+            final oldId = _messages[idx].id;
+            _messages[idx] = message;
+            _messageIds.remove(oldId);
+            _messageIds.add(message.id);
+          } else if (!_messageIds.contains(message.id)) {
             _messageIds.add(message.id);
             _messages.add(message);
-          });
-          _scrollToBottom();
-        }
+          }
+        });
+        _scrollToBottom();
       }
     };
 
@@ -69,6 +84,12 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
         setState(() {
           _connected = true;
         });
+        // Mark conversation as read on connect and refresh unread badge
+        try {
+          final ws = ChatWebSocketService.instance;
+          ws.markAsRead(widget.conversationId);
+          ChatUnreadService.instance.refresh();
+        } catch (_) {}
       }
     };
 
@@ -122,6 +143,11 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
           _loading = false;
         });
         _scrollToBottom();
+        // After loading messages the server marks them as read (see GET /chat/conversations/{id}/messages)
+        // Refresh unread badge to reflect changes
+        try {
+          await ChatUnreadService.instance.refresh();
+        } catch (_) {}
       }
     } catch (_) {
       if (mounted) {

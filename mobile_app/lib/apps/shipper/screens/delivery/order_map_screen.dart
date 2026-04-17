@@ -102,6 +102,8 @@ class _OrderMapScreenState extends State<OrderMapScreen>
           break;
         case ShipperRealtimeEventType.connected:
         case ShipperRealtimeEventType.disconnected:
+        case ShipperRealtimeEventType.notificationReceived:
+        case ShipperRealtimeEventType.notificationUnreadCountUpdated:
         case ShipperRealtimeEventType.orderCreated:
         case ShipperRealtimeEventType.profileUpdated:
           break;
@@ -1220,6 +1222,7 @@ class _OrderMapScreenState extends State<OrderMapScreen>
     _navAnimationController!.forward();
   }
 
+  // ignore: unused_element
   void _showOrderDetailsDialog() {
     showModalBottomSheet(
       context: context,

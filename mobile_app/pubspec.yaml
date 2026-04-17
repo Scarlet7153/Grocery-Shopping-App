@@ -98,6 +98,7 @@ flutter:
     - .env.example
     - assets/images/
     - assets/products/
+    - assets/icons/
 
 dependency_overrides:
   analyzer: ^5.12.0

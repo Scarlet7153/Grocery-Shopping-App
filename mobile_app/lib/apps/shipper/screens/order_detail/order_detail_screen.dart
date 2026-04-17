@@ -55,6 +55,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           break;
         case ShipperRealtimeEventType.connected:
         case ShipperRealtimeEventType.disconnected:
+        case ShipperRealtimeEventType.notificationReceived:
+        case ShipperRealtimeEventType.notificationUnreadCountUpdated:
         case ShipperRealtimeEventType.orderCreated:
         case ShipperRealtimeEventType.profileUpdated:
           break;
@@ -517,6 +519,19 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   ),
                 ],
               ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Phương thức thanh toán',
+                    style: TextStyle(fontSize: 14, color: Colors.grey[700])),
+                Text(
+                  _order.paymentMethod ?? 'COD',
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w500),
+                ),
+              ],
             ),
           ],
         ),

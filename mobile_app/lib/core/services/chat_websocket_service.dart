@@ -84,7 +84,7 @@ class ChatWebSocketService {
     final httpScheme = uri.scheme == 'https' ? 'https' : 'http';
     // Preserve any base path (e.g. '/api') and append '/ws'
     final pathPrefix = (uri.path.isEmpty || uri.path == '/') ? '' : uri.path;
-    final wsPath = pathPrefix.endsWith('/') ? '${pathPrefix}ws' : '${pathPrefix}/ws';
+    final wsPath = pathPrefix.endsWith('/') ? '${pathPrefix}ws' : '$pathPrefix/ws';
     final httpUri = uri.replace(
       scheme: httpScheme,
       path: wsPath,

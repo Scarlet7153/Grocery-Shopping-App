@@ -1,7 +1,9 @@
+// ignore_for_file: prefer_const_declarations
 import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../shared/customer_payment_method.dart';
 import '../../shared/customer_state_view.dart';
@@ -12,6 +14,10 @@ import '../../../../core/network/api_client.dart';
 import '../../../../shared/widgets/snackbar_utils.dart';
 import '../../utils/customer_l10n.dart';
 import 'customer_review_screen.dart';
+import '../chat/customer_chat_screen.dart';
+import '../../../../features/customer/home/data/chat_api.dart';
+import '../../../../features/notification/bloc/notification_bloc.dart';
+import '../../../../features/notification/data/notification_model.dart';
 
 class CustomerOrderDetailScreen extends StatefulWidget {
   const CustomerOrderDetailScreen({super.key, required this.orderId});
@@ -65,6 +71,24 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
         case CustomerRealtimeEventType.error:
         case CustomerRealtimeEventType.connected:
         case CustomerRealtimeEventType.disconnected:
+          break;
+        case CustomerRealtimeEventType.notificationReceived:
+          if (event.payload != null) {
+            final notification = NotificationModel.fromJson(event.payload!);
+            if (mounted) {
+              context
+                  .read<NotificationBloc>()
+                  .add(ReceiveRealtimeNotification(notification));
+            }
+          }
+          break;
+        case CustomerRealtimeEventType.notificationUnreadCountUpdated:
+          if (event.payload != null && event.payload!['count'] != null) {
+            final count = event.payload!['count'] as int;
+            if (mounted) {
+              context.read<NotificationBloc>().add(UpdateUnreadCount(count));
+            }
+          }
           break;
       }
     });
@@ -597,6 +621,11 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                       value: formatVnd(grandTotal),
                       isTotal: true,
                     ),
+                    const SizedBox(height: 8),
+                    _SummaryRow(
+                      label: context.tr(vi: 'Phương thức', en: 'Method'),
+                      value: _order?['paymentMethod']?.toString() ?? 'COD',
+                    ),
                   ],
                 ),
               ),
@@ -630,6 +659,24 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
                   ),
                   const SizedBox(height: 10),
                 ],
+              ),
+            if (status == 'DELIVERING')
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () => _openChatWithShipper(),
+                  icon: const Icon(Icons.chat),
+                  label: Text(context.tr(
+                      vi: 'Chat với Shipper', en: 'Chat with Shipper')),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.teal,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
               ),
             if (status == 'PENDING')
               SizedBox(
@@ -724,6 +771,50 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
         setState(() => _hasReviewed = true);
       }
     });
+  }
+
+  void _openChatWithShipper() async {
+    if (_order == null) return;
+    final orderIdInt = int.tryParse(widget.orderId);
+    if (orderIdInt == null) return;
+    final shipperId = _order!['shipperId'] as int?;
+    final shipperName = (_order!['shipperName'] ?? 'Shipper').toString();
+
+    if (shipperId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(context.tr(
+                vi: 'Chưa có thông tin shipper',
+                en: 'No shipper information yet')),
+          ),
+        );
+      }
+      return;
+    }
+
+    final chatApi = ChatApi();
+    try {
+      final conv = await chatApi.createOrGetConversation(orderIdInt, shipperId);
+      if (!mounted) return;
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => CustomerChatScreen(
+            conversationId: conv.id,
+            shipperName: shipperName,
+            orderId: orderIdInt,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              context.tr(vi: 'Không thể mở chat', en: 'Unable to open chat')),
+        ),
+      );
+    }
   }
 }
 

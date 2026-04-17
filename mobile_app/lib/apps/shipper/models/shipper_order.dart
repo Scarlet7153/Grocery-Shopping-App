@@ -21,6 +21,7 @@ class ShipperOrder {
   final List<OrderItem> items;
   final List<StoreInfo> stores;
   final double? distanceKm;
+  final String? paymentMethod;
 
   ShipperOrder({
     required this.id,
@@ -44,6 +45,7 @@ class ShipperOrder {
     this.items = const [],
     this.stores = const [],
     this.distanceKm,
+    this.paymentMethod,
   });
 
   factory ShipperOrder.fromJson(Map<String, dynamic> json) {
@@ -70,9 +72,9 @@ class ShipperOrder {
       createdAt: _parseDate(data['createdAt']),
       items: _parseItems(data['items']),
       stores: _parseStores(data['stores']),
-      distanceKm: data['distanceKm'] != null
-          ? _toDouble(data['distanceKm'])
-          : null,
+      distanceKm:
+          data['distanceKm'] != null ? _toDouble(data['distanceKm']) : null,
+      paymentMethod: data['paymentMethod']?.toString(),
     );
   }
 

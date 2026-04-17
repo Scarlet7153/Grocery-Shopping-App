@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:app_links/app_links.dart';
-import 'package:dio/dio.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -22,6 +22,7 @@ import 'screens/auth/customer_splash_screen.dart';
 import 'screens/cart/customer_payment_tracking_screen.dart';
 import 'screens/orders/customer_order_detail_screen.dart';
 import 'shared/customer_payment_method.dart';
+import '../../features/notification/bloc/notification_bloc.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -149,6 +150,7 @@ class _CustomerAppState extends State<CustomerApp> {
           ),
           BlocProvider(create: (_) => CustomerThemeCubit()),
           BlocProvider(create: (_) => CustomerLanguageCubit()),
+          BlocProvider(create: (_) => NotificationBloc()..add(LoadNotifications())),
         ],
         child: BlocBuilder<CustomerThemeCubit, CustomerThemeState>(
           builder: (context, themeState) {

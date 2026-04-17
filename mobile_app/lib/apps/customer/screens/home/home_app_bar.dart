@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/cart/cart_session.dart';
+import '../../../../core/widgets/chat_badge_icon.dart';
 import '../../utils/customer_l10n.dart';
+import '../chat/customer_chat_list_screen.dart';
 
 class HomeBottomBar extends StatelessWidget {
   final int currentIndex;
@@ -20,30 +22,27 @@ class HomeBottomBar extends StatelessWidget {
     return BottomNavigationBar(
       currentIndex: currentIndex,
       onTap: onTap,
-
       backgroundColor: scheme.surface,
-
       selectedItemColor: scheme.primary,
       unselectedItemColor: scheme.onSurfaceVariant,
-
       type: BottomNavigationBarType.fixed,
-
       items: [
         BottomNavigationBarItem(
           icon: const Icon(Icons.home),
           label: context.tr(vi: 'Trang chủ', en: 'Home'),
         ),
-
         BottomNavigationBarItem(
           icon: _CartBadgeIcon(),
           label: context.tr(vi: 'Giỏ hàng', en: 'Cart'),
         ),
-
         BottomNavigationBarItem(
           icon: const Icon(Icons.receipt),
           label: context.tr(vi: 'Đơn hàng', en: 'Orders'),
         ),
-
+        BottomNavigationBarItem(
+          icon: const ChatBadgeIcon(),
+          label: context.tr(vi: 'Chat', en: 'Chat'),
+        ),
         BottomNavigationBarItem(
           icon: const Icon(Icons.person),
           label: context.tr(vi: 'Hồ sơ', en: 'Profile'),

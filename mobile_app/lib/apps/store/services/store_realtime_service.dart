@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
@@ -12,6 +13,8 @@ enum StoreRealtimeEventType {
   newOrder,
   orderAccepted,
   orderStatusChanged,
+  notificationReceived,
+  notificationUnreadCountUpdated,
   error,
 }
 
@@ -46,10 +49,12 @@ class StoreRealtimeService {
 
     final token = await _getToken();
     if (token == null || token.isEmpty) {
+      developer.log('Store realtime: No token found', name: 'StoreRealtime');
       _emitError('Không tìm thấy token để kết nối STOMP');
       return;
     }
 
+    developer.log('Store realtime: Connecting...', name: 'StoreRealtime');
     final authHeaders = {'Authorization': 'Bearer $token'};
 
     _client = StompClient(
@@ -61,12 +66,27 @@ class StoreRealtimeService {
         stompConnectHeaders: authHeaders,
         webSocketConnectHeaders: authHeaders,
         onConnect: (frame) {
+          developer.log('Store realtime: Connected!', name: 'StoreRealtime');
           _isConnected = true;
           _emitEvent(
               const StoreRealtimeEvent(type: StoreRealtimeEventType.connected));
-          _subscribe(destination: '/topic/orders/new', type: StoreRealtimeEventType.newOrder);
-          _subscribe(destination: '/topic/orders/accepted', type: StoreRealtimeEventType.orderAccepted);
-          _subscribe(destination: '/topic/orders/status', type: StoreRealtimeEventType.orderStatusChanged);
+          _subscribe(
+              destination: '/topic/orders/new',
+              type: StoreRealtimeEventType.newOrder);
+          _subscribe(
+              destination: '/topic/orders/accepted',
+              type: StoreRealtimeEventType.orderAccepted);
+          _subscribe(
+              destination: '/topic/orders/status',
+              type: StoreRealtimeEventType.orderStatusChanged);
+          _subscribe(
+            destination: '/user/queue/notifications',
+            type: StoreRealtimeEventType.notificationReceived,
+          );
+          _subscribe(
+            destination: '/user/queue/notifications/count',
+            type: StoreRealtimeEventType.notificationUnreadCountUpdated,
+          );
         },
         onDisconnect: (_) {
           _isConnected = false;
@@ -98,9 +118,14 @@ class StoreRealtimeService {
 
   void _subscribe(
       {required String destination, required StoreRealtimeEventType type}) {
+    developer.log('Store realtime: Subscribing to $destination',
+        name: 'StoreRealtime');
     _client?.subscribe(
       destination: destination,
       callback: (frame) {
+        developer.log(
+            'Store realtime: Received message on $destination: ${frame.body?.substring(0, frame.body!.length > 100 ? 100 : frame.body!.length)}...',
+            name: 'StoreRealtime');
         final payload = _parseJson(frame.body);
         _emitEvent(StoreRealtimeEvent(
             type: type, payload: payload, rawBody: frame.body));

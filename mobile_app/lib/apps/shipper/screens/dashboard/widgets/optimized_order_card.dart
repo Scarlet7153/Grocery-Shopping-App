@@ -77,220 +77,225 @@ class OptimizedOrderCard extends StatelessWidget {
     final statusIcon = _getStatusIcon();
     final statusLabel = _getStatusLabel();
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: borderColor),
-        boxShadow: [
-          BoxShadow(
-            color: shadowColor,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // ===== TOP BAR - Status + Order ID =====
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.08),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(14),
-                topRight: Radius.circular(14),
+    return InkWell(
+      onTap: onDetails,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: borderColor),
+          boxShadow: [
+            BoxShadow(
+              color: shadowColor,
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            // ===== TOP BAR - Status + Order ID =====
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.08),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(14),
+                  topRight: Radius.circular(14),
+                ),
+              ),
+              child: Row(
+                children: [
+                  // Status badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusColor,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(statusIcon, size: 16, color: Colors.white),
+                        const SizedBox(width: 6),
+                        Text(
+                          statusLabel,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Spacer(),
+                  // Order ID
+                  Text(
+                    '#${order.id}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: secondaryTextColor,
+                    ),
+                  ),
+                ],
               ),
             ),
-            child: Row(
-              children: [
-                // Status badge
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 6,
+
+            // ===== CONTENT AREA =====
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Customer name (LARGE - 18px)
+                  Text(
+                    order.customerName,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: primaryTextColor,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  decoration: BoxDecoration(
-                    color: statusColor,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                  const SizedBox(height: 6),
+
+                  // Store name (secondary - 14px)
+                  Row(
                     children: [
-                      Icon(statusIcon, size: 16, color: Colors.white),
+                      const Icon(Icons.store, size: 16, color: Colors.orange),
                       const SizedBox(width: 6),
-                      Text(
-                        statusLabel,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                          letterSpacing: 0.5,
+                      Expanded(
+                        child: Text(
+                          order.storeName,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: secondaryTextColor,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
                   ),
-                ),
-                const Spacer(),
-                // Order ID
-                Text(
-                  '#${order.id}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: secondaryTextColor,
+                  const SizedBox(height: 8),
+
+                  // Delivery address (16px body)
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on,
+                          size: 16, color: Colors.red),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          order.deliveryAddress,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: primaryTextColor,
+                            height: 1.4,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-          ),
+                  const SizedBox(height: 12),
 
-          // ===== CONTENT AREA =====
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Customer name (LARGE - 18px)
-                Text(
-                  order.customerName,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: primaryTextColor,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 6),
-
-                // Store name (secondary - 14px)
-                Row(
-                  children: [
-                    const Icon(Icons.store, size: 16, color: Colors.orange),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        order.storeName,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: secondaryTextColor,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-
-                // Delivery address (16px body)
-                Row(
-                  children: [
-                    const Icon(Icons.location_on, size: 16, color: Colors.red),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        order.deliveryAddress,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: primaryTextColor,
-                          height: 1.4,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                // ===== METRICS ROW =====
-                Row(
-                  children: [
-                    // Distance
-                    if (distance != null)
-                      Flexible(
-                        child: _buildMetricBadge(
-                          icon: Icons.near_me,
-                          label: '${distance!.toStringAsFixed(1)} km',
-                          bgColor: Colors.blue.withValues(alpha: 0.1),
-                          textColor: Colors.blue.shade700,
-                        ),
-                      ),
-                    if (distance != null) const SizedBox(width: 8),
-
-                    // Price/Earnings
-                    Flexible(
-                      child: _buildMetricBadge(
-                        icon: Icons.attach_money,
-                        label: '${order.shippingFee.toStringAsFixed(0)}₫',
-                        bgColor: Colors.green.withValues(alpha: 0.1),
-                        textColor: Colors.green.shade700,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-
-                    // Items count
-                    Flexible(
-                      child: _buildMetricBadge(
-                        icon: Icons.shopping_bag,
-                        label:
-                            '${order.items.length} ${ShipperStrings.itemsLabel}',
-                        bgColor: Colors.purple.withValues(alpha: 0.1),
-                        textColor: Colors.purple.shade700,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // ===== ACTION BUTTON (FULL WIDTH - THUMB ZONE) =====
-          if (onStart != null)
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: sectionBg,
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(14),
-                  bottomRight: Radius.circular(14),
-                ),
-              ),
-              child: ElevatedButton.icon(
-                onPressed: isLoading ? null : onStart,
-                icon: isLoading
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.white,
+                  // ===== METRICS ROW =====
+                  Row(
+                    children: [
+                      // Distance
+                      if (distance != null)
+                        Flexible(
+                          child: _buildMetricBadge(
+                            icon: Icons.near_me,
+                            label: '${distance!.toStringAsFixed(1)} km',
+                            bgColor: Colors.blue.withValues(alpha: 0.1),
+                            textColor: Colors.blue.shade700,
                           ),
                         ),
-                      )
-                    : const Icon(Icons.check_circle, size: 20),
-                label: isLoading
-                    ? const Text(ShipperStrings.buttonProcessing)
-                    : const Text(ShipperStrings.buttonStart),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  minimumSize: const Size(double.infinity, 56),
-                  textStyle: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                      if (distance != null) const SizedBox(width: 8),
+
+                      // Price/Earnings
+                      Flexible(
+                        child: _buildMetricBadge(
+                          icon: Icons.attach_money,
+                          label: '${order.shippingFee.toStringAsFixed(0)}₫',
+                          bgColor: Colors.green.withValues(alpha: 0.1),
+                          textColor: Colors.green.shade700,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+
+                      // Items count
+                      Flexible(
+                        child: _buildMetricBadge(
+                          icon: Icons.shopping_bag,
+                          label:
+                              '${order.items.length} ${ShipperStrings.itemsLabel}',
+                          bgColor: Colors.purple.withValues(alpha: 0.1),
+                          textColor: Colors.purple.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // ===== ACTION BUTTON (FULL WIDTH - THUMB ZONE) =====
+            if (onStart != null)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: sectionBg,
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(14),
+                    bottomRight: Radius.circular(14),
+                  ),
+                ),
+                child: ElevatedButton.icon(
+                  onPressed: isLoading ? null : onStart,
+                  icon: isLoading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                      : const Icon(Icons.check_circle, size: 20),
+                  label: isLoading
+                      ? const Text(ShipperStrings.buttonProcessing)
+                      : const Text(ShipperStrings.buttonStart),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    minimumSize: const Size(double.infinity, 56),
+                    textStyle: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

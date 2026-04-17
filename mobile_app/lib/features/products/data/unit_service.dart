@@ -19,9 +19,9 @@ class UnitService {
         }
       }
       return [];
-    } on DioException catch (e) {
+    } on DioException {
       return [];
-    } catch (e) {
+    } catch (_) {
       return [];
     }
   }
@@ -38,9 +38,9 @@ class UnitService {
         }
       }
       return [];
-    } on DioException catch (e) {
+    } on DioException {
       return [];
-    } catch (e) {
+    } catch (_) {
       return [];
     }
   }
@@ -57,9 +57,9 @@ class UnitService {
         }
       }
       return [];
-    } on DioException catch (e) {
+    } on DioException {
       return [];
-    } catch (e) {
+    } catch (_) {
       return [];
     }
   }
@@ -74,9 +74,9 @@ class UnitService {
         return Unit.fromJson(data);
       }
       return null;
-    } on DioException catch (e) {
+    } on DioException {
       return null;
-    } catch (e) {
+    } catch (_) {
       return null;
     }
   }

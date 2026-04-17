@@ -35,15 +35,30 @@ public class PaymentService {
 
         BigDecimal amount = order.getTotalAmount().add(order.getShippingFee());
 
+        // COD: payment tự động thành công, không cần redirect
+        // MOMO/VNPAY: payment bắt đầu ở trạng thái PENDING
+        Payment.PaymentStatus initialStatus = (method == Payment.PaymentMethod.COD)
+                ? Payment.PaymentStatus.SUCCESS
+                : Payment.PaymentStatus.PENDING;
+
         Payment payment = Payment.builder()
                 .order(order)
                 .paymentMethod(method)
                 .amount(amount)
-                .status(Payment.PaymentStatus.PENDING)
+                .status(initialStatus)
                 .build();
 
         Payment saved = paymentRepository.save(payment);
-        log.info("Created payment #{} for order {} with method {}", saved.getId(), orderId, method);
+        log.info("Created payment #{} for order {} with method {} and status {}",
+                saved.getId(), orderId, method, initialStatus);
+
+        // Với COD, cập nhật luôn order.payment_status
+        if (method == Payment.PaymentMethod.COD) {
+            order.setPaymentStatus(Payment.PaymentStatus.SUCCESS);
+            orderRepository.save(order);
+            log.info("Order {} payment status updated to SUCCESS for COD", orderId);
+        }
+
         return saved;
     }
 

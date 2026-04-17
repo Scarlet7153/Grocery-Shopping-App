@@ -10,6 +10,7 @@ import 'bloc/shipper_auth_bloc.dart';
 import 'bloc/shipper_dashboard_bloc.dart';
 import 'bloc/shipper_language_cubit.dart';
 import 'bloc/shipper_theme_cubit.dart';
+import '../../features/notification/bloc/notification_bloc.dart';
 import 'repository/shipper_repository.dart';
 import 'screens/auth/shipper_splash_screen.dart';
 
@@ -35,6 +36,7 @@ class ShipperApp extends StatelessWidget {
           ),
           BlocProvider(create: (_) => ShipperThemeCubit()),
           BlocProvider(create: (_) => ShipperLanguageCubit()),
+          BlocProvider(create: (_) => NotificationBloc()..add(LoadNotifications())),
         ],
         child: BlocBuilder<ShipperThemeCubit, ShipperThemeState>(
           builder: (context, themeState) {

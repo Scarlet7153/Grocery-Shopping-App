@@ -13,6 +13,8 @@ enum ShipperRealtimeEventType {
   orderAccepted,
   orderStatusChanged,
   profileUpdated,
+  notificationReceived,
+  notificationUnreadCountUpdated,
   error,
 }
 
@@ -82,6 +84,14 @@ class ShipperRealtimeStompService {
           _subscribe(
             destination: '/user/queue/profile',
             type: ShipperRealtimeEventType.profileUpdated,
+          );
+          _subscribe(
+            destination: '/user/queue/notifications',
+            type: ShipperRealtimeEventType.notificationReceived,
+          );
+          _subscribe(
+            destination: '/user/queue/notifications/count',
+            type: ShipperRealtimeEventType.notificationUnreadCountUpdated,
           );
         },
         onDisconnect: (_) {

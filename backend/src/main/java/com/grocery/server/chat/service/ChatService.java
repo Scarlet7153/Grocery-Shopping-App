@@ -111,22 +111,25 @@ public class ChatService {
 
         Message saved = messageRepository.save(message);
 
+        // Mark this message as already processed BEFORE broadcasting so the
+        // MongoDB change stream listener will skip re-broadcasting the same message.
+        try {
+            if (saved.getId() != null) {
+                messageBroadcastDeduplicator.markProcessed(saved.getId());
+            }
+        } catch (Exception ignored) {
+        }
+
         conv.setLastMessage(request.getContent());
         conv.setLastMessageAt(LocalDateTime.now());
         conv.setUpdatedAt(LocalDateTime.now());
         conversationRepository.save(conv);
 
         MessageResponse response = toMessageResponse(saved);
+
+        // Server-initiated broadcast (primary). ChangeStream will now skip this id.
         broadcastNewMessage(conv, response);
         broadcastConversationUpdated(conv);
-
-                // Mark this message as already broadcasted so ChangeStream listener can skip duplicate
-                try {
-                        if (saved.getId() != null) {
-                                messageBroadcastDeduplicator.markProcessed(saved.getId());
-                        }
-                } catch (Exception ignored) {
-                }
 
         log.info("Message sent in conversation {} by {}", request.getConversationId(), senderType);
         return response;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../utils/customer_l10n.dart';
+import 'package:grocery_shopping_app/features/notification/presentation/widgets/notification_icon_button.dart';
 
 class CustomerHomeHeader extends StatelessWidget
     implements PreferredSizeWidget {
@@ -108,12 +109,9 @@ class CustomerHomeHeader extends StatelessWidget
           ),
         ],
       ),
-      actions: [
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.notifications_none),
-        ),
-        const SizedBox(width: 4),
+      actions: const [
+        NotificationIconButton(),
+        SizedBox(width: 4),
       ],
     );
   }

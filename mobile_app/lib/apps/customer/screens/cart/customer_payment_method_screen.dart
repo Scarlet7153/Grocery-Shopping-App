@@ -1,3 +1,4 @@
+// ignore_for_file: deprecated_member_use, unused_element, unused_local_variable
 import 'package:flutter/material.dart';
 
 import '../../shared/customer_payment_method.dart';

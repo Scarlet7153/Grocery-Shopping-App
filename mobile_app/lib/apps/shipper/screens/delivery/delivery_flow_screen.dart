@@ -43,6 +43,8 @@ class _DeliveryFlowScreenState extends State<DeliveryFlowScreen> {
           break;
         case ShipperRealtimeEventType.connected:
         case ShipperRealtimeEventType.disconnected:
+        case ShipperRealtimeEventType.notificationReceived:
+        case ShipperRealtimeEventType.notificationUnreadCountUpdated:
         case ShipperRealtimeEventType.orderCreated:
         case ShipperRealtimeEventType.profileUpdated:
           break;

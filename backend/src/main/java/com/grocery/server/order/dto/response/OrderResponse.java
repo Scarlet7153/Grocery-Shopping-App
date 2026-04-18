@@ -114,4 +114,9 @@ public class OrderResponse {
      * Danh sách sản phẩm trong đơn
      */
     private List<OrderItemResponse> items;
+
+    /**
+     * Phương thức thanh toán (COD, MOMO, VNPAY)
+     */
+    private String paymentMethod;
 }

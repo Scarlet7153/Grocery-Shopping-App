@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../features/store/data/store_service.dart';
@@ -13,6 +14,8 @@ import '../../../features/products/data/unit_service.dart';
 import '../../../features/products/data/unit_model.dart';
 import '../../../features/review/data/review_service.dart';
 import '../../../features/review/data/review_model.dart';
+import '../../../features/notification/bloc/notification_bloc.dart';
+import '../../../features/notification/data/notification_model.dart';
 import '../services/store_realtime_service.dart';
 
 // ============ DASHBOARD BLOC ============
@@ -104,9 +107,9 @@ class StoreDashboardBloc
       await _storeService.updateStoreProfile(
           event.storeId,
           UpdateStoreProfileRequest(
-            storeName: event.storeName,
-            address: event.address,
-            imageUrl: event.imageUrl));
+              storeName: event.storeName,
+              address: event.address,
+              imageUrl: event.imageUrl));
       add(LoadStoreDashboard());
     } catch (e) {
       emit(StoreDashboardError(e.toString()));
@@ -154,6 +157,8 @@ class StoreOrdersBloc extends Bloc<StoreOrdersEvent, StoreOrdersState> {
     on<_RealtimeOrdersChanged>(_onRealtimeOrdersChanged);
 
     _realtimeSubscription = _realtimeService.events.listen((event) {
+      developer.log('[StoreOrdersBloc] Received realtime event: ${event.type}',
+          name: 'StoreOrders');
       if (event.type == StoreRealtimeEventType.newOrder ||
           event.type == StoreRealtimeEventType.orderAccepted ||
           event.type == StoreRealtimeEventType.orderStatusChanged) {

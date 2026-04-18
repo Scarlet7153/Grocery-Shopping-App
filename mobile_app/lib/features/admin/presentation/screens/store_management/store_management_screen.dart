@@ -18,7 +18,6 @@ class _StoreManagementScreenState extends State<StoreManagementScreen> {
   final OrderService _orderService = OrderService();
   final _currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
   String _searchQuery = '';
-  bool _isLoadingRevenue = false;
   Map<String, double> _storeRevenueMap = {};
 
   @override
@@ -29,7 +28,6 @@ class _StoreManagementScreenState extends State<StoreManagementScreen> {
 
   Future<void> _loadStoreRevenue() async {
     if (!mounted) return;
-    setState(() => _isLoadingRevenue = true);
     
     try {
       // getAllOrdersAdmin giờ đây đã an toàn (không gây 403 UI)
@@ -50,11 +48,9 @@ class _StoreManagementScreenState extends State<StoreManagementScreen> {
       if (!mounted) return;
       setState(() {
         _storeRevenueMap = revenueMap;
-        _isLoadingRevenue = false;
       });
     } catch (e) {
       debugPrint('⚠️ Error loading store revenue (Handled): $e');
-      if (mounted) setState(() => _isLoadingRevenue = false);
     }
   }
 

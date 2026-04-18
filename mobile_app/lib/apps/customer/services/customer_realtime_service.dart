@@ -12,6 +12,8 @@ enum CustomerRealtimeEventType {
   disconnected,
   orderCreated,
   orderStatusChanged,
+  notificationReceived,
+  notificationUnreadCountUpdated,
   error,
 }
 
@@ -79,6 +81,14 @@ class CustomerRealtimeService {
           _subscribe(
             destination: '/user/queue/orders',
             type: CustomerRealtimeEventType.orderStatusChanged,
+          );
+          _subscribe(
+            destination: '/user/queue/notifications',
+            type: CustomerRealtimeEventType.notificationReceived,
+          );
+          _subscribe(
+            destination: '/user/queue/notifications/count',
+            type: CustomerRealtimeEventType.notificationUnreadCountUpdated,
           );
         },
         onDisconnect: (_) {

@@ -6,16 +6,16 @@ import 'package:geolocator/geolocator.dart';
 
 import '../../../../core/auth/auth_session.dart';
 import '../../../../core/cart/cart_session.dart';
-import '../../../../core/format/formatters.dart';
 import '../../../../core/theme/customer_theme.dart';
 import '../../../../features/customer/home/data/product_model.dart';
 import '../../bloc/customer_home_bloc.dart';
 import '../../services/customer_current_location_service.dart';
 import '../../shared/customer_product_list_card.dart';
-import '../../shared/customer_product_image.dart';
 import '../../shared/customer_state_view.dart';
+import '../../shared/variant_selection_sheet.dart';
 import '../../utils/customer_l10n.dart';
 import '../cart/customer_cart_screen.dart';
+import '../chat/customer_chat_list_screen.dart';
 import '../orders/customer_orders_screen.dart';
 import '../profile/customer_profile_screen.dart';
 import '../profile/recipient_info_screen.dart';
@@ -100,6 +100,9 @@ class _HomeShellState extends State<_HomeShell> {
     } else if (_currentIndex == 2) {
       body = const CustomerOrdersScreen();
       appBar = AppBar(title: Text(context.tr(vi: 'Đơn hàng', en: 'Orders')));
+    } else if (_currentIndex == 3) {
+      body = const CustomerChatListScreen();
+      appBar = AppBar(title: Text(context.tr(vi: 'Chat', en: 'Chat')));
     } else {
       body = const CustomerProfileScreen();
       appBar = AppBar(title: Text(context.tr(vi: 'Hồ sơ', en: 'Profile')));
@@ -534,7 +537,13 @@ class _HomeViewState extends State<_HomeView> {
                                     ),
                                   );
                                 },
-                                onBuyNow: () => _addToCart(product),
+                                onBuyNow: () async {
+                                  if (product.units.length > 1) {
+                                    await showVariantSelectionSheet(context, product);
+                                  } else {
+                                    _addToCart(product);
+                                  }
+                                },
                                 customerAddress: AuthSession.useCurrentLocation
                                     ? null
                                     : AuthSession.address,

@@ -17,6 +17,7 @@ import '../../features/orders/data/order_service.dart';
 import '../../features/products/data/product_service.dart';
 import '../../features/review/data/review_service.dart';
 import '../../features/products/data/category_service.dart';
+import '../../features/notification/bloc/notification_bloc.dart';
 
 import 'bloc/store_blocs.dart';
 import 'bloc/store_language_cubit.dart';
@@ -63,6 +64,7 @@ class StoreApp extends StatelessWidget {
           BlocProvider(create: (_) => StoreCategoriesBloc(CategoryService())),
           BlocProvider(create: (_) => StoreLanguageCubit()),
           BlocProvider(create: (_) => StoreThemeCubit()),
+          BlocProvider(create: (_) => NotificationBloc()..add(LoadNotifications())),
         ],
         child: BlocBuilder<StoreThemeCubit, StoreThemeState>(
           builder: (context, themeState) {

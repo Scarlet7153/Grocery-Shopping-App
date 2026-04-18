@@ -6,6 +6,7 @@ import '../../../../features/customer/home/data/home_api.dart';
 import '../../../../features/customer/home/data/product_model.dart';
 import '../../shared/customer_product_list_card.dart';
 import '../../shared/customer_state_view.dart';
+import '../../shared/variant_selection_sheet.dart';
 import '../../utils/customer_l10n.dart';
 import 'product_detail_screen.dart';
 
@@ -379,7 +380,13 @@ class _AllProductsScreenState extends State<AllProductsScreen> {
                                           ),
                                         );
                                       },
-                                      onBuyNow: () => _addToCart(product),
+                                      onBuyNow: () async {
+                                        if (product.units.length > 1) {
+                                          await showVariantSelectionSheet(context, product);
+                                        } else {
+                                          _addToCart(product);
+                                        }
+                                      },
                                       customerAddress:
                                           AuthSession.useCurrentLocation
                                               ? null

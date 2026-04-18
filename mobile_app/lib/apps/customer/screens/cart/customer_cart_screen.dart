@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/auth/auth_session.dart';
 import '../../../../core/cart/cart_session.dart';
 import '../../../../core/format/formatters.dart';
-import '../../../../shared/widgets/snackbar_utils.dart';
 import '../../utils/customer_l10n.dart';
 import 'customer_checkout_screen.dart';
-import '../profile/recipient_info_screen.dart';
 
 class CustomerCartScreen extends StatefulWidget {
   const CustomerCartScreen({super.key});

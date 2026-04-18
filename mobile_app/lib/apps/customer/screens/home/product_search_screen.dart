@@ -6,6 +6,7 @@ import '../../../../features/customer/home/data/home_api.dart';
 import '../../../../features/customer/home/data/product_model.dart';
 import '../../shared/customer_product_list_card.dart';
 import '../../shared/customer_state_view.dart';
+import '../../shared/variant_selection_sheet.dart';
 import '../../utils/customer_l10n.dart';
 import 'product_detail_screen.dart';
 
@@ -128,7 +129,12 @@ class _ProductSearchScreenState extends State<ProductSearchScreen> {
                         : AuthSession.address,
                     storeAddress: _storeAddressByName[
                         product.storeName.trim().toLowerCase()],
-                    onBuyNow: () {
+                    onBuyNow: () async {
+                      if (product.units.length > 1) {
+                        await showVariantSelectionSheet(context, product);
+                        return;
+                      }
+
                       final defaultUnit =
                           product.units.isNotEmpty ? product.units.first : null;
                       if (defaultUnit == null) {

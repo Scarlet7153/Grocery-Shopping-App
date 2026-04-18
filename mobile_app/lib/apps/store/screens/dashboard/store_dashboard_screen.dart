@@ -6,6 +6,7 @@ import '../../bloc/store_blocs.dart';
 import '../../../../features/orders/data/order_model.dart';
 import '../orders/store_order_detail_screen.dart';
 import '../../utils/store_localizations.dart';
+import '../../../../features/notification/presentation/widgets/notification_icon_button.dart';
 
 class StoreDashboardScreen extends StatefulWidget {
   final VoidCallback? onViewAllOrders;
@@ -55,6 +56,7 @@ class _StoreDashboardScreenState extends State<StoreDashboardScreen> {
           foregroundColor: Colors.white,
           elevation: 0,
           actions: [
+            const NotificationIconButton(color: Colors.white),
             BlocBuilder<StoreDashboardBloc, StoreDashboardState>(
               builder: (context, state) {
                 if (state is StoreDashboardLoaded) {

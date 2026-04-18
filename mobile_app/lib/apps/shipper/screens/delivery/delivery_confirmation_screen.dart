@@ -61,6 +61,8 @@ class _DeliveryConfirmationScreenState
           break;
         case ShipperRealtimeEventType.connected:
         case ShipperRealtimeEventType.disconnected:
+        case ShipperRealtimeEventType.notificationReceived:
+        case ShipperRealtimeEventType.notificationUnreadCountUpdated:
         case ShipperRealtimeEventType.orderCreated:
         case ShipperRealtimeEventType.orderAccepted:
         case ShipperRealtimeEventType.profileUpdated:

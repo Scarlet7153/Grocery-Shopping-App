@@ -23,8 +23,9 @@ import com.grocery.server.user.entity.User;
 import com.grocery.server.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.grocery.server.notification.service.NotificationService;
+import com.grocery.server.notification.document.Notification;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -50,6 +51,7 @@ public class OrderService {
     private final StoreRepository storeRepository;
     private final ProductRepository productRepository;
     private final RedisMessagePublisher messagePublisher;
+    private final NotificationService notificationService;
 
     // Phí ship cố định (VNĐ) - Có thể cấu hình trong application.properties sau
     private static final BigDecimal SHIPPING_FEE = new BigDecimal("15000.00");
@@ -61,7 +63,6 @@ public class OrderService {
      * @param customerId ID khách hàng
      * @return Thông tin đơn hàng vừa tạo
      */
-    @Transactional
     public OrderResponse createOrder(CreateOrderRequest request, Long customerId) {
         log.info("Khách hàng {} đang tạo đơn hàng từ cửa hàng {}", customerId, request.getStoreId());
 
@@ -150,6 +151,19 @@ public class OrderService {
         Order savedOrder = orderRepository.save(order);
         log.info("Đã tạo đơn hàng #{} với tổng tiền: {} VNĐ", savedOrder.getId(), totalAmount);
         publishOrderCreatedEvent(savedOrder);
+
+        // Thông báo đến Store owner về đơn hàng mới
+        if (store.getOwner() != null) {
+            notificationService.createAndSend(
+                store.getOwner().getId(),
+                Notification.ORDER_CREATED,
+                "Đơn hàng mới #" + savedOrder.getId(),
+                "Khách hàng " + savedOrder.getCustomer().getFullName()
+                    + " đặt đơn " + savedOrder.getTotalAmount().toPlainString() + " VNĐ",
+                savedOrder.getId(),
+                "ORDER"
+            );
+        }
 
         return mapToOrderResponse(savedOrder);
     }
@@ -279,7 +293,6 @@ public class OrderService {
      * @param userId  ID người thực hiện
      * @return Thông tin đơn hàng sau khi cập nhật
      */
-    @Transactional
     public OrderResponse updateOrderStatus(Long orderId, UpdateOrderStatusRequest request, Long userId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn hàng"));
@@ -316,6 +329,7 @@ public class OrderService {
         orderRepository.save(order);
         log.info("Đơn hàng #{} đã chuyển từ {} sang {}", orderId, oldStatus, request.getNewStatus());
         publishOrderStatusChangedEvent(order, oldStatus, request.getNewStatus(), request.getCancelReason());
+        sendOrderNotifications(order, request.getNewStatus(), request.getCancelReason());
 
         return mapToOrderResponse(order);
     }
@@ -327,7 +341,6 @@ public class OrderService {
      * @param shipperId ID tài xế
      * @return Thông tin đơn hàng
      */
-    @Transactional
     public OrderResponse assignShipper(Long orderId, Long shipperId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đơn hàng"));
@@ -354,6 +367,19 @@ public class OrderService {
         log.info("Tài xế {} đã nhận đơn hàng #{}", shipper.getFullName(), orderId);
         publishOrderAcceptedEvent(order, shipper);
         publishOrderStatusChangedEvent(order, OrderStatus.CONFIRMED, OrderStatus.PICKING_UP, null);
+
+        // Thông báo cho khách hàng và tài xế
+        notificationService.createAndSend(
+            order.getCustomer().getId(), Notification.SHIPPER_ASSIGNED,
+            "Shipper đã nhận đơn của bạn",
+            "Shipper " + shipper.getFullName() + " (" + shipper.getPhoneNumber() + ") đang trên đường đến cửa hàng",
+            orderId, "ORDER");
+
+        notificationService.createAndSend(
+            order.getStore().getOwner().getId(), Notification.SHIPPER_ASSIGNED,
+            "Có shipper nhận đơn #" + orderId,
+            "Shipper " + shipper.getFullName() + " đã nhận đơn hàng",
+            orderId, "ORDER");
 
         return mapToOrderResponse(order);
     }
@@ -417,6 +443,60 @@ public class OrderService {
 
         messagePublisher.publishOrderEvent("status", order.getId(), event);
         }
+
+    private void sendOrderNotifications(Order order, OrderStatus newStatus, String reason) {
+        Long customerId = order.getCustomer().getId();
+        Long storeOwnerId = order.getStore().getOwner().getId();
+        Long orderId = order.getId();
+
+        switch (newStatus) {
+            case CONFIRMED -> notificationService.createAndSend(
+                customerId, Notification.ORDER_CONFIRMED,
+                "Đơn hàng #" + orderId + " đã được xác nhận",
+                "Cửa hàng " + order.getStore().getStoreName() + " đã xác nhận đơn của bạn",
+                orderId, "ORDER");
+
+            case PICKING_UP -> notificationService.createAndSend(
+                customerId, Notification.ORDER_PICKING_UP,
+                "Shipper đang lấy hàng",
+                "Shipper " + order.getShipper().getFullName() + " đang đến lấy hàng tại cửa hàng",
+                orderId, "ORDER");
+
+            case DELIVERING -> notificationService.createAndSend(
+                customerId, Notification.ORDER_DELIVERING,
+                "Đơn hàng đang trên đường giao",
+                "Shipper " + order.getShipper().getFullName() + " đang giao hàng đến bạn",
+                orderId, "ORDER");
+
+            case DELIVERED -> {
+                notificationService.createAndSend(
+                    customerId, Notification.ORDER_DELIVERED,
+                    "Giao hàng thành công! 🎉",
+                    "Đơn hàng #" + orderId + " đã được giao. Hãy đánh giá trải nghiệm của bạn!",
+                    orderId, "ORDER");
+                notificationService.createAndSend(
+                    storeOwnerId, Notification.ORDER_DELIVERED,
+                    "Đơn hàng #" + orderId + " hoàn thành",
+                    "Shipper đã giao thành công cho khách hàng " + order.getCustomer().getFullName(),
+                    orderId, "ORDER");
+            }
+
+            case CANCELLED -> {
+                notificationService.createAndSend(
+                    customerId, Notification.ORDER_CANCELLED,
+                    "Đơn hàng #" + orderId + " đã bị hủy",
+                    reason != null ? "Lý do: " + reason : "Đơn hàng của bạn đã bị hủy",
+                    orderId, "ORDER");
+                notificationService.createAndSend(
+                    storeOwnerId, Notification.ORDER_CANCELLED,
+                    "Đơn hàng #" + orderId + " bị hủy",
+                    reason != null ? "Lý do: " + reason : "Đơn hàng đã bị hủy",
+                    orderId, "ORDER");
+            }
+
+            default -> {}
+        }
+    }
 
     /**
      * Validate chuyển trạng thái có hợp lệ không
@@ -543,6 +623,9 @@ public class OrderService {
                 .cancelReason(order.getCancelReason())
                 .createdAt(order.getCreatedAt())
                 .items(items)
+                .paymentMethod(order.getPayments() != null && !order.getPayments().isEmpty()
+                        ? order.getPayments().get(0).getPaymentMethod().name()
+                        : null)
                 .build();
     }
 }

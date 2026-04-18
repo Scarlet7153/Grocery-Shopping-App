@@ -1,12 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../shared/customer_state_view.dart';
 import '../../services/customer_realtime_service.dart';
 import '../../utils/customer_l10n.dart';
 import '../../../../core/format/formatters.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../features/notification/bloc/notification_bloc.dart';
+import '../../../../features/notification/data/notification_model.dart';
 import 'customer_order_detail_screen.dart';
 
 class CustomerOrdersScreen extends StatefulWidget {
@@ -58,6 +61,24 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
         case CustomerRealtimeEventType.error:
         case CustomerRealtimeEventType.connected:
         case CustomerRealtimeEventType.disconnected:
+          break;
+        case CustomerRealtimeEventType.notificationReceived:
+          if (event.payload != null) {
+            final notification = NotificationModel.fromJson(event.payload!);
+            if (mounted) {
+              context
+                  .read<NotificationBloc>()
+                  .add(ReceiveRealtimeNotification(notification));
+            }
+          }
+          break;
+        case CustomerRealtimeEventType.notificationUnreadCountUpdated:
+          if (event.payload != null && event.payload!['count'] != null) {
+            final count = event.payload!['count'] as int;
+            if (mounted) {
+              context.read<NotificationBloc>().add(UpdateUnreadCount(count));
+            }
+          }
           break;
       }
     });

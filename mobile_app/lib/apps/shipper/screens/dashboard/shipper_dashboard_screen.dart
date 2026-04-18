@@ -15,6 +15,11 @@ import 'package:grocery_shopping_app/apps/shipper/screens/delivery/delivery_flow
 import 'package:grocery_shopping_app/apps/shipper/screens/delivery/order_map_screen.dart';
 import 'package:grocery_shopping_app/apps/shipper/screens/order_detail/order_detail_screen.dart';
 import 'package:grocery_shopping_app/apps/shipper/services/shipper_realtime_stomp_service.dart';
+import 'package:grocery_shopping_app/apps/shipper/screens/chat/shipper_chat_list_screen.dart';
+import 'package:grocery_shopping_app/core/widgets/chat_badge_icon.dart';
+import 'package:grocery_shopping_app/features/notification/presentation/widgets/notification_icon_button.dart';
+import 'package:grocery_shopping_app/features/notification/bloc/notification_bloc.dart';
+import 'package:grocery_shopping_app/features/notification/data/notification_model.dart';
 
 /// A tiny fake repository that returns sample data immediately. Used by the
 /// preview constructor so we can open the dashboard without a backend/token.
@@ -98,12 +103,10 @@ class _PreviewRepo extends ShipperRepository {
     return {
       'isOnline': true,
       'earnings': 150000.0,
-      'availableOrders': sampleOrders
-          .where((o) => o.status == OrderStatus.CONFIRMED)
-          .toList(),
-      'deliveries': sampleOrders
-          .where((o) => o.status != OrderStatus.CONFIRMED)
-          .toList(),
+      'availableOrders':
+          sampleOrders.where((o) => o.status == OrderStatus.CONFIRMED).toList(),
+      'deliveries':
+          sampleOrders.where((o) => o.status != OrderStatus.CONFIRMED).toList(),
       'completedCount': 15,
       'acceptanceRate': 92.0,
     };
@@ -177,6 +180,24 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
           break;
         case ShipperRealtimeEventType.connected:
         case ShipperRealtimeEventType.disconnected:
+          break;
+        case ShipperRealtimeEventType.notificationReceived:
+          if (event.payload != null) {
+            final notification = NotificationModel.fromJson(event.payload!);
+            if (mounted) {
+              context
+                  .read<NotificationBloc>()
+                  .add(ReceiveRealtimeNotification(notification));
+            }
+          }
+          break;
+        case ShipperRealtimeEventType.notificationUnreadCountUpdated:
+          if (event.payload != null && event.payload!['count'] != null) {
+            final count = event.payload!['count'] as int;
+            if (mounted) {
+              context.read<NotificationBloc>().add(UpdateUnreadCount(count));
+            }
+          }
           break;
       }
     });
@@ -255,13 +276,13 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
 
     // Trigger refresh
     blocContext.read<ShipperDashboardBloc>().add(RefreshDashboardData());
-    
+
     // Wait for BLoC to finish loading (not loading anymore = finished)
     await blocContext.read<ShipperDashboardBloc>().stream.firstWhere(
-      (state) => state.status != DashboardStatus.loading,
-      orElse: () => const ShipperDashboardState.initial(),
-    );
-    
+          (state) => state.status != DashboardStatus.loading,
+          orElse: () => const ShipperDashboardState.initial(),
+        );
+
     // Then refresh user profile
     await _loadUserProfile();
   }
@@ -289,6 +310,7 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
               children: [
                 _overviewPage(),
                 _historyPage(),
+                _chatPage(),
                 _statisticsPage(),
                 _profilePage(),
               ],
@@ -297,10 +319,11 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
               currentIndex: _currentIndex,
               selectedItemColor: ShipperTheme.primaryColor,
               unselectedItemColor: Colors.grey,
+              type: BottomNavigationBarType.fixed,
               onTap: (idx) {
                 setState(() => _currentIndex = idx);
                 // Refresh user profile when accessing profile tab
-                if (idx == 3) {
+                if (idx == 4) {
                   _loadUserProfile();
                 }
               },
@@ -312,6 +335,10 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                 BottomNavigationBarItem(
                   icon: const Icon(Icons.receipt_long),
                   label: _tr(context, 'Đơn hàng', 'Orders'),
+                ),
+                BottomNavigationBarItem(
+                  icon: const ChatBadgeIcon(),
+                  label: _tr(context, 'Chat', 'Chat'),
                 ),
                 BottomNavigationBarItem(
                   icon: const Icon(Icons.bar_chart),
@@ -381,15 +408,14 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                                 _userData?['fullName'] ?? 'Shipper',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style:
-                                    Theme.of(
+                                style: Theme.of(
                                       context,
                                     ).textTheme.headlineSmall?.copyWith(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurface,
-                                      fontWeight: FontWeight.w700,
-                                    ) ??
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onSurface,
+                                          fontWeight: FontWeight.w700,
+                                        ) ??
                                     TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
@@ -405,13 +431,15 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                                   'Đối tác giao hàng',
                                   'Delivery partner',
                                 ),
-                                style:
-                                    Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                                      fontWeight: FontWeight.w500,
-                                    ) ??
+                                style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
+                                          fontWeight: FontWeight.w500,
+                                        ) ??
                                     TextStyle(
                                       fontSize: 13,
                                       color: Theme.of(
@@ -422,14 +450,15 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                             ],
                           ),
                         ),
+                        const NotificationIconButton(),
                       ],
                     ),
                     const SizedBox(height: 12),
                     OnlineToggle(
                       isOnline: state.isOnline,
                       onToggle: () => context.read<ShipperDashboardBloc>().add(
-                        ToggleOnlineStatus(),
-                      ),
+                            ToggleOnlineStatus(),
+                          ),
                     ),
                   ],
                 ),
@@ -442,11 +471,10 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                 const SizedBox(height: 16),
                 Text(
                   _tr(context, 'Đơn hàng sẵn có', 'Available orders'),
-                  style:
-                      Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface,
-                        fontWeight: FontWeight.w700,
-                      ) ??
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface,
+                            fontWeight: FontWeight.w700,
+                          ) ??
                       TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -480,8 +508,8 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
 
                         if (result == true && context.mounted) {
                           context.read<ShipperDashboardBloc>().add(
-                            RefreshDashboardData(),
-                          );
+                                RefreshDashboardData(),
+                              );
                         }
                       }
 
@@ -635,19 +663,19 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                   children: HistoryFilter.values.map((filter) {
                     final label = switch (filter) {
                       HistoryFilter.all => _tr(context, 'Tất cả', 'All'),
-                      HistoryFilter.completed => _tr(context, 'Hoàn thành', 'Completed'),
-                      HistoryFilter.cancelled => _tr(context, 'Đã hủy', 'Cancelled'),
+                      HistoryFilter.completed =>
+                        _tr(context, 'Hoàn thành', 'Completed'),
+                      HistoryFilter.cancelled =>
+                        _tr(context, 'Đã hủy', 'Cancelled'),
                     };
                     final count = switch (filter) {
                       HistoryFilter.all => state.deliveries.length,
-                      HistoryFilter.completed =>
-                        state.deliveries
-                            .where((o) => o.status == OrderStatus.DELIVERED)
-                            .length,
-                      HistoryFilter.cancelled =>
-                        state.deliveries
-                            .where((o) => o.status == OrderStatus.CANCELLED)
-                            .length,
+                      HistoryFilter.completed => state.deliveries
+                          .where((o) => o.status == OrderStatus.DELIVERED)
+                          .length,
+                      HistoryFilter.cancelled => state.deliveries
+                          .where((o) => o.status == OrderStatus.CANCELLED)
+                          .length,
                     };
                     final selected = filter == _historyFilter;
                     return Expanded(
@@ -717,7 +745,7 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                               onTap: () {
                                 final isActiveDelivery =
                                     order.status == OrderStatus.PICKING_UP ||
-                                    order.status == OrderStatus.DELIVERING;
+                                        order.status == OrderStatus.DELIVERING;
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -807,9 +835,9 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                                               Container(
                                                 padding:
                                                     const EdgeInsets.symmetric(
-                                                      horizontal: 8,
-                                                      vertical: 4,
-                                                    ),
+                                                  horizontal: 8,
+                                                  vertical: 4,
+                                                ),
                                                 decoration: BoxDecoration(
                                                   color: _statusColor(
                                                     order.status,
@@ -999,6 +1027,10 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
 
   Widget _profilePage() {
     return const ShipperProfileScreen();
+  }
+
+  Widget _chatPage() {
+    return const ShipperChatListScreen();
   }
 
   Widget _buildStatRow(String title, String value) {

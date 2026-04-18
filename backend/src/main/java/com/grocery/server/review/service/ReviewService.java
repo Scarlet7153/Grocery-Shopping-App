@@ -15,6 +15,8 @@ import com.grocery.server.store.entity.Store;
 import com.grocery.server.store.repository.StoreRepository;
 import com.grocery.server.user.entity.User;
 import com.grocery.server.user.repository.UserRepository;
+import com.grocery.server.notification.service.NotificationService;
+import com.grocery.server.notification.document.Notification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -41,6 +43,7 @@ public class ReviewService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final StoreRepository storeRepository;
+    private final NotificationService notificationService;
 
     /**
      * Tạo đánh giá mới
@@ -87,6 +90,18 @@ public class ReviewService {
 
         Review savedReview = reviewRepository.save(review);
         log.info("Review created successfully with id: {}", savedReview.getId());
+
+        // Gửi thông báo đến chủ cửa hàng
+        if (order.getStore().getOwner() != null) {
+            notificationService.createAndSend(
+                order.getStore().getOwner().getId(),
+                Notification.NEW_REVIEW,
+                "Đánh giá mới từ " + reviewer.getFullName(),
+                "Khách hàng đã đánh giá " + request.getRating() + " sao cho đơn hàng #" + order.getId(),
+                savedReview.getId(),
+                "REVIEW"
+            );
+        }
 
         return mapToResponse(savedReview);
     }
@@ -176,6 +191,16 @@ public class ReviewService {
 
         Review updatedReview = reviewRepository.save(review);
         log.info("Review replied successfully: {}", reviewId);
+
+        // Gửi thông báo đến khách hàng
+        notificationService.createAndSend(
+            review.getReviewer().getId(),
+            Notification.REVIEW_REPLIED,
+            "Phản hồi từ cửa hàng",
+            "Cửa hàng " + review.getStore().getStoreName() + " đã phản hồi đánh giá của bạn",
+            updatedReview.getId(),
+            "REVIEW"
+        );
 
         return mapToResponse(updatedReview);
     }

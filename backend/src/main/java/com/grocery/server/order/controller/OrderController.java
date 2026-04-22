@@ -3,6 +3,7 @@ package com.grocery.server.order.controller;
 import com.grocery.server.order.dto.request.CreateOrderRequest;
 import com.grocery.server.order.dto.request.UpdateOrderStatusRequest;
 import com.grocery.server.order.dto.response.OrderResponse;
+import com.grocery.server.order.dto.response.OrderStatisticsResponse;
 import com.grocery.server.order.entity.Order;
 import com.grocery.server.order.service.OrderService;
 import com.grocery.server.shared.dto.ApiResponse;
@@ -11,6 +12,7 @@ import com.grocery.server.user.entity.User;
 import com.grocery.server.user.repository.UserRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -27,6 +29,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/orders")
 @RequiredArgsConstructor
+@Slf4j
 public class OrderController {
 
     private final OrderService orderService;
@@ -93,6 +96,19 @@ public class OrderController {
     }
 
     /**
+     * Lấy đơn hàng của một khách hàng cụ thể (Admin only)
+     * GET /api/orders/user/{userId}
+     * Role: ADMIN
+     */
+    @GetMapping("/user/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<OrderResponse>>> getOrdersByUserId(@PathVariable Long userId) {
+        log.info("GET /api/orders/user/{} - Get orders by user (Admin)", userId);
+        List<OrderResponse> orders = orderService.getOrdersByCustomer(userId);
+        return ResponseEntity.ok(ApiResponse.success("Lấy danh sách đơn hàng của user thành công", orders));
+    }
+
+    /**
      * Lấy tất cả đơn hàng của cửa hàng hiện tại
      * GET /api/orders/my-store-orders
      * Role: STORE (chỉ lấy đơn của cửa hàng mình)
@@ -152,6 +168,18 @@ public class OrderController {
 
         org.springframework.data.domain.Page<OrderResponse> result = orderService.getAllOrdersPaginated(page, size, sortBy, sortDir, storeId, statusEnum, fromDt, toDt);
         return ResponseEntity.ok(ApiResponse.success("Lấy tất cả đơn hàng thành công", result));
+    }
+
+    /**
+     * Lấy thống kê đơn hàng cho Dashboard Admin
+     * GET /api/orders/statistics
+     * Role: ADMIN
+     */
+    @GetMapping("/statistics")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<OrderStatisticsResponse>> getOrderStatistics() {
+        OrderStatisticsResponse stats = orderService.getOrderStatistics();
+        return ResponseEntity.ok(ApiResponse.success("Lấy thống kê đơn hàng thành công", stats));
     }
 
     private java.time.LocalDateTime parseDateTime(String s) {

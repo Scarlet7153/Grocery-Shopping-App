@@ -8,8 +8,27 @@ class ApiStoreRepositoryImpl implements StoreRepository {
   @override
   Future<List<Map<String, dynamic>>> getStores({bool? pendingApproval}) async {
     try {
-      final response = await _apiClient.get('/stores');
+      final endpoint = pendingApproval == true ? '/users/stores/pending' : '/stores';
+      final response = await _apiClient.get(endpoint);
       final List data = response.data['data'] as List;
+      
+      if (pendingApproval == true) {
+        // Normalize pending store data to match regular store format
+        return data.map<Map<String, dynamic>>((item) {
+          return {
+            'id': item['storeId'],
+            'userId': item['userId'],
+            'storeName': item['storeName'] ?? 'Chưa đặt tên',
+            'ownerName': item['fullName'] ?? 'N/A',
+            'address': item['storeAddress'] ?? 'N/A',
+            'phoneNumber': item['phoneNumber'] ?? 'N/A',
+            'isOpen': false,
+            'status': 'PENDING',
+            'imageUrl': item['avatarUrl'],
+          };
+        }).toList();
+      }
+      
       return List<Map<String, dynamic>>.from(data);
     } on DioException catch (e) {
       final status = e.response?.statusCode;
@@ -23,18 +42,18 @@ class ApiStoreRepositoryImpl implements StoreRepository {
   }
 
   @override
-  Future<void> approveStore(String storeId) async {
+  Future<void> approveStore(String userId) async {
     try {
-      await _apiClient.patch('/stores/$storeId/status');
+      await _apiClient.patch('/users/$userId/approve-store');
     } catch (e) {
-      throw Exception('Failed to update store status: $e');
+      throw Exception('Failed to approve store: $e');
     }
   }
 
   @override
-  Future<void> rejectStore(String storeId) async {
+  Future<void> rejectStore(String userId) async {
     try {
-      await _apiClient.delete('/stores/$storeId');
+      await _apiClient.patch('/users/$userId/reject-store');
     } catch (e) {
       throw Exception('Failed to reject store: $e');
     }

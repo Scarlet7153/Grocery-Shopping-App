@@ -14,6 +14,7 @@ class CartItem {
     required this.unitPrice,
     required this.imageUrl,
     required this.storeName,
+    this.storeAddress = '',
     required this.stockQuantity,
     required this.quantity,
   });
@@ -28,6 +29,7 @@ class CartItem {
   final num unitPrice;
   final String imageUrl;
   final String storeName;
+  final String storeAddress;
   final int stockQuantity;
   final int quantity;
 
@@ -40,6 +42,7 @@ class CartItem {
       unitPrice: unitPrice,
       imageUrl: imageUrl,
       storeName: storeName,
+      storeAddress: storeAddress,
       stockQuantity: stockQuantity,
       quantity: quantity ?? this.quantity,
     );
@@ -53,6 +56,7 @@ class CartItem {
         'unitPrice': unitPrice,
         'imageUrl': imageUrl,
         'storeName': storeName,
+        'storeAddress': storeAddress,
         'stockQuantity': stockQuantity,
         'quantity': quantity,
       };
@@ -65,6 +69,7 @@ class CartItem {
         unitPrice: json['unitPrice'] as num,
         imageUrl: json['imageUrl'] as String,
         storeName: json['storeName'] as String,
+        storeAddress: (json['storeAddress'] ?? '') as String,
         stockQuantity: json['stockQuantity'] as int,
         quantity: json['quantity'] as int,
       );
@@ -136,6 +141,7 @@ class CartSession {
           unitPrice: unitPrice ?? product.displayPrice,
           imageUrl: product.imageUrl,
           storeName: product.storeName,
+          storeAddress: product.storeAddress,
           stockQuantity: resolvedStock,
           quantity: nextQuantity,
         ),

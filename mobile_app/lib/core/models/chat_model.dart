@@ -4,6 +4,7 @@ class ConversationModel {
   final int shipperId;
   final int customerId;
   final String shipperName;
+  final String? shipperAvatar;
   final String customerName;
   final String? lastMessage;
   final DateTime? lastMessageAt;
@@ -16,6 +17,7 @@ class ConversationModel {
     required this.shipperId,
     required this.customerId,
     required this.shipperName,
+    this.shipperAvatar,
     required this.customerName,
     this.lastMessage,
     this.lastMessageAt,
@@ -30,6 +32,7 @@ class ConversationModel {
       shipperId: (json['shipperId'] ?? 0) as int,
       customerId: (json['customerId'] ?? 0) as int,
       shipperName: (json['shipperName'] ?? '') as String,
+      shipperAvatar: json['shipperAvatar'] as String?,
       customerName: (json['customerName'] ?? '') as String,
       lastMessage: json['lastMessage'] as String?,
       lastMessageAt: json['lastMessageAt'] != null

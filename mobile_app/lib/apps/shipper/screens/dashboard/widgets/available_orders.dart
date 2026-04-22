@@ -5,7 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:grocery_shopping_app/core/theme/shipper_theme.dart';
 import 'package:grocery_shopping_app/apps/shipper/models/shipper_order.dart';
 import 'package:grocery_shopping_app/apps/shipper/constants/shipper_strings.dart';
-import 'package:grocery_shopping_app/apps/shipper/services/routing_service.dart';
+import 'package:grocery_shopping_app/core/config/routing_service_factory.dart';
 import 'package:grocery_shopping_app/apps/shipper/bloc/shipper_dashboard_bloc.dart';
 import 'package:grocery_shopping_app/apps/shipper/screens/dashboard/widgets/optimized_order_card.dart';
 import '../../order_detail/order_detail_screen.dart';
@@ -22,8 +22,7 @@ class AvailableOrdersList extends StatefulWidget {
 }
 
 class _AvailableOrdersListState extends State<AvailableOrdersList> {
-  static const String _apiKey = 'c251cd70-5c14-49fe-a134-0ad33f0bf0ed';
-  static final _routingService = GraphHopperRoutingService(apiKey: _apiKey);
+  static final _routingService = RoutingServiceFactory.instance;
 
   final Map<int, double> _distanceCache = {};
   final Map<String, LatLng> _geocodeCache = {};

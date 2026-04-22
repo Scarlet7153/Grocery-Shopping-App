@@ -1,14 +1,14 @@
 import 'package:latlong2/latlong.dart';
 import 'package:collection/collection.dart';
 import '../models/shipper_order.dart';
-import 'routing_service.dart';
+import '../../../core/config/routing_service.dart';
 import 'geocoding_service.dart';
 
 /// Service để optimize delivery route cho multiple orders
 class OrderOptimizationService {
-  final GraphHopperRoutingService _routingService;
+  final RoutingService _routingService;
 
-  OrderOptimizationService({required GraphHopperRoutingService routingService})
+  OrderOptimizationService({required RoutingService routingService})
     : _routingService = routingService;
 
   /// Optimize sequence của multiple orders

@@ -126,6 +126,7 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildBody() {
+    final isAdmin = widget.userRole == UserRole.admin;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppDimensions.screenPaddingLarge),
       child: Form(
@@ -136,14 +137,18 @@ class _LoginScreenState extends State<LoginScreen>
             _buildHeader(),
             const SizedBox(height: AppDimensions.spacing5Xl),
             _buildLoginForm(),
-            const SizedBox(height: AppDimensions.spacingL),
-            _buildRememberMeRow(),
+            if (!isAdmin) ...[
+              const SizedBox(height: AppDimensions.spacingL),
+              _buildRememberMeRow(),
+            ],
             const SizedBox(height: AppDimensions.spacing3Xl),
             _buildLoginButton(),
-            const SizedBox(height: AppDimensions.spacing2Xl),
-            _buildForgotPassword(),
-            const SizedBox(height: AppDimensions.spacing4Xl),
-            _buildRegisterSection(),
+            if (!isAdmin) ...[
+              const SizedBox(height: AppDimensions.spacing2Xl),
+              _buildForgotPassword(),
+              const SizedBox(height: AppDimensions.spacing4Xl),
+              _buildRegisterSection(),
+            ],
           ],
         ),
       ),

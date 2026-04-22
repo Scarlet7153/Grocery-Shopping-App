@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../auth/models/user_model.dart';
 import 'package:intl/intl.dart';
+import 'package:grocery_shopping_app/core/utils/app_localizations.dart';
 
 class UserListItem extends StatelessWidget {
   final UserModel user;
@@ -17,6 +18,7 @@ class UserListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isActive = user.status == UserStatus.active;
+    final l = AppLocalizations.of(context)!;
     
     return Card(
       elevation: 2,
@@ -103,7 +105,7 @@ class UserListItem extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    isActive ? 'Hoạt động' : 'Đã khóa',
+                    isActive ? l.byLocale(vi: 'Hoạt động', en: 'Active') : l.byLocale(vi: 'Đã khóa', en: 'Blocked'),
                     style: TextStyle(
                       color: isActive ? Colors.green[700] : Colors.red[700],
                       fontSize: 12,
@@ -118,7 +120,7 @@ class UserListItem extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Tham gia: ${DateFormat('dd/MM/yyyy').format(user.createdAt)}',
+                  '${l.byLocale(vi: 'Tham gia', en: 'Joined')}: ${DateFormat('dd/MM/yyyy').format(user.createdAt)}',
                   style: TextStyle(color: Colors.grey[500], fontSize: 13),
                 ),
                 TextButton.icon(
@@ -165,17 +167,25 @@ class UserListItem extends StatelessWidget {
     
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(willBlock ? 'Xác nhận khóa' : 'Biết nhận mở khóa'),
+      builder: (context) {
+        final l = AppLocalizations.of(context)!;
+        return AlertDialog(
+        title: Text(willBlock ? l.byLocale(vi: 'Xác nhận khóa', en: 'Confirm block') : l.byLocale(vi: 'Xác nhận mở khóa', en: 'Confirm unblock')),
         content: Text(
           willBlock 
-            ? 'Bạn có chắc chắn muốn khóa tài khoản của ${user.fullName}? Người dùng này sẽ không thể đăng nhập vào hệ thống.'
-            : 'Bạn có chắc chắn muốn mở khóa cho tài khoản ${user.fullName}?',
+            ? l.byLocale(
+                vi: 'Bạn có chắc chắn muốn khóa tài khoản của ${user.fullName}? Người dùng này sẽ không thể đăng nhập vào hệ thống.',
+                en: 'Are you sure you want to block ${user.fullName}? This user will not be able to log in.',
+              )
+            : l.byLocale(
+                vi: 'Bạn có chắc chắn muốn mở khóa cho tài khoản ${user.fullName}?',
+                en: 'Are you sure you want to unblock ${user.fullName}?',
+              ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Hủy'),
+            child: Text(l.byLocale(vi: 'Hủy', en: 'Cancel')),
           ),
           ElevatedButton(
             onPressed: () {
@@ -186,10 +196,11 @@ class UserListItem extends StatelessWidget {
               backgroundColor: willBlock ? Colors.red : Colors.green,
               foregroundColor: Colors.white,
             ),
-            child: Text(willBlock ? 'Khóa' : 'Mở'),
+            child: Text(willBlock ? l.byLocale(vi: 'Khóa', en: 'Block') : l.byLocale(vi: 'Mở', en: 'Unblock')),
           ),
         ],
-      ),
+        );
+      },
     );
   }
 }

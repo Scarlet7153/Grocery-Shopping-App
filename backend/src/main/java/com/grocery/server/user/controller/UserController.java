@@ -3,6 +3,7 @@ package com.grocery.server.user.controller;
 import com.grocery.server.shared.dto.ApiResponse;
 import com.grocery.server.user.dto.request.ChangePasswordRequest;
 import com.grocery.server.user.dto.request.UpdateProfileRequest;
+import com.grocery.server.user.dto.response.StoreApprovalResponse;
 import com.grocery.server.user.dto.response.UserListResponse;
 import com.grocery.server.user.dto.response.UserProfileResponse;
 import com.grocery.server.user.entity.User;
@@ -123,6 +124,19 @@ public class UserController {
         );
     }
 
+    @GetMapping("/stores/pending")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<StoreApprovalResponse>>> getPendingStores() {
+
+        log.info("GET /api/users/stores/pending - Get pending stores (Admin)");
+
+        List<StoreApprovalResponse> stores = userService.getPendingStores();
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Lấy danh sách cửa hàng chờ duyệt thành công", stores)
+        );
+    }
+
     @PatchMapping("/{userId}/toggle-status")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<UserProfileResponse>> toggleUserStatus(
@@ -134,6 +148,34 @@ public class UserController {
         
         return ResponseEntity.ok(
                 ApiResponse.success("Cập nhật trạng thái user thành công", user)
+        );
+    }
+
+    @PatchMapping("/{userId}/approve-store")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<UserProfileResponse>> approveStore(
+            @PathVariable Long userId) {
+        
+        log.info("PATCH /api/users/{}/approve-store - Approve store (Admin)", userId);
+        
+        UserProfileResponse user = userService.approveStore(userId);
+        
+        return ResponseEntity.ok(
+                ApiResponse.success("Duyệt cửa hàng thành công", user)
+        );
+    }
+
+    @PatchMapping("/{userId}/reject-store")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<UserProfileResponse>> rejectStore(
+            @PathVariable Long userId) {
+        
+        log.info("PATCH /api/users/{}/reject-store - Reject store (Admin)", userId);
+        
+        UserProfileResponse user = userService.rejectStore(userId);
+        
+        return ResponseEntity.ok(
+                ApiResponse.success("Từ chối cửa hàng thành công", user)
         );
     }
 

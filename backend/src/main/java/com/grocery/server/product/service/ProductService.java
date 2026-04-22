@@ -365,6 +365,7 @@ public class ProductService {
                 .description(product.getDescription())
                 .imageUrl(product.getImageUrl())
                 .storeName(product.getStore().getStoreName())
+                .storeAddress(product.getStore().getAddress())
                 .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)
                 .status(product.getStatus().name())
                 .units(unitResponses)

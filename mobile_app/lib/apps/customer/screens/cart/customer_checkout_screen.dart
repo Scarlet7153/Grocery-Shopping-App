@@ -5,6 +5,8 @@ import '../../../../core/auth/auth_session.dart';
 import '../../../../core/cart/cart_session.dart';
 import '../../../../core/format/formatters.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/utils/shipping_fee_calculator.dart';
+import '../../../../apps/customer/services/customer_delivery_estimate_service.dart';
 import '../../../../shared/widgets/snackbar_utils.dart';
 import '../../shared/customer_payment_method.dart';
 import '../../shared/customer_payment_preferences.dart';
@@ -23,8 +25,105 @@ class CustomerCheckoutScreen extends StatefulWidget {
 
 class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
   bool _placingOrder = false;
+  double _shippingFee = 0;
+  bool _calculatingShipping = false;
 
   List<CartItem> get _items => widget.selectedItems;
+
+  @override
+  void initState() {
+    super.initState();
+    _calculateShippingFee();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Recalculate when returning from address edit
+    _calculateShippingFee();
+  }
+
+  Future<void> _calculateShippingFee() async {
+    setState(() => _calculatingShipping = true);
+
+    final address = AuthSession.effectiveAddress;
+
+    // Group items by store address (fallback to storeName if address empty)
+    final storeAddresses = <String>{};
+    for (final item in _items) {
+      final addr = item.storeAddress.isNotEmpty ? item.storeAddress : item.storeName;
+      debugPrint('[Shipping] item=${item.name} storeAddress="${item.storeAddress}" storeName="${item.storeName}" resolvedAddr="$addr"');
+      if (addr.isNotEmpty) {
+        storeAddresses.add(addr);
+      }
+    }
+
+    // Count unique stores for fallback
+    final uniqueStoreCount = _items.map((i) => i.storeName).where((n) => n.isNotEmpty).toSet().length;
+    final storeCount = uniqueStoreCount > 0 ? uniqueStoreCount : 1;
+
+    debugPrint('[Shipping] customerAddress="$address" storeCount=$storeCount storeAddresses=$storeAddresses');
+
+    double totalFee = 0;
+
+    if (address == null || address.isEmpty || storeAddresses.isEmpty) {
+      // Không có địa chỉ để tính khoảng cách → dùng phí mặc định
+      totalFee = ShippingFeeCalculator.defaultFee * storeCount;
+      debugPrint('[Shipping] No address → defaultFee=${ShippingFeeCalculator.defaultFee} * $storeCount = $totalFee');
+    } else {
+      final estimateService = CustomerDeliveryEstimateService.instance;
+      for (final storeAddress in storeAddresses) {
+        try {
+          final estimate = await estimateService.estimateByAddress(
+            customerAddress: address,
+            storeAddress: storeAddress,
+          );
+          debugPrint('[Shipping] estimate store="$storeAddress" distance=${estimate?.distanceKm}km fee=${estimate != null ? ShippingFeeCalculator.calculate(estimate.distanceKm) : "null"}');
+          if (estimate != null) {
+            // Sanity check: nếu khoảng cách > 20km, có thể geocode sai → fallback
+            if (estimate.distanceKm > 20) {
+              totalFee += ShippingFeeCalculator.defaultFee;
+              debugPrint('[Shipping] distance >20km → fallback default');
+            } else {
+              totalFee += ShippingFeeCalculator.calculate(estimate.distanceKm);
+            }
+          } else {
+            totalFee += ShippingFeeCalculator.defaultFee;
+            debugPrint('[Shipping] estimate null → fallback default');
+          }
+        } catch (e, st) {
+          debugPrint('[Shipping] ERROR store="$storeAddress" $e');
+          debugPrint('[Shipping] Stack: $st');
+          totalFee += ShippingFeeCalculator.defaultFee;
+        }
+      }
+    }
+
+    // Cap tối đa phí ship: 50k cho 1 cửa hàng, 80k cho 2+, 100k cho 3+
+    double maxFee;
+    if (storeCount == 1) {
+      maxFee = 50000;
+    } else if (storeCount == 2) {
+      maxFee = 80000;
+    } else {
+      maxFee = 100000;
+    }
+    if (totalFee > maxFee) {
+      totalFee = maxFee;
+    }
+
+    // Đảm bảo phí ship luôn > 0 nếu có sản phẩm
+    if (totalFee <= 0 && _items.isNotEmpty) {
+      totalFee = ShippingFeeCalculator.defaultFee * storeCount;
+    }
+
+    if (mounted) {
+      setState(() {
+        _shippingFee = totalFee;
+        _calculatingShipping = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +145,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
     final total =
         items.fold<num>(0, (sum, item) => sum + item.unitPrice * item.quantity);
     final itemCount = items.length;
-    const shippingFee = 0;
+    final shippingFee = _shippingFee;
     final grandTotal = total + shippingFee;
 
     final address =
@@ -95,11 +194,16 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
                       ),
                     ),
                     IconButton(
-                      onPressed: () {
-                        Navigator.of(context).push(
+                      onPressed: () async {
+                        await Navigator.of(context).push(
                           MaterialPageRoute(
                               builder: (_) => const RecipientInfoScreen()),
                         );
+                        // Refresh address and recalculate shipping fee after returning
+                        if (mounted) {
+                          setState(() {});
+                          _calculateShippingFee();
+                        }
                       },
                       icon: const Icon(Icons.edit_outlined, size: 18),
                     ),
@@ -165,7 +269,9 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
                     _SummaryRow(
                       label:
                           context.tr(vi: 'Phí vận chuyển', en: 'Shipping fee'),
-                      value: formatVnd(shippingFee),
+                      value: _calculatingShipping
+                          ? context.tr(vi: 'Đang tính...', en: 'Calculating...')
+                          : formatVnd(shippingFee),
                     ),
                     const Divider(height: 18),
                     _SummaryRow(
@@ -241,6 +347,7 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
 
       final payload = <String, dynamic>{
         'deliveryAddress': address,
+        'shippingFee': _shippingFee,
         'items': items
             .map(
               (i) => {
@@ -342,87 +449,6 @@ class _CustomerCheckoutScreenState extends State<CustomerCheckoutScreen> {
     } finally {
       if (mounted) setState(() => _placingOrder = false);
     }
-  }
-
-  String _norm(String input) {
-    var s = input.trim().toLowerCase();
-    s = s.replaceAll(RegExp(r'[àáạảãâầấậẩẫăằắặẳẵ]'), 'a');
-    s = s.replaceAll(RegExp(r'[èéẹẻẽêềếệểễ]'), 'e');
-    s = s.replaceAll(RegExp(r'[ìíịỉĩ]'), 'i');
-    s = s.replaceAll(RegExp(r'[òóọỏõôồốộổỗơờớợởỡ]'), 'o');
-    s = s.replaceAll(RegExp(r'[ùúụủũưừứựửữ]'), 'u');
-    s = s.replaceAll(RegExp(r'[ỳýỵỷỹ]'), 'y');
-    s = s.replaceAll(RegExp(r'[đ]'), 'd');
-    s = s.replaceAll(RegExp(r'[^a-z0-9]+'), ' ');
-    s = s.replaceAll(RegExp(r'\s+'), ' ').trim();
-    return s;
-  }
-
-  Future<int?> _resolveStoreIdByName(String storeName) async {
-    final keyword = storeName.trim();
-    if (keyword.isEmpty) return null;
-    final keywordNorm = _norm(keyword);
-
-    Map<String, dynamic>? pickBest(List<Map<String, dynamic>> list) {
-      if (list.isEmpty) return null;
-      Map<String, dynamic>? best;
-      var bestScore = -1;
-
-      for (final s in list) {
-        final nameRaw = (s['storeName'] ?? '').toString();
-        final nameNorm = _norm(nameRaw);
-        if (nameNorm.isEmpty) continue;
-
-        var score = 0;
-        if (nameNorm == keywordNorm) {
-          score = 100;
-        } else if (nameNorm.contains(keywordNorm) ||
-            keywordNorm.contains(nameNorm)) {
-          score = 80;
-        } else {
-          final a = nameNorm.split(' ').where((t) => t.isNotEmpty).toSet();
-          final b = keywordNorm.split(' ').where((t) => t.isNotEmpty).toSet();
-          score = a.intersection(b).length;
-        }
-
-        if (score > bestScore) {
-          bestScore = score;
-          best = s;
-        }
-      }
-
-      if (bestScore <= 0) return null;
-      return best;
-    }
-
-    try {
-      final res = await ApiClient.dio.get(
-        '/stores/search',
-        queryParameters: {'keyword': keyword},
-      );
-      final data = res.data;
-      if (data is Map && data['data'] is List) {
-        final list = List<Map<String, dynamic>>.from(data['data'] as List);
-        final picked = pickBest(list);
-        final id = picked?['id'];
-        if (id == null) return null;
-        return int.tryParse(id.toString());
-      }
-    } catch (_) {}
-
-    try {
-      final res = await ApiClient.dio.get('/stores');
-      final data = res.data;
-      if (data is Map && data['data'] is List) {
-        final list = List<Map<String, dynamic>>.from(data['data'] as List);
-        final picked = pickBest(list);
-        final id = picked?['id'];
-        if (id == null) return null;
-        return int.tryParse(id.toString());
-      }
-    } catch (_) {}
-
-    return null;
   }
 
   Future<Map<String, dynamic>?> _initiatePayment({

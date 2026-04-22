@@ -1,8 +1,9 @@
+import 'package:grocery_shopping_app/core/config/environment.dart';
+
 /// Constants for Shipper Dashboard
 class DashboardConstants {
-  // API Keys
-  static const String graphHopperApiKey =
-      'c251cd70-5c14-49fe-a134-0ad33f0bf0ed';
+  // API Keys (read from .env for easy configuration)
+  static String get graphHopperApiKey => Environment.graphHopperApiKey;
   // Sample data - for demo/preview purposes
   static const String sampleCustomerName = 'Nguyễn Văn A';
   static const String sampleShipperName = 'Nguyễn Văn A';

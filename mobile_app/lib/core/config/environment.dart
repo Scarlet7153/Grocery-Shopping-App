@@ -37,4 +37,49 @@ class Environment {
 
   static bool get enableLogging =>
       (dotenv.env['ENABLE_LOGGING'] ?? 'true').toLowerCase() == 'true';
+
+  // --- Map & Routing APIs ---
+  static String get graphHopperApiKey {
+    final key = dotenv.env['GRAPH_HOPPER_API_KEY'];
+    if (key == null || key.isEmpty) {
+      throw StateError('GRAPH_HOPPER_API_KEY is not set in .env');
+    }
+    return key;
+  }
+
+  static String get graphHopperBaseUrl =>
+      dotenv.env['GRAPH_HOPPER_BASE_URL'] ?? 'https://graphhopper.com/api/1/route';
+
+  static String get graphHopperVrpUrl =>
+      dotenv.env['GRAPH_HOPPER_VRP_URL'] ?? 'https://graphhopper.com/api/1/vrp';
+
+  static String get trackAsiaApiKey {
+    final key = dotenv.env['TRACK_ASIA_API_KEY'];
+    if (key == null || key.isEmpty) {
+      throw StateError('TRACK_ASIA_API_KEY is not set in .env');
+    }
+    return key;
+  }
+
+  static String get trackAsiaGeocodeUrl =>
+      dotenv.env['TRACK_ASIA_GEOCODE_URL'] ??
+      'https://maps.track-asia.com/api/v2/place/textsearch/json';
+
+  static String get tileUrl =>
+      dotenv.env['TILE_URL'] ?? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+  // --- OpenRouteService (ORS) ---
+  static String get routingProvider =>
+      dotenv.env['ROUTING_PROVIDER'] ?? 'graphhopper';
+
+  static String get openRouteServiceApiKey {
+    final key = dotenv.env['ORS_API_KEY'];
+    if (key == null || key.isEmpty) {
+      throw StateError('ORS_API_KEY is not set in .env. Required when using openrouteservice.');
+    }
+    return key;
+  }
+
+  static String get openRouteServiceBaseUrl =>
+      dotenv.env['ORS_BASE_URL'] ?? 'https://api.openrouteservice.org';
 }

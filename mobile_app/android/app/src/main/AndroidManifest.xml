@@ -62,7 +62,11 @@
     <!-- Camera permission for avatar upload -->
     <uses-permission android:name="android.permission.CAMERA" />
     
-    <!-- Storage permission for image picker -->
+    <!-- Storage permission for image picker (Android 12 and below) -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    
+    <!-- Storage permission for image picker (Android 13+) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
 </manifest>

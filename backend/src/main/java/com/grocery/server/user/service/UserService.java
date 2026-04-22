@@ -142,6 +142,12 @@ public class UserService {
         if (user.getStatus() == User.UserStatus.ACTIVE) {
             user.setStatus(User.UserStatus.BANNED);
             log.info("Banned user: {}", user.getPhoneNumber());
+            
+            // Nếu là cửa hàng, tự động đóng cửa hàng
+            if (user.getRole() == User.UserRole.STORE && user.getStore() != null) {
+                user.getStore().setIsOpen(false);
+                log.info("Auto-closed store {} because owner was banned", user.getStore().getId());
+            }
         } else {
             user.setStatus(User.UserStatus.ACTIVE);
             log.info("Activated user: {}", user.getPhoneNumber());
@@ -167,6 +173,77 @@ public class UserService {
         userRepository.delete(user);
         log.info("Deleted user: {}", user.getPhoneNumber());
     }
+    /**
+     * Duyệt cửa hàng (Admin only) - Chuyển status từ PENDING sang ACTIVE và mở cửa hàng
+     */
+    @Transactional
+    public UserProfileResponse approveStore(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+        
+        if (user.getRole() != User.UserRole.STORE) {
+            throw new BadRequestException("User này không phải là cửa hàng");
+        }
+        
+        if (user.getStatus() != User.UserStatus.PENDING) {
+            throw new BadRequestException("Cửa hàng này không ở trạng thái chờ duyệt");
+        }
+        
+        user.setStatus(User.UserStatus.ACTIVE);
+        
+        // Mở cửa hàng
+        if (user.getStore() != null) {
+            user.getStore().setIsOpen(true);
+        }
+        
+        User updatedUser = userRepository.save(user);
+        log.info("Approved store: {} (userId: {})", user.getPhoneNumber(), userId);
+        
+        return UserProfileResponse.fromEntity(updatedUser);
+    }
+    
+    /**
+     * Từ chối cửa hàng (Admin only) - Chuyển status từ PENDING sang BANNED
+     */
+    @Transactional
+    public UserProfileResponse rejectStore(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+        
+        if (user.getRole() != User.UserRole.STORE) {
+            throw new BadRequestException("User này không phải là cửa hàng");
+        }
+        
+        if (user.getStatus() != User.UserStatus.PENDING) {
+            throw new BadRequestException("Cửa hàng này không ở trạng thái chờ duyệt");
+        }
+        
+        user.setStatus(User.UserStatus.BANNED);
+        
+        // Tự động đóng cửa hàng khi bị từ chối
+        if (user.getStore() != null) {
+            user.getStore().setIsOpen(false);
+            log.info("Auto-closed store {} because owner was rejected", user.getStore().getId());
+        }
+        
+        User updatedUser = userRepository.save(user);
+        log.info("Rejected store: {} (userId: {})", user.getPhoneNumber(), userId);
+        
+        return UserProfileResponse.fromEntity(updatedUser);
+    }
+
+    /**
+     * Lấy danh sách cửa hàng đang chờ duyệt (Admin only)
+     */
+    @Transactional(readOnly = true)
+    public List<com.grocery.server.user.dto.response.StoreApprovalResponse> getPendingStores() {
+        List<User> users = userRepository.findByStatus(User.UserStatus.PENDING);
+        return users.stream()
+                .filter(u -> u.getRole() == User.UserRole.STORE)
+                .map(com.grocery.server.user.dto.response.StoreApprovalResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     public List<UserListResponse> getUsersByStatus(User.UserStatus status) {
         List<User> users = userRepository.findByStatus(status);

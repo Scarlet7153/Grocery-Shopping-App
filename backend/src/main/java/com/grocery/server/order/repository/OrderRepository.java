@@ -151,6 +151,28 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     java.math.BigDecimal getTotalRevenue();
 
     /**
+     * Tính tổng doanh thu trong khoảng thờ i gian
+     */
+    @Query("SELECT SUM(o.totalAmount) FROM Order o WHERE o.status = 'DELIVERED' AND o.createdAt >= :from AND o.createdAt < :to")
+    java.math.BigDecimal getRevenueBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
+    /**
+     * Tính tổng doanh thu và số đơn theo tháng (12 tháng gần nhất)
+     */
+    @Query(value = """
+        SELECT 
+            DATE_FORMAT(o.created_at, '%Y-%m') as month,
+            SUM(o.total_amount) as revenue,
+            COUNT(*) as order_count
+        FROM orders o
+        WHERE o.status = 'DELIVERED'
+            AND o.created_at >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+        GROUP BY DATE_FORMAT(o.created_at, '%Y-%m')
+        ORDER BY month ASC
+        """, nativeQuery = true)
+    List<Object[]> getMonthlyRevenueLast12Months();
+
+    /**
      * Đếm tổng số đơn hàng theo từng trạng thái
      * @param status Trạng thái đơn hàng
      * @return Số lượng đơn hàng

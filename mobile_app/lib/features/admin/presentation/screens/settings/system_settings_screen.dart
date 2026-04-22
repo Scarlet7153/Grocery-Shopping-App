@@ -208,7 +208,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Cài đặt hệ thống'),
         backgroundColor: const Color(0xFF6A1B9A),
@@ -257,7 +257,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Colors.grey[700],
+              color: Theme.of(context).textTheme.bodySmall?.color,
             ),
           ),
         ),
@@ -289,8 +289,8 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
         child: Icon(icon, color: Colors.blue[700]),
       ),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-      subtitle: Text(subtitle, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+      subtitle: Text(subtitle, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 13)),
+      trailing: Icon(Icons.arrow_forward_ios, size: 14, color: Theme.of(context).disabledColor),
       onTap: onTap,
     );
   }

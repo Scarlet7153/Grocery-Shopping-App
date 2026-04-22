@@ -15,7 +15,6 @@ import 'package:grocery_shopping_app/core/utils/logger.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'package:grocery_shopping_app/features/auth/models/user_model.dart';
-import 'package:grocery_shopping_app/core/utils/export_service.dart';
 
 import '../../../../core/utils/app_localizations.dart';
 
@@ -29,6 +28,7 @@ class AdminDashboardScreen extends StatefulWidget {
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   int _currentIndex = 0;
   late PageController _pageController;
+  String _chartPeriod = '12m'; // '7d', '30d', '12m'
 
   final _currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
 
@@ -79,8 +79,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 final bool isLargeScreen = constraints.maxWidth > 900;
                 
                 return Scaffold(
-                  backgroundColor: const Color(0xFFF0F2F5),
-                  appBar: _currentIndex == 0 ? _buildAppBar(user) : null,
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                  appBar: null,
                   body: Row(
                     children: [
                       if (isLargeScreen) _buildSidebar(),
@@ -162,12 +162,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           // Sidebar Footer
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(border: Border(top: BorderSide(color: Colors.grey[100]!))),
+            decoration: BoxDecoration(border: Border(top: BorderSide(color: Theme.of(context).dividerColor))),
             child: Row(
               children: [
-                const CircleAvatar(radius: 16, backgroundColor: Colors.orange, child: Icon(Icons.person, size: 16, color: Colors.white)),
+                CircleAvatar(radius: 16, backgroundColor: Theme.of(context).colorScheme.primary, child: Icon(Icons.person, size: 16, color: Theme.of(context).colorScheme.onPrimary)),
                 const SizedBox(width: 12),
-                const Expanded(child: Text('Admin Manager', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis)),
+                Expanded(child: Text('Admin Manager', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyMedium?.color), overflow: TextOverflow.ellipsis)),
                 IconButton(
                   onPressed: () {
                     showDialog(
@@ -188,51 +188,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         ],
                       ),
                     );
-                  }, 
-                  icon: const Icon(Icons.logout, size: 18, color: Colors.grey)
+                  },
+                  icon: Icon(Icons.logout, size: 18, color: Theme.of(context).iconTheme.color)
                 ),
               ],
             ),
           ),
         ],
       ),
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar(UserModel user) {
-    final l = AppLocalizations.of(context)!;
-    return AppBar(
-      backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-      elevation: 0,
-      title: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.indigo.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.shield_outlined, color: Colors.indigo, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(l.translate('app_title'), style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.normal)),
-                Text(user.fullName, style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87, fontSize: 16, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
-              ],
-            ),
-          ),
-        ],
-      ),
-      actions: [
-        IconButton(
-          onPressed: () {},
-          icon: const Icon(Icons.notifications_outlined, color: Colors.black87),
-        ),
-        const SizedBox(width: 8),
-      ],
     );
   }
 
@@ -273,7 +236,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           children: [
                             Icon(
                               isSelected ? item['activeIcon'] : item['icon'],
-                              color: isSelected ? Colors.indigo : Colors.grey[500],
+                              color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).textTheme.bodySmall?.color,
                               size: 24,
                             ),
                             const SizedBox(height: 4),
@@ -282,7 +245,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                color: isSelected ? Colors.indigo : Colors.grey[600],
+                                color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).textTheme.bodySmall?.color,
                               ),
                             ),
                           ],
@@ -322,7 +285,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 const SizedBox(height: 24),
                 _buildStatsGrid(stats),
                 const SizedBox(height: 24),
-                _buildSectionHeader('Biểu đồ Tăng trưởng', onExport: () => _exportDashboardData(stats)),
+                _buildSectionHeader('Biểu đồ Doanh thu'),
                 const SizedBox(height: 12),
                 _buildOverviewChart(stats),
                 const SizedBox(height: 24),
@@ -421,43 +384,43 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final crossAxisCount = width > 500 ? 3 : 2;
+        final crossAxisCount = width > 900 ? 4 : 2;
+        final aspectRatio = width > 900 ? 2.4 : 1.4;
         
         return GridView.count(
           crossAxisCount: crossAxisCount,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 1.1,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          childAspectRatio: aspectRatio,
           children: [
             _buildPremiumStatCard(
-              'Doanh thu', 
-              _currencyFormat.format(stats['revenue'] ?? 0), 
-              Icons.payments, 
+              'Doanh thu tháng này',
+              _currencyFormat.format(stats['revenue'] ?? 0),
+              Icons.payments,
               [const Color(0xFF6366F1), const Color(0xFF818CF8)],
-              '+12.5%',
+              subtitle: stats['monthOverMonthGrowth'] != null
+                  ? '${(stats['monthOverMonthGrowth'] as double) >= 0 ? '+' : ''}${(stats['monthOverMonthGrowth'] as double).toStringAsFixed(1)}% so với tháng trước'
+                  : null,
             ),
             _buildPremiumStatCard(
-              'Đơn hàng', 
-              '${stats['orders'] ?? 0}', 
-              Icons.shopping_cart, 
+              'Đơn hàng',
+              '${stats['orders'] ?? 0}',
+              Icons.shopping_cart,
               [const Color(0xFFF59E0B), const Color(0xFFFBBF24)],
-              '+5.2%',
             ),
             _buildPremiumStatCard(
-              'Người dùng', 
-              '${stats['userCount'] ?? 0}', 
-              Icons.people, 
+              'Người dùng',
+              '${stats['userCount'] ?? 0}',
+              Icons.people,
               [const Color(0xFF10B981), const Color(0xFF34D399)],
-              '+8.1%',
             ),
             _buildPremiumStatCard(
-              'Cửa hàng', 
-              '${stats['storeCount'] ?? 0}', 
-              Icons.storefront, 
+              'Cửa hàng',
+              '${stats['storeCount'] ?? 0}',
+              Icons.storefront,
               [const Color(0xFF3B82F6), const Color(0xFF60A5FA)],
-              '+2.0%',
             ),
           ],
         );
@@ -465,42 +428,48 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildPremiumStatCard(String title, String value, IconData icon, List<Color> gradient, String trend) {
+  Widget _buildPremiumStatCard(String title, String value, IconData icon, List<Color> gradient, {String? subtitle}) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(colors: gradient, begin: Alignment.topLeft, end: Alignment.bottomRight),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(color: gradient.first.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 6)),
+          BoxShadow(color: gradient.first.withValues(alpha: 0.25), blurRadius: 8, offset: const Offset(0, 4)),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
-                  child: Icon(icon, color: Colors.white, size: 20),
-                ),
-                Text(trend, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-              ],
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
+              child: Icon(icon, color: Colors.white, size: 26),
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(value, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                ),
-                const SizedBox(height: 2),
-                Text(title, style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 11)),
-              ],
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    value,
+                    style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold, height: 1.2),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    title,
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 20, height: 1.2),
+                  ),
+                  if (subtitle != null)
+                    Text(
+                      subtitle,
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 10, height: 1.2),
+                    ),
+                ],
+              ),
             ),
           ],
         ),
@@ -509,93 +478,157 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildOverviewChart(Map<String, dynamic> stats) {
-    final List<OrderModel> orders = stats['recentOrders']?.cast<OrderModel>() ?? [];
-    
-    // Simple logic to group revenue by the last 7 days
-    final now = DateTime.now();
-    final Map<int, double> dailyRevenue = {};
-    for (int i = 0; i < 7; i++) {
-      dailyRevenue[i] = 0;
-    }
+    final chartGridColor = Theme.of(context).dividerColor;
+    final chartLabelColor = Theme.of(context).textTheme.bodySmall?.color;
+    final primaryColor = Theme.of(context).colorScheme.primary;
 
-    for (var order in orders) {
-      if (order.status == 'DELIVERED' && order.createdAt != null) {
-        final dt = DateTime.tryParse(order.createdAt!);
-        if (dt != null) {
-          final diff = now.difference(dt).inDays;
-          if (diff >= 0 && diff < 7) {
-            final dayIndex = 6 - diff;
-            dailyRevenue[dayIndex] = (dailyRevenue[dayIndex] ?? 0) + (order.totalAmount ?? 0);
+    List<FlSpot> spots = [];
+    double maxY = 10.0;
+    List<String> bottomLabels = [];
+
+    if (_chartPeriod == '12m') {
+      // Dùng dữ liệu monthlyRevenue từ API
+      final monthlyData = (stats['monthlyRevenue'] as List<dynamic>?) ?? [];
+      for (int i = 0; i < monthlyData.length; i++) {
+        final revenue = (monthlyData[i]['revenue'] ?? 0).toDouble();
+        spots.add(FlSpot(i.toDouble(), revenue / 1000));
+        bottomLabels.add(monthlyData[i]['monthLabel']?.toString() ?? '');
+      }
+      if (spots.isNotEmpty) {
+        final maxRevenue = spots.map((s) => s.y).reduce((a, b) => a > b ? a : b);
+        maxY = maxRevenue > 0 ? maxRevenue * 1.2 : 10.0;
+      }
+    } else {
+      // 7d hoặc 30d: tính từ recentOrders
+      final days = _chartPeriod == '30d' ? 30 : 7;
+      final List<OrderModel> orders = stats['recentOrders']?.cast<OrderModel>() ?? [];
+      final now = DateTime.now();
+      final Map<int, double> dailyRevenue = {};
+      for (int i = 0; i < days; i++) dailyRevenue[i] = 0;
+
+      for (var order in orders) {
+        if (order.createdAt != null) {
+          final dt = DateTime.tryParse(order.createdAt!);
+          if (dt != null) {
+            final diff = now.difference(dt).inDays;
+            if (diff >= 0 && diff < days) {
+              final dayIndex = days - 1 - diff;
+              dailyRevenue[dayIndex] = (dailyRevenue[dayIndex] ?? 0) + (order.totalAmount ?? 0);
+            }
           }
         }
       }
+
+      spots = dailyRevenue.entries.map((e) => FlSpot(e.key.toDouble(), e.value / 1000)).toList();
+      final maxRevenue = dailyRevenue.values.isEmpty ? 0.0 : dailyRevenue.values.reduce((a, b) => a > b ? a : b);
+      maxY = maxRevenue > 0 ? (maxRevenue / 1000.0) * 1.2 : 10.0;
+
+      for (int i = 0; i < days; i++) {
+        final day = now.subtract(Duration(days: days - 1 - i));
+        final weekday = day.weekday;
+        final labels = {1: 'T2', 2: 'T3', 3: 'T4', 4: 'T5', 5: 'T6', 6: 'T7', 7: 'CN'};
+        bottomLabels.add(labels[weekday] ?? '');
+      }
     }
 
-    final spots = dailyRevenue.entries.map((e) {
-      // Scale down for chart display (to millions or similar)
-      double value = e.value / 1000000; 
-      return FlSpot(e.key.toDouble(), value == 0 ? 0.1 : value);
-    }).toList();
-
-    return Container(
-      height: 240,
-      padding: const EdgeInsets.fromLTRB(12, 24, 24, 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 20, offset: const Offset(0, 10))],
-      ),
-      child: LineChart(
-        LineChartData(
-          gridData: FlGridData(
-            show: true,
-            drawHorizontalLine: true,
-            horizontalInterval: 1,
-            getDrawingHorizontalLine: (value) => FlLine(color: Colors.grey[100]!, strokeWidth: 1),
-          ),
-          titlesData: FlTitlesData(
-            show: true,
-            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (val, meta) {
-                  // Generate last 7 days labels
-                  if (val.toInt() >= 0 && val.toInt() < 7) {
-                    final day = now.subtract(Duration(days: 6 - val.toInt()));
-                    final label = DateFormat('dd/MM').format(day);
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(label, style: TextStyle(color: Colors.grey[400], fontSize: 9, fontWeight: FontWeight.bold)),
-                    );
-                  }
-                  return const Text('');
-                },
-              ),
-            ),
-          ),
-          borderData: FlBorderData(show: false),
-          lineBarsData: [
-            LineChartBarData(
-              spots: spots,
-              isCurved: true,
-              color: Colors.indigo,
-              barWidth: 5,
-              isStrokeCapRound: true,
-              dotData: const FlDotData(show: true),
-              belowBarData: BarAreaData(
-                show: true, 
-                gradient: LinearGradient(
-                  colors: [Colors.indigo.withValues(alpha: 0.2), Colors.indigo.withValues(alpha: 0)],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
-            ),
+    return Column(
+      children: [
+        // Toggle buttons
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            _buildPeriodChip('7 ngày', '7d'),
+            const SizedBox(width: 8),
+            _buildPeriodChip('30 ngày', '30d'),
+            const SizedBox(width: 8),
+            _buildPeriodChip('12 tháng', '12m'),
           ],
         ),
-      ),
+        const SizedBox(height: 12),
+        Container(
+          height: 240,
+          padding: const EdgeInsets.fromLTRB(12, 24, 24, 12),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 20, offset: const Offset(0, 10))],
+          ),
+          child: LineChart(
+            LineChartData(
+              minY: 0,
+              maxY: maxY,
+              gridData: FlGridData(
+                show: true,
+                drawHorizontalLine: true,
+                getDrawingHorizontalLine: (value) => FlLine(color: chartGridColor, strokeWidth: 1),
+              ),
+              titlesData: FlTitlesData(
+                show: true,
+                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    interval: _chartPeriod == '12m' ? 2 : (_chartPeriod == '30d' ? 5 : 2),
+                    getTitlesWidget: (val, meta) {
+                      final index = val.toInt();
+                      if (index >= 0 && index < bottomLabels.length) {
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(bottomLabels[index], style: TextStyle(color: chartLabelColor, fontSize: 9, fontWeight: FontWeight.w600)),
+                        );
+                      }
+                      return const Text('');
+                    },
+                  ),
+                ),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 50,
+                    getTitlesWidget: (val, meta) {
+                      if (val == 0) return const SizedBox.shrink();
+                      return Text('${val.toInt()}k', style: TextStyle(color: chartLabelColor, fontSize: 9, fontWeight: FontWeight.bold));
+                    },
+                  ),
+                ),
+              ),
+              borderData: FlBorderData(show: false),
+              lineBarsData: [
+                LineChartBarData(
+                  spots: spots,
+                  isCurved: true,
+                  color: primaryColor,
+                  barWidth: 3,
+                  isStrokeCapRound: true,
+                  dotData: const FlDotData(show: true),
+                  belowBarData: BarAreaData(
+                    show: true,
+                    gradient: LinearGradient(
+                      colors: [primaryColor.withValues(alpha: 0.2), primaryColor.withValues(alpha: 0)],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPeriodChip(String label, String value) {
+    final isSelected = _chartPeriod == value;
+    return ChoiceChip(
+      label: Text(label, style: TextStyle(fontSize: 11, color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color)),
+      selected: isSelected,
+      onSelected: (_) => setState(() => _chartPeriod = value),
+      selectedColor: Theme.of(context).colorScheme.primary,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).cardColor : const Color(0xFFF0F2F5),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      padding: const EdgeInsets.symmetric(horizontal: 4),
     );
   }
 
@@ -610,7 +643,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Truy cập nhanh', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+        Text('Truy cập nhanh', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.titleLarge?.color)),
         const SizedBox(height: 12),
         SizedBox(
           height: 90,
@@ -628,7 +661,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   width: 90,
                   margin: EdgeInsets.only(right: i < actions.length - 1 ? 12 : 0),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
                   ),
@@ -641,7 +674,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         child: Icon(action['icon'] as IconData, color: action['color'] as Color, size: 24),
                       ),
                       const SizedBox(height: 8),
-                      Text(action['title'] as String, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                      Text(action['title'] as String, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyMedium?.color)),
                     ],
                   ),
                 ),
@@ -657,31 +690,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87)),
+        Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.titleLarge?.color)),
         if (onExport != null)
           TextButton.icon(
             onPressed: onExport,
             icon: const Icon(Icons.description_outlined, size: 16),
             label: const Text('Xuất báo cáo', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-            style: TextButton.styleFrom(foregroundColor: Colors.indigo),
+            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.primary),
           ),
       ],
-    );
-  }
-
-  void _exportDashboardData(Map<String, dynamic> stats) async {
-    final List<Map<String, dynamic>> exportData = [
-      {'Thông số': 'Tổng doanh thu', 'Giá trị': stats['revenue']},
-      {'Thông số': 'Tổng đơn hàng', 'Giá trị': stats['orders']},
-      {'Thông số': 'Tổng người dùng', 'Giá trị': stats['userCount']},
-      {'Thông số': 'Tổng cửa hàng', 'Giá trị': stats['storeCount']},
-      {'Thông số': 'Lợi nhuận ước tính', 'Giá trị': stats['profit']},
-    ];
-    
-    await ExportService.exportToCsv(
-      context: context,
-      data: exportData,
-      fileName: 'baocao_tongquan_${DateFormat('yyyyMMdd').format(DateTime.now())}',
     );
   }
 
@@ -713,12 +730,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 24),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+        decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(12)),
         child: Column(
           children: [
-            Icon(Icons.history_outlined, color: Colors.grey[300], size: 40),
+            Icon(Icons.history_outlined, color: Theme.of(context).disabledColor, size: 40),
             const SizedBox(height: 8),
-            Text('Chưa có hoạt động mới', style: TextStyle(color: Colors.grey[500], fontSize: 13)),
+            Text('Chưa có hoạt động mới', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 13)),
           ],
         ),
       );
@@ -729,7 +746,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -740,12 +757,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   Text(item['title'] as String, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14), overflow: TextOverflow.ellipsis),
-                   Text(item['subtitle'] as String, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                   Text(item['title'] as String, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Theme.of(context).textTheme.bodyMedium?.color), overflow: TextOverflow.ellipsis),
+                   Text(item['subtitle'] as String, style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color)),
                 ],
               ),
             ),
-            Text(DateFormat('HH:mm').format(DateTime.now().subtract(const Duration(minutes: 15))), style: TextStyle(fontSize: 11, color: Colors.grey[400])),
+            Text(DateFormat('HH:mm').format(DateTime.now().subtract(const Duration(minutes: 15))), style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.6))),
           ],
         ),
       )).toList(),

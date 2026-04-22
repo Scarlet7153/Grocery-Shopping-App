@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:typed_data';
-import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/api/api_error.dart';
+import '../../../../core/utils/image_picker_helper.dart';
 import '../../../../core/theme/store_theme.dart';
 import '../../../../features/products/data/product_model.dart';
 import '../../../../features/products/data/product_service.dart';
@@ -27,7 +27,6 @@ class StoreProductEditScreen extends StatefulWidget {
 class _StoreProductEditScreenState extends State<StoreProductEditScreen> {
   final UnitService _unitService = UnitService();
   final ProductService _productService = ProductService();
-  final ImagePicker _imagePicker = ImagePicker();
 
   late TextEditingController _nameController;
   late TextEditingController _descController;
@@ -44,11 +43,7 @@ class _StoreProductEditScreenState extends State<StoreProductEditScreen> {
 
   Future<void> _pickProductImage() async {
     try {
-      final picked = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 85,
-        maxWidth: 1600,
-      );
+      final picked = await ImagePickerHelper.pickFromGallery(context);
       if (picked == null) {
         return;
       }

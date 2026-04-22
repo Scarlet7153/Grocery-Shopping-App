@@ -140,59 +140,87 @@ class OrderService {
     }
   }
 
-  // Cờ để biết endpoint /orders/available có bị giới hạn (403) hay không
-  static bool _isAvailableRestricted = false;
-
-  /// Lấy toàn bộ danh sách đơn hàng cho Admin thông qua cơ chế Khám phá (Tránh 403 redundant)
+  /// Lấy toàn bộ danh sách đơn hàng cho Admin
   Future<List<OrderModel>> getAllOrdersAdmin({bool forceRefresh = false}) async {
-    // Nếu đã biết là bị giới hạn, ta vào thẳng chế độ Discovery để tiết kiệm tài nguyên
-    if (_isAvailableRestricted) {
+    try {
+      // Gọi đúng API admin endpoint với page size lớn
+      final response = await _client.get<dynamic>('/orders/all?page=0&size=1000');
+      if (response.data != null && response.data['data'] != null) {
+        final pageData = response.data['data'];
+        final List? content = pageData['content'] ?? pageData;
+        if (content != null) {
+          return content.map((json) => OrderModel.fromJson(Map<String, dynamic>.from(json))).toList();
+        }
+      }
+      return [];
+    } catch (e) {
+      debugPrint('⚠️ getAllOrdersAdmin error: $e');
+      // Fallback sang discovery mode nếu API lỗi
       return await discoverRealOrders(forceRefresh: forceRefresh);
     }
-
-    try {
-      final response = await _client.get<dynamic>('/orders/available');
-      if (response.data != null && response.data['data'] != null) {
-        final List list = response.data['data'];
-        return list.map((json) => OrderModel.fromJson(Map<String, dynamic>.from(json))).toList();
-      }
-    } catch (e) {
-      if (e is DioException && e.response?.statusCode == 403) {
-        _isAvailableRestricted = true; // Đánh dấu là bị giới hạn
-        debugPrint('ℹ️ /orders/available is restricted. Admin is now using Discovery Mode for orders.');
-      }
-    }
-    
-    return await discoverRealOrders(forceRefresh: forceRefresh);
   }
 
-  /// Lấy thống kê tổng quan cho Dashboard Admin (An toàn và Tối ưu)
+  /// Lấy thống kê đơn hàng từ API /orders/statistics
+  Future<Map<String, dynamic>> getOrderStatistics() async {
+    try {
+      final response = await _client.get<dynamic>('/orders/statistics');
+      final data = response.data?['data'] ?? {};
+      return {
+        'currentMonthRevenue': (data['currentMonthRevenue'] ?? 0).toDouble(),
+        'previousMonthRevenue': (data['previousMonthRevenue'] ?? 0).toDouble(),
+        'monthOverMonthGrowth': (data['monthOverMonthGrowth'] ?? 0).toDouble(),
+        'totalRevenue': (data['totalRevenue'] ?? 0).toDouble(),
+        'totalOrders': data['totalOrders'] ?? 0,
+        'monthlyRevenue': (data['monthlyRevenue'] as List<dynamic>?)?.map((m) => {
+          'month': m['month'],
+          'monthLabel': m['monthLabel'],
+          'revenue': (m['revenue'] ?? 0).toDouble(),
+          'orderCount': m['orderCount'] ?? 0,
+        }).toList() ?? [],
+      };
+    } catch (e) {
+      debugPrint('getOrderStatistics Error: $e');
+      return {
+        'currentMonthRevenue': 0.0,
+        'previousMonthRevenue': 0.0,
+        'monthOverMonthGrowth': 0.0,
+        'totalRevenue': 0.0,
+        'totalOrders': 0,
+        'monthlyRevenue': [],
+      };
+    }
+  }
+
+  /// Lấy thống kê tổng quan cho Dashboard Admin
   Future<Map<String, dynamic>> getAdminStats() async {
     try {
-      // 1. Lấy dữ liệu từ các API chắc chắn có quyền (Users, Stores)
+      // Lấy dữ liệu song song
       final results = await Future.wait([
         _client.get<dynamic>('/users').catchError((e) => Response(requestOptions: RequestOptions(path: ''), data: {'data': []})),
         _client.get<dynamic>('/stores').catchError((e) => Response(requestOptions: RequestOptions(path: ''), data: {'data': []})),
+        _client.get<dynamic>('/orders/statistics').catchError((e) => Response(requestOptions: RequestOptions(path: ''), data: {'data': {}})),
       ]);
 
       final usersList = (results[0].data['data'] as List?) ?? [];
       final storesList = (results[1].data['data'] as List?) ?? [];
-      
-      // 2. Lấy dữ liệu đơn hàng (Khám phá thay vì gọi API list gây 403)
-      final orders = await discoverRealOrders();
+      final statsData = results[2].data?['data'] ?? {};
 
-      double totalRevenue = 0;
-      for (var o in orders) {
-        totalRevenue += (o.totalAmount ?? 0).toDouble();
-      }
+      final currentMonthRevenue = (statsData['currentMonthRevenue'] ?? 0).toDouble();
+      final totalRevenue = (statsData['totalRevenue'] ?? 0).toDouble();
+      final totalOrders = statsData['totalOrders'] ?? 0;
+      final monthlyRevenue = (statsData['monthlyRevenue'] as List<dynamic>?) ?? [];
 
       return {
         'userCount': usersList.length,
         'storeCount': storesList.length,
-        'orders': orders.length,
-        'revenue': totalRevenue,
-        'profit': totalRevenue * 0.1, // Ước tính 10%
-        'recentOrders': orders.take(5).toList(),
+        'orders': totalOrders,
+        'revenue': currentMonthRevenue,       // Doanh thu tháng này
+        'totalRevenue': totalRevenue,         // Tổng doanh thu lũy kế
+        'previousMonthRevenue': (statsData['previousMonthRevenue'] ?? 0).toDouble(),
+        'monthOverMonthGrowth': (statsData['monthOverMonthGrowth'] ?? 0).toDouble(),
+        'monthlyRevenue': monthlyRevenue,
+        'profit': totalRevenue * 0.1,
+        'recentOrders': [],
         'recentUsers': usersList.take(3).toList(),
       };
     } catch (e) {

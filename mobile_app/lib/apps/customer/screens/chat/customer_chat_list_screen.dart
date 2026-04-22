@@ -17,15 +17,11 @@ class CustomerChatListScreen extends StatefulWidget {
 class _CustomerChatListScreenState extends State<CustomerChatListScreen> {
   final ChatApi _chatApi = ChatApi();
 
-  bool _connected = false;
   List<ConversationModel> _conversations = [];
   bool _loading = true;
   String? _error;
 
   late final ConversationUpdateCallback _conversationUpdatedListener;
-  late final VoidCallback _connectedListener;
-  late final VoidCallback _disconnectedListener;
-  late final VoidCallback _errorListener;
 
   @override
   void initState() {
@@ -42,32 +38,8 @@ class _CustomerChatListScreenState extends State<CustomerChatListScreen> {
         _loadConversations();
       }
     };
-    _connectedListener = () {
-      if (mounted) {
-        setState(() {
-          _connected = true;
-        });
-      }
-    };
-    _disconnectedListener = () {
-      if (mounted) {
-        setState(() {
-          _connected = false;
-        });
-      }
-    };
-    _errorListener = () {
-      if (mounted) {
-        setState(() {
-          _connected = false;
-        });
-      }
-    };
 
     wsService.addConversationUpdateListener(_conversationUpdatedListener);
-    wsService.addConnectedListener(_connectedListener);
-    wsService.addDisconnectedListener(_disconnectedListener);
-    wsService.addErrorListener(_errorListener);
 
     wsService.connect();
     wsService.subscribeToConversationList();
@@ -104,9 +76,6 @@ class _CustomerChatListScreenState extends State<CustomerChatListScreen> {
   void dispose() {
     final wsService = ChatWebSocketService.instance;
     wsService.removeConversationUpdateListener(_conversationUpdatedListener);
-    wsService.removeConnectedListener(_connectedListener);
-    wsService.removeDisconnectedListener(_disconnectedListener);
-    wsService.removeErrorListener(_errorListener);
     wsService.unsubscribeFromConversationList();
     super.dispose();
   }
@@ -118,14 +87,6 @@ class _CustomerChatListScreenState extends State<CustomerChatListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(context.tr(vi: 'Chat', en: 'Chat')),
-        actions: [
-          Icon(
-            _connected ? Icons.wifi : Icons.wifi_off,
-            color: _connected ? Colors.lightGreenAccent : Colors.redAccent,
-            size: 20,
-          ),
-          const SizedBox(width: 12),
-        ],
       ),
       body: Container(
         color: scheme.surfaceContainerLowest,
@@ -165,6 +126,7 @@ class _CustomerChatListScreenState extends State<CustomerChatListScreen> {
                                     builder: (_) => CustomerChatScreen(
                                       conversationId: conv.id,
                                       shipperName: conv.shipperName,
+                                      shipperAvatar: conv.shipperAvatar,
                                       orderId: conv.orderId,
                                     ),
                                   ),
@@ -206,8 +168,13 @@ class _ConversationTile extends StatelessWidget {
               CircleAvatar(
                 radius: 26,
                 backgroundColor: scheme.primaryContainer,
-                child: Icon(Icons.delivery_dining,
-                    color: scheme.onPrimaryContainer),
+                backgroundImage: conversation.shipperAvatar != null && conversation.shipperAvatar!.isNotEmpty
+                    ? NetworkImage(conversation.shipperAvatar!)
+                    : null,
+                child: conversation.shipperAvatar == null || conversation.shipperAvatar!.isEmpty
+                    ? Icon(Icons.delivery_dining,
+                        color: scheme.onPrimaryContainer)
+                    : null,
               ),
               const SizedBox(width: 12),
               Expanded(

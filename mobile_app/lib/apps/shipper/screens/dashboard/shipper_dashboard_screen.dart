@@ -482,7 +482,9 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                       ),
                 ),
                 const SizedBox(height: 8),
-                if (state.availableOrders.isEmpty)
+                if (!state.isOnline)
+                  _buildOfflineState()
+                else if (state.availableOrders.isEmpty)
                   _buildEmptyAvailableOrders()
                 else
                   AvailableOrdersList(
@@ -541,6 +543,40 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
               style: const TextStyle(fontSize: 24, color: Colors.white),
             )
           : null,
+    );
+  }
+
+  Widget _buildOfflineState() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 40),
+      child: Column(
+        children: [
+          Icon(Icons.cloud_off_outlined, size: 72, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text(
+            _tr(context, 'Đang ngoại tuyến', 'Offline'),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _tr(
+              context,
+              'Bật trạng thái trực tuyến để nhận đơn hàng',
+              'Go online to receive orders',
+            ),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey[400],
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
     );
   }
 

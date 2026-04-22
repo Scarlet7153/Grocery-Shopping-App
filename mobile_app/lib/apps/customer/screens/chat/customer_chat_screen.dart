@@ -11,11 +11,13 @@ class CustomerChatScreen extends StatefulWidget {
     super.key,
     required this.conversationId,
     required this.shipperName,
+    this.shipperAvatar,
     required this.orderId,
   });
 
   final String conversationId;
   final String shipperName;
+  final String? shipperAvatar;
   final int orderId;
 
   @override
@@ -28,7 +30,6 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
   final ScrollController _scrollController = ScrollController();
 
   final Set<String> _messageIds = {};
-  bool _connected = false;
   List<MessageModel> _messages = [];
   bool _loading = true;
   bool _sending = false;
@@ -81,9 +82,6 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
     _connectedListener = () {
       debugPrint('✅ WebSocket Connected!');
       if (mounted) {
-        setState(() {
-          _connected = true;
-        });
         // Mark conversation as read on connect and refresh unread badge
         try {
           final ws = ChatWebSocketService.instance;
@@ -94,19 +92,11 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
     };
 
     _disconnectedListener = () {
-      if (mounted) {
-        setState(() {
-          _connected = false;
-        });
-      }
+      debugPrint('❌ WebSocket Disconnected');
     };
 
     _errorListener = () {
-      if (mounted) {
-        setState(() {
-          _connected = false;
-        });
-      }
+      debugPrint('❌ WebSocket Error');
     };
 
     wsService.addMessageListener(_messageReceivedListener);
@@ -252,8 +242,13 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
             CircleAvatar(
               radius: 18,
               backgroundColor: scheme.primaryContainer,
-              child: Icon(Icons.delivery_dining,
-                  size: 20, color: scheme.onPrimaryContainer),
+              backgroundImage: widget.shipperAvatar != null && widget.shipperAvatar!.isNotEmpty
+                  ? NetworkImage(widget.shipperAvatar!)
+                  : null,
+              child: widget.shipperAvatar == null || widget.shipperAvatar!.isEmpty
+                  ? Icon(Icons.delivery_dining,
+                      size: 20, color: scheme.onPrimaryContainer)
+                  : null,
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -276,12 +271,6 @@ class _CustomerChatScreenState extends State<CustomerChatScreen> {
           ],
         ),
         actions: [
-          Icon(
-            _connected ? Icons.wifi : Icons.wifi_off,
-            color: _connected ? Colors.lightGreenAccent : Colors.redAccent,
-            size: 20,
-          ),
-          const SizedBox(width: 12),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadMessages,

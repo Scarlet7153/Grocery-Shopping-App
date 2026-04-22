@@ -45,7 +45,7 @@ class _FeedbackManagementScreenState extends State<FeedbackManagementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Quản Lý Phản Hồi'),
         backgroundColor: Colors.pink[600],
@@ -78,7 +78,7 @@ class _FeedbackManagementScreenState extends State<FeedbackManagementScreen> {
                         ),
                         child: Text(fb['type'], style: TextStyle(color: Colors.pink[700], fontWeight: FontWeight.bold, fontSize: 12)),
                       ),
-                      Text(fb['date'], style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                      Text(fb['date'], style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 12)),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -109,8 +109,10 @@ class _FeedbackManagementScreenState extends State<FeedbackManagementScreen> {
                       ElevatedButton(
                         onPressed: () => _toggleStatus(index),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: isResolved ? Colors.grey[200] : Colors.green[50],
-                          foregroundColor: isResolved ? Colors.black : Colors.green[800],
+                          backgroundColor: isResolved
+                              ? (Theme.of(context).brightness == Brightness.dark ? Theme.of(context).cardColor : Colors.grey[200])
+                              : Colors.green[50],
+                          foregroundColor: isResolved ? Theme.of(context).textTheme.bodyMedium?.color : Colors.green[800],
                         ),
                         child: Text(isResolved ? 'Đánh dấu Chưa xử lý' : 'Đánh dấu Đã xử lý'),
                       ),

@@ -27,9 +27,73 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
   StreamSubscription<CustomerRealtimeEvent>? _realtimeSubscription;
   bool _isRealtimeSyncing = false;
 
+  // Filter & Search
+  String _searchQuery = '';
+  String _selectedStatus = 'ALL';
+  bool _sortNewestFirst = true;
+
+  final TextEditingController _searchController = TextEditingController();
+
+  static const _statusOptions = [
+    {'value': 'ALL', 'vi': 'Tất cả', 'en': 'All'},
+    {'value': 'PENDING', 'vi': 'Chờ xác nhận', 'en': 'Pending'},
+    {'value': 'CONFIRMED', 'vi': 'Đã xác nhận', 'en': 'Confirmed'},
+    {'value': 'PICKING_UP', 'vi': 'Đang lấy hàng', 'en': 'Picking up'},
+    {'value': 'DELIVERING', 'vi': 'Đang giao', 'en': 'Delivering'},
+    {'value': 'DELIVERED', 'vi': 'Đã giao', 'en': 'Delivered'},
+    {'value': 'CANCELLED', 'vi': 'Đã hủy', 'en': 'Cancelled'},
+  ];
+
   num _asNum(dynamic v) {
     if (v is num) return v;
     return num.tryParse(v?.toString() ?? '') ?? 0;
+  }
+
+  String _norm(String input) {
+    var s = input.trim().toLowerCase();
+    s = s.replaceAll(RegExp(r'[àáạảãâầấậẩẫăằắặẳẵ]'), 'a');
+    s = s.replaceAll(RegExp(r'[èéẹẻẽêềếệểễ]'), 'e');
+    s = s.replaceAll(RegExp(r'[ìíịỉĩ]'), 'i');
+    s = s.replaceAll(RegExp(r'[òóọỏõôồốộổỗơờớợởỡ]'), 'o');
+    s = s.replaceAll(RegExp(r'[ùúụủũưừứựửữ]'), 'u');
+    s = s.replaceAll(RegExp(r'[ỳýỵỷỹ]'), 'y');
+    s = s.replaceAll(RegExp(r'[đ]'), 'd');
+    s = s.replaceAll(RegExp(r'[^a-z0-9]+'), ' ');
+    s = s.replaceAll(RegExp(r'\s+'), ' ').trim();
+    return s;
+  }
+
+  List<Map<String, dynamic>> get _filteredOrders {
+    var list = List<Map<String, dynamic>>.from(_orders);
+
+    // Filter by status
+    if (_selectedStatus != 'ALL') {
+      list = list.where((o) => (o['status']?.toString() ?? '') == _selectedStatus).toList();
+    }
+
+    // Filter by search query
+    if (_searchQuery.trim().isNotEmpty) {
+      final query = _norm(_searchQuery);
+      list = list.where((o) {
+        final id = _norm(o['id']?.toString() ?? '');
+        final store = _norm(o['storeName']?.toString() ?? '');
+        final items = o['items'] as List?;
+        final itemNames = items != null
+            ? items.map((i) => _norm(i['productName']?.toString() ?? '')).join(' ')
+            : '';
+        return id.contains(query) || store.contains(query) || itemNames.contains(query);
+      }).toList();
+    }
+
+    // Sort by createdAt
+    list.sort((a, b) {
+      final aDate = a['createdAt']?.toString() ?? '';
+      final bDate = b['createdAt']?.toString() ?? '';
+      final cmp = aDate.compareTo(bDate);
+      return _sortNewestFirst ? -cmp : cmp;
+    });
+
+    return list;
   }
 
   @override
@@ -47,6 +111,7 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
   void dispose() {
     _realtimeSubscription?.cancel();
     _realtimeService.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -152,6 +217,7 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
     }
 
     final scheme = Theme.of(context).colorScheme;
+    final filtered = _filteredOrders;
 
     return Container(
       color: scheme.surfaceContainerLowest,
@@ -165,103 +231,205 @@ class _CustomerOrdersScreenState extends State<CustomerOrdersScreen> {
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-            ..._orders.map((order) {
-              final total = order['grandTotal'] ?? order['totalAmount'] ?? 0;
-              final status = order['status']?.toString() ?? 'UNKNOWN';
-              final id = order['id']?.toString() ?? '';
-              final storeName = order['storeName']?.toString() ?? '';
-              final createdAt = order['createdAt']?.toString() ?? '';
 
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+            // Search bar
+            TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: context.tr(vi: 'Tìm theo mã, cửa hàng, sản phẩm...', en: 'Search by ID, store, product...'),
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _searchQuery = '');
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: scheme.surface,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
                 ),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(14),
-                  onTap: () async {
-                    if (id.isEmpty) return;
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => CustomerOrderDetailScreen(orderId: id),
-                      ),
-                    );
-                    await _loadOrders();
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: scheme.primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            Icons.receipt_long,
-                            color: scheme.primary,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                context.tr(vi: 'Đơn #$id', en: 'Order #$id'),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              if (storeName.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Text(
-                                    storeName,
-                                    style: TextStyle(
-                                      color: scheme.onSurfaceVariant,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                              if (createdAt.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Text(
-                                    createdAt,
-                                    style: TextStyle(
-                                      color: scheme.onSurfaceVariant,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              formatVnd(_asNum(total)),
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: scheme.error,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            _StatusChip(status: status),
-                          ],
-                        ),
-                      ],
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              ),
+              onChanged: (v) => setState(() => _searchQuery = v),
+            ),
+            const SizedBox(height: 12),
+
+            // Status filter chips
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: _statusOptions.map((opt) {
+                  final value = opt['value']!;
+                  final label = context.tr(vi: opt['vi']!, en: opt['en']!);
+                  final selected = value == _selectedStatus;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: FilterChip(
+                      label: Text(label, style: const TextStyle(fontSize: 12)),
+                      selected: selected,
+                      onSelected: (_) => setState(() => _selectedStatus = value),
+                      selectedColor: scheme.primary.withValues(alpha: 0.15),
+                      checkmarkColor: scheme.primary,
                     ),
+                  );
+                }).toList(),
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Sort toggle
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  context.tr(
+                    vi: '${filtered.length} đơn hàng',
+                    en: '${filtered.length} orders',
+                  ),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: scheme.onSurfaceVariant,
                   ),
                 ),
-              );
-            }),
+                TextButton.icon(
+                  onPressed: () => setState(() => _sortNewestFirst = !_sortNewestFirst),
+                  icon: Icon(
+                    _sortNewestFirst ? Icons.arrow_downward : Icons.arrow_upward,
+                    size: 16,
+                    color: scheme.primary,
+                  ),
+                  label: Text(
+                    context.tr(
+                      vi: _sortNewestFirst ? 'Mới nhất' : 'Cũ nhất',
+                      en: _sortNewestFirst ? 'Newest' : 'Oldest',
+                    ),
+                    style: TextStyle(fontSize: 13, color: scheme.primary),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+
+            // Order list
+            if (filtered.isEmpty)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 40),
+                  child: Column(
+                    children: [
+                      Icon(Icons.search_off, size: 48, color: scheme.onSurfaceVariant),
+                      const SizedBox(height: 12),
+                      Text(
+                        context.tr(vi: 'Không tìm thấy đơn hàng', en: 'No orders found'),
+                        style: TextStyle(color: scheme.onSurfaceVariant),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              ...filtered.map((order) {
+                final total = order['grandTotal'] ?? order['totalAmount'] ?? 0;
+                final status = order['status']?.toString() ?? 'UNKNOWN';
+                final id = order['id']?.toString() ?? '';
+                final storeName = order['storeName']?.toString() ?? '';
+                final createdAt = order['createdAt']?.toString() ?? '';
+
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(14),
+                    onTap: () async {
+                      if (id.isEmpty) return;
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => CustomerOrderDetailScreen(orderId: id),
+                        ),
+                      );
+                      await _loadOrders();
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: scheme.primary.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.receipt_long,
+                              color: scheme.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  context.tr(vi: 'Đơn #$id', en: 'Order #$id'),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                if (storeName.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text(
+                                      storeName,
+                                      style: TextStyle(
+                                        color: scheme.onSurfaceVariant,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                if (createdAt.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text(
+                                      createdAt,
+                                      style: TextStyle(
+                                        color: scheme.onSurfaceVariant,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                formatVnd(_asNum(total)),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: scheme.error,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              _StatusChip(status: status),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
           ],
         ),
       ),

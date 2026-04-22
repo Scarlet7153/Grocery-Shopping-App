@@ -309,6 +309,10 @@ class AuthRepositoryImpl implements AuthRepository {
       
       final futures = <Future>[];
       
+      if (token != null) {
+        futures.add(_prefs.setString(_keyAccessToken, token));
+      }
+      
       if (authResponse.data?.userId != null) {
         futures.add(_prefs.setString(_keyUserId, authResponse.data!.userId!.toString()));
       }

@@ -1,4 +1,4 @@
-﻿class ProductUnitModel {
+class ProductUnitModel {
   final int id;
   final String unitName;
   final double price;
@@ -27,6 +27,7 @@ class ProductModel {
   final String description;
   final String imageUrl;
   final String storeName;
+  final String storeAddress;
   final String categoryName;
   final String status;
   final List<ProductUnitModel> units;
@@ -37,6 +38,7 @@ class ProductModel {
     required this.description,
     required this.imageUrl,
     required this.storeName,
+    this.storeAddress = '',
     required this.categoryName,
     required this.status,
     required this.units,
@@ -56,6 +58,7 @@ class ProductModel {
       description: (json['description'] ?? '') as String,
       imageUrl: (json['imageUrl'] ?? '') as String,
       storeName: (json['storeName'] ?? '') as String,
+      storeAddress: (json['storeAddress'] ?? '') as String,
       categoryName: (json['categoryName'] ?? '') as String,
       status: (json['status'] ?? '') as String,
       units: unitsJson

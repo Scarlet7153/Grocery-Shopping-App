@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:typed_data';
-import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/location/province_api.dart';
+import '../../../../core/utils/image_picker_helper.dart';
 import '../../../../core/theme/store_theme.dart';
 import '../../../../features/store/data/store_model.dart';
 import '../../../../features/store/data/store_service.dart';
@@ -36,7 +36,6 @@ class _StoreProfileEditScreenState extends State<StoreProfileEditScreen> {
   final _formKey = GlobalKey<FormState>();
   final ProvinceApi _provinceApi = ProvinceApi();
   final StoreService _storeService = StoreService();
-  final ImagePicker _imagePicker = ImagePicker();
   late final TextEditingController _nameController;
   late final TextEditingController _streetController;
 
@@ -179,11 +178,7 @@ class _StoreProfileEditScreenState extends State<StoreProfileEditScreen> {
 
   Future<void> _pickStoreImage() async {
     try {
-      final picked = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 85,
-        maxWidth: 1600,
-      );
+      final picked = await ImagePickerHelper.pickFromGallery(context);
       if (picked == null) {
         return;
       }

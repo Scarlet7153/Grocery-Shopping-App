@@ -305,19 +305,43 @@ class _DeliveryFlowScreenState extends State<DeliveryFlowScreen> {
               ],
             ),
             const SizedBox(height: 20),
-            _buildInfoCard(
-              icon: Icons.storefront,
-              title: 'Cửa hàng',
-              value: _order.storeName,
-              color: Colors.purple,
-            ),
-            const SizedBox(height: 12),
-            _buildInfoCard(
-              icon: Icons.location_on,
-              title: 'Địa chỉ',
-              value: _order.storeAddress,
-              color: Colors.red,
-            ),
+            if (_order.stores.length > 1) ...[
+              ..._order.stores.asMap().entries.expand((entry) {
+                final i = entry.key;
+                final store = entry.value;
+                return [
+                  _buildInfoCard(
+                    icon: Icons.storefront,
+                    title: i == 0 ? 'Cửa hàng' : '',
+                    value: store.name,
+                    color: Colors.purple,
+                  ),
+                  const SizedBox(height: 4),
+                  _buildInfoCard(
+                    icon: Icons.location_on,
+                    title: '',
+                    value: store.address,
+                    color: Colors.red,
+                  ),
+                  if (i < _order.stores.length - 1)
+                    const SizedBox(height: 12),
+                ];
+              }),
+            ] else ...[
+              _buildInfoCard(
+                icon: Icons.storefront,
+                title: 'Cửa hàng',
+                value: _order.storeName,
+                color: Colors.purple,
+              ),
+              const SizedBox(height: 12),
+              _buildInfoCard(
+                icon: Icons.location_on,
+                title: 'Địa chỉ',
+                value: _order.storeAddress,
+                color: Colors.red,
+              ),
+            ],
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,

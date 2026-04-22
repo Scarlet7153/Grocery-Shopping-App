@@ -18,6 +18,7 @@ class _StoreManagementScreenState extends State<StoreManagementScreen> {
   final OrderService _orderService = OrderService();
   final _currencyFormat = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
   String _searchQuery = '';
+  bool _showPendingOnly = false;
   Map<String, double> _storeRevenueMap = {};
 
   @override
@@ -138,7 +139,7 @@ class _StoreManagementScreenState extends State<StoreManagementScreen> {
                   }
                 }
               },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo, foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary, foregroundColor: Colors.white),
               child: const Text('Thêm'),
             ),
           ],
@@ -159,41 +160,77 @@ class _StoreManagementScreenState extends State<StoreManagementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Quản lý Cửa hàng', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: Theme.of(context).cardColor,
+        foregroundColor: Theme.of(context).textTheme.titleLarge?.color,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.file_download_outlined, color: Colors.indigo),
+            icon: Icon(Icons.file_download_outlined, color: Theme.of(context).colorScheme.primary),
             onPressed: _exportStores,
             tooltip: 'Xuất Excel',
           ),
           const SizedBox(width: 8),
         ],
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Tìm kiếm theo tên hoặc địa chỉ...',
-                prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                filled: true,
-                fillColor: const Color(0xFFF0F2F5),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
-                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+          preferredSize: const Size.fromHeight(104),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Tìm kiếm theo tên hoặc địa chỉ...',
+                    prefixIcon: Icon(Icons.search, color: Theme.of(context).hintColor),
+                    filled: true,
+                    fillColor: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).cardColor : const Color(0xFFF0F2F5),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                  ),
+                  onChanged: (val) => setState(() => _searchQuery = val.toLowerCase()),
+                ),
               ),
-              onChanged: (val) => setState(() => _searchQuery = val.toLowerCase()),
-            ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).cardColor : const Color(0xFFF0F2F5),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<bool>(
+                      isExpanded: true,
+                      value: _showPendingOnly,
+                      icon: Icon(Icons.filter_list, color: Theme.of(context).colorScheme.primary),
+                      items: const [
+                        DropdownMenuItem(
+                          value: false,
+                          child: Text('Tất cả cửa hàng'),
+                        ),
+                        DropdownMenuItem(
+                          value: true,
+                          child: Text('Chờ duyệt'),
+                        ),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() => _showPendingOnly = val);
+                        }
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddStoreDialog,
-        backgroundColor: Colors.indigo,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         child: const Icon(Icons.add_business, color: Colors.white),
       ),
       body: _buildStoreList(),
@@ -202,10 +239,10 @@ class _StoreManagementScreenState extends State<StoreManagementScreen> {
 
   Widget _buildStoreList() {
     return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _storeRepository.getStores(),
+      future: _storeRepository.getStores(pendingApproval: _showPendingOnly),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: Colors.indigo));
+          return Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary));
         }
 
         final allStores = snapshot.data ?? [];
@@ -230,8 +267,7 @@ class _StoreManagementScreenState extends State<StoreManagementScreen> {
             itemCount: filteredStores.length,
             itemBuilder: (context, index) {
               final store = filteredStores[index];
-              // Assuming 'isOpen' or 'status' field indicates if approval is needed
-              final bool isPending = store['isOpen'] == 'pending' || store['status'] == 'PENDING';
+              final bool isPending = store['status'] == 'PENDING' || _showPendingOnly;
               return _buildStoreCard(store, isPending);
             },
           ),
@@ -245,11 +281,12 @@ class _StoreManagementScreenState extends State<StoreManagementScreen> {
     final double revenue = _storeRevenueMap[sId] ?? (store['totalRevenue'] as num?)?.toDouble() ?? 0.0;
     
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 6))],
       ),
       child: InkWell(
         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => StoreDetailScreen(store: store))),
@@ -265,7 +302,7 @@ class _StoreManagementScreenState extends State<StoreManagementScreen> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: Colors.indigo[50],
+                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                       image: store['imageUrl'] != null && store['imageUrl'].toString().isNotEmpty
                           ? DecorationImage(
@@ -275,7 +312,7 @@ class _StoreManagementScreenState extends State<StoreManagementScreen> {
                           : null,
                     ),
                     child: store['imageUrl'] == null || store['imageUrl'].toString().isEmpty
-                        ? const Icon(Icons.store, color: Colors.indigo, size: 24)
+                        ? Icon(Icons.store, color: Theme.of(context).colorScheme.primary, size: 24)
                         : null,
                   ),
                   const SizedBox(width: 16),
@@ -284,19 +321,19 @@ class _StoreManagementScreenState extends State<StoreManagementScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(store['storeName'] ?? 'Cửa hàng ẩn', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                        Text('Chủ CH: ${store['ownerName'] ?? 'N/A'}', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                        Text('Chủ CH: ${store['ownerName'] ?? 'N/A'}', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 13)),
                       ],
                     ),
                   ),
-                  _buildStatusBadge(store['isOpen']),
+                  _buildStatusBadge(store['isOpen'], isPending: isPending),
                 ],
               ),
               const Divider(height: 24),
               Row(
                 children: [
-                   const Icon(Icons.location_on_outlined, size: 14, color: Colors.grey),
+                   Icon(Icons.location_on_outlined, size: 14, color: Theme.of(context).disabledColor),
                    const SizedBox(width: 4),
-                   Expanded(child: Text(store['address'] ?? 'N/A', style: TextStyle(color: Colors.grey[600], fontSize: 12), overflow: TextOverflow.ellipsis)),
+                   Expanded(child: Text(store['address'] ?? 'N/A', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 12), overflow: TextOverflow.ellipsis)),
                 ],
               ),
               const SizedBox(height: 12),
@@ -306,11 +343,11 @@ class _StoreManagementScreenState extends State<StoreManagementScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Tổng doanh thu', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                      Text(_currencyFormat.format(revenue), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.indigo)),
+                      Text('Tổng doanh thu', style: TextStyle(fontSize: 11, color: Theme.of(context).textTheme.bodySmall?.color)),
+                      Text(_currencyFormat.format(revenue), style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
                     ],
                   ),
-                  if (isPending) _buildActionButtons(store['id']),
+                  if (isPending) _buildActionButtons(store['userId'] ?? store['id']),
                 ],
               ),
             ],
@@ -320,7 +357,17 @@ class _StoreManagementScreenState extends State<StoreManagementScreen> {
     );
   }
 
-  Widget _buildStatusBadge(dynamic isOpen) {
+  Widget _buildStatusBadge(dynamic isOpen, {bool isPending = false}) {
+    if (isPending) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.orange.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text('Chờ duyệt', style: TextStyle(color: Colors.orange[700], fontSize: 11, fontWeight: FontWeight.bold)),
+      );
+    }
     final bool active = isOpen == true;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -332,22 +379,66 @@ class _StoreManagementScreenState extends State<StoreManagementScreen> {
     );
   }
 
-  Widget _buildActionButtons(dynamic storeId) {
+  Widget _buildActionButtons(dynamic userId) {
+    final id = userId?.toString() ?? '';
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        IconButton(
-          onPressed: () async {
-            await _storeRepository.rejectStore(storeId);
-            if (mounted) setState(() {});
-          },
-          icon: const Icon(Icons.cancel_outlined, color: Colors.red, size: 28),
+        OutlinedButton.icon(
+          onPressed: id.isEmpty
+              ? null
+              : () async {
+                  try {
+                    await _storeRepository.rejectStore(id);
+                    if (mounted) {
+                      setState(() {});
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Đã từ chối cửa hàng')),
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Lỗi: $e')),
+                      );
+                    }
+                  }
+                },
+          icon: const Icon(Icons.cancel_outlined, color: Colors.red, size: 18),
+          label: const Text('Từ chối', style: TextStyle(color: Colors.red, fontSize: 12)),
+          style: OutlinedButton.styleFrom(
+            side: const BorderSide(color: Colors.red),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          ),
         ),
-        IconButton(
-          onPressed: () async {
-            await _storeRepository.approveStore(storeId);
-            if (mounted) setState(() {});
-          },
-          icon: const Icon(Icons.check_circle_outline, color: Colors.green, size: 28),
+        const SizedBox(width: 8),
+        FilledButton.icon(
+          onPressed: id.isEmpty
+              ? null
+              : () async {
+                  try {
+                    await _storeRepository.approveStore(id);
+                    if (mounted) {
+                      setState(() {});
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Đã duyệt cửa hàng thành công')),
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Lỗi: $e')),
+                      );
+                    }
+                  }
+                },
+          icon: const Icon(Icons.check_circle_outline, size: 18),
+          label: const Text('Duyệt', style: TextStyle(fontSize: 12)),
+          style: FilledButton.styleFrom(
+            backgroundColor: Colors.green,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          ),
         ),
       ],
     );
@@ -385,9 +476,9 @@ class _StoreManagementScreenState extends State<StoreManagementScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.store_outlined, size: 64, color: Colors.grey[300]),
+          Icon(Icons.store_outlined, size: 64, color: Theme.of(context).dividerColor),
           const SizedBox(height: 16),
-          Text('Không tìm thấy cửa hàng', style: TextStyle(color: Colors.grey[600], fontSize: 16)),
+          Text('Không tìm thấy cửa hàng', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 16)),
         ],
       ),
     );

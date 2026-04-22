@@ -88,16 +88,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  
-  # assets:
-    # - assets/images/
-    # - assets/icons/
-    # - assets/products/
   assets:
     - .env
-    - .env.example
     - assets/images/
-    - assets/products/
     - assets/icons/
 
 dependency_overrides:

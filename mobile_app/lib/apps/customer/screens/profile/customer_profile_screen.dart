@@ -3,14 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:dio/dio.dart';
-import 'package:image_picker/image_picker.dart';
-
 import '../../../../core/network/api_client.dart';
+import '../../../../core/utils/image_picker_helper.dart';
 import '../../../../shared/widgets/snackbar_utils.dart';
 
 import '../../../../core/auth/auth_session.dart';
 import '../auth/customer_login_screen.dart';
-import '../orders/customer_orders_screen.dart';
+
 import 'recipient_info_screen.dart';
 import '../cart/customer_payment_method_screen.dart';
 import '../../bloc/customer_language_cubit.dart';
@@ -173,12 +172,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
       return;
     }
 
-    final picker = ImagePicker();
-    final xfile = await picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
-      maxWidth: 1024,
-    );
+    final xfile = await ImagePickerHelper.pickFromGallery(context);
     if (xfile == null) return;
 
     setState(() => _uploadingAvatar = true);
@@ -406,18 +400,6 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                     if (selected != null) {
                       CustomerPaymentPreferences.method.value = selected;
                     }
-                  },
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.history),
-                  title: Text(
-                      context.tr(vi: 'Lịch sử đơn hàng', en: 'Order history')),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                          builder: (_) => const CustomerOrdersScreen()),
-                    );
                   },
                 ),
                 const Divider(height: 1),

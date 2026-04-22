@@ -26,11 +26,11 @@ class _DeliveryManagementScreenState extends State<DeliveryManagementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F2F5),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Giao hàng & Vận chuyển', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: Theme.of(context).cardColor,
+        foregroundColor: Theme.of(context).textTheme.titleLarge?.color,
         elevation: 0,
         actions: [
           if (_searchQuery.isNotEmpty || _statusFilter != 'Tất cả')
@@ -45,7 +45,7 @@ class _DeliveryManagementScreenState extends State<DeliveryManagementScreen> {
               },
             ),
           IconButton(
-            icon: const Icon(Icons.file_download_outlined, color: Colors.indigo),
+            icon: Icon(Icons.file_download_outlined, color: Theme.of(context).colorScheme.primary),
             onPressed: _exportDeliveries,
             tooltip: 'Xuất Excel',
           ),
@@ -62,7 +62,7 @@ class _DeliveryManagementScreenState extends State<DeliveryManagementScreen> {
                 prefixIcon: const Icon(Icons.search, size: 20),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
                 filled: true,
-                fillColor: Colors.grey[100],
+                fillColor: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).cardColor : const Color(0xFFF0F2F5),
                 contentPadding: EdgeInsets.zero,
               ),
               onChanged: (v) => setState(() => _searchQuery = v.toLowerCase()),
@@ -74,7 +74,7 @@ class _DeliveryManagementScreenState extends State<DeliveryManagementScreen> {
         future: _orderService.getAllOrdersAdmin(), // Switch to Admin API for full visibility
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: Colors.indigo));
+            return Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary));
           }
 
           final allOrders = snapshot.data ?? [];
@@ -136,7 +136,7 @@ class _DeliveryManagementScreenState extends State<DeliveryManagementScreen> {
 
     return Container(
       padding: const EdgeInsets.all(16),
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
@@ -156,8 +156,8 @@ class _DeliveryManagementScreenState extends State<DeliveryManagementScreen> {
         children: [
           Icon(icon, color: isSelected ? color : color.withValues(alpha: 0.4), size: 24),
           const SizedBox(height: 8),
-          Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isSelected ? Colors.black : Colors.grey)),
-          Text(title, style: TextStyle(fontSize: 11, color: isSelected ? color : Colors.grey, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+          Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: isSelected ? Theme.of(context).textTheme.bodyMedium?.color : Theme.of(context).disabledColor)),
+          Text(title, style: TextStyle(fontSize: 11, color: isSelected ? color : Theme.of(context).disabledColor, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
         ],
       ),
     );
@@ -175,13 +175,13 @@ class _DeliveryManagementScreenState extends State<DeliveryManagementScreen> {
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: FilterChip(
-              label: Text(filter, style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : Colors.black87)),
+              label: Text(filter, style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color)),
               selected: isSelected,
               onSelected: (val) => setState(() => _statusFilter = filter),
-              selectedColor: Colors.indigo,
+              selectedColor: Theme.of(context).colorScheme.primary,
               checkmarkColor: Colors.white,
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: isSelected ? Colors.indigo : Colors.grey[300]!)),
+              backgroundColor: Theme.of(context).cardColor,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20), side: BorderSide(color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).dividerColor)),
             ),
           );
         }).toList(),
@@ -191,11 +191,12 @@ class _DeliveryManagementScreenState extends State<DeliveryManagementScreen> {
 
   Widget _buildDeliveryCard(OrderModel order) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
+        border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 6))],
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -216,7 +217,7 @@ class _DeliveryManagementScreenState extends State<DeliveryManagementScreen> {
                           return Text('Đơn #${displayId.toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15));
                         },
                       ),
-                      Text('Khách hàng: ${order.customerName ?? "Khách lẻ"}', style: const TextStyle(fontSize: 13, color: Colors.grey)),
+                      Text('Khách hàng: ${order.customerName ?? "Khách lẻ"}', style: TextStyle(fontSize: 13, color: Theme.of(context).textTheme.bodySmall?.color)),
                     ],
                   ),
                 ),
@@ -226,17 +227,17 @@ class _DeliveryManagementScreenState extends State<DeliveryManagementScreen> {
             const Divider(height: 32),
             Row(
               children: [
-                const Icon(Icons.location_on_outlined, size: 16, color: Colors.indigo),
+                Icon(Icons.location_on_outlined, size: 16, color: Theme.of(context).colorScheme.primary),
                 const SizedBox(width: 12),
-                Expanded(child: Text(order.address ?? "Không có địa chỉ", style: const TextStyle(fontSize: 12, color: Colors.black87), overflow: TextOverflow.ellipsis)),
+                Expanded(child: Text(order.address ?? "Không có địa chỉ", style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color), overflow: TextOverflow.ellipsis)),
               ],
             ),
             const SizedBox(height: 8),
             Row(
               children: [
-                const Icon(Icons.person_pin_outlined, size: 16, color: Colors.grey),
+                Icon(Icons.person_pin_outlined, size: 16, color: Theme.of(context).disabledColor),
                 const SizedBox(width: 12),
-                Text('Shipper: ${order.shipperName ?? "Chưa chỉ định"}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                Text('Shipper: ${order.shipperName ?? "Chưa chỉ định"}', style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodySmall?.color)),
                 const Spacer(),
                 const Text('Dự kiến: 15p', style: TextStyle(fontSize: 11, color: Colors.green, fontWeight: FontWeight.bold)),
               ],
@@ -250,8 +251,8 @@ class _DeliveryManagementScreenState extends State<DeliveryManagementScreen> {
                 if (order.status == 'DELIVERED') progress = 1.0;
                 return LinearProgressIndicator(
                   value: progress, 
-                  backgroundColor: const Color(0xFFF0F2F5), 
-                  valueColor: AlwaysStoppedAnimation<Color>(progress == 1.0 ? Colors.green : Colors.indigo),
+                  backgroundColor: Theme.of(context).dividerColor, 
+                  valueColor: AlwaysStoppedAnimation<Color>(progress == 1.0 ? Colors.green : Theme.of(context).colorScheme.primary),
                   minHeight: 6,
                   borderRadius: BorderRadius.circular(3),
                 );
@@ -271,7 +272,7 @@ class _DeliveryManagementScreenState extends State<DeliveryManagementScreen> {
                 const SizedBox(width: 8),
                 TextButton(
                   onPressed: () {},
-                  child: const Text('Xem lộ trình', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.indigo)),
+                  child: Text('Xem lộ trình', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
                 ),
               ],
             ),
@@ -352,9 +353,9 @@ class _DeliveryManagementScreenState extends State<DeliveryManagementScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.local_shipping_outlined, size: 64, color: Colors.grey[300]),
+          Icon(Icons.local_shipping_outlined, size: 64, color: Theme.of(context).dividerColor),
           const SizedBox(height: 16),
-          const Text('Không có hoạt động vận chuyển nào', style: TextStyle(color: Colors.grey)),
+          Text('Không có hoạt động vận chuyển nào', style: TextStyle(color: Theme.of(context).disabledColor)),
         ],
       ),
     );

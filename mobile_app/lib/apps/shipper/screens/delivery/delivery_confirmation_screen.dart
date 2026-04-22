@@ -314,8 +314,29 @@ class _DeliveryConfirmationScreenState
           // Order details (16px body text)
           _buildDetailRow('Mã đơn', '#${widget.order.id}'),
           const SizedBox(height: 12),
-          _buildDetailRow('Cửa hàng', widget.order.storeName),
-          const SizedBox(height: 12),
+          if (widget.order.stores.length > 1) ...[
+            _buildDetailRow(
+              'Cửa hàng',
+              '${widget.order.stores.length} cửa hàng',
+            ),
+            const SizedBox(height: 4),
+            ...widget.order.stores.map(
+              (s) => Padding(
+                padding: const EdgeInsets.only(left: 12, bottom: 4),
+                child: Text(
+                  '• ${s.name}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ] else ...[
+            _buildDetailRow('Cửa hàng', widget.order.storeName),
+            const SizedBox(height: 12),
+          ],
           _buildDetailRow('Số lượng', '$itemCount sản phẩm'),
           const SizedBox(height: 14),
 

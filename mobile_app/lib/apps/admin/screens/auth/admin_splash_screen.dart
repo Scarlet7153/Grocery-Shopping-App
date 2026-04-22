@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/admin_theme.dart';
-// Đã xóa dòng import 'admin_login_screen.dart' bị sai
+import '../../../../features/auth/bloc/auth_bloc.dart';
+import '../../../../features/auth/bloc/auth_state.dart';
 
 class AdminSplashScreen extends StatefulWidget {
   const AdminSplashScreen({super.key});
@@ -15,12 +17,13 @@ class _AdminSplashScreenState extends State<AdminSplashScreen>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _rotateAnimation;
+  bool _hasNavigated = false;
 
   @override
   void initState() {
     super.initState();
     _setupAnimations();
-    _navigateToLogin();
+    _startNavigationTimer();
   }
 
   void _setupAnimations() {
@@ -48,31 +51,44 @@ class _AdminSplashScreenState extends State<AdminSplashScreen>
     _animationController.forward();
   }
 
-  Future<void> _navigateToLogin() async {
+  void _navigateBasedOnAuth(AuthState state) {
+    if (_hasNavigated) return;
+    
+    if (state is AuthAuthenticated) {
+      _hasNavigated = true;
+      Navigator.pushReplacementNamed(context, '/admin-dashboard');
+    } else if (state is AuthUnauthenticated) {
+      _hasNavigated = true;
+      Navigator.pushReplacementNamed(context, '/login');
+    }
+  }
+
+  Future<void> _startNavigationTimer() async {
     await Future.delayed(const Duration(seconds: 3));
-    if (mounted) {
-      // ✅ Fix: Sử dụng Route đã định nghĩa trong main_admin.dart
-      // Điều này giúp gọi đúng LoginScreen dùng chung với UserRole.admin
+    if (mounted && !_hasNavigated) {
+      _hasNavigated = true;
       Navigator.pushReplacementNamed(context, '/login');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        width: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AdminTheme.primaryColor.withValues(alpha: 0.05),
-              AdminTheme.backgroundColor,
-              AdminTheme.secondaryColor.withValues(alpha: 0.1),
-            ],
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) => _navigateBasedOnAuth(state),
+      child: Scaffold(
+        body: Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AdminTheme.primaryColor.withValues(alpha: 0.05),
+                AdminTheme.backgroundColor,
+                AdminTheme.secondaryColor.withValues(alpha: 0.1),
+              ],
+            ),
           ),
-        ),
         child: SafeArea(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -143,7 +159,8 @@ class _AdminSplashScreenState extends State<AdminSplashScreen>
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildAdminBranding() => Column(

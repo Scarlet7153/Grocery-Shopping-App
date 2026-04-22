@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 
 import '../../utils/customer_l10n.dart';
+import '../../../../core/config/environment.dart';
 
 class AddressMapPickerScreen extends StatefulWidget {
   const AddressMapPickerScreen({super.key});
@@ -282,7 +283,7 @@ class _AddressMapPickerScreenState extends State<AddressMapPickerScreen> {
                   ),
                   children: [
                     TileLayer(
-                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      urlTemplate: Environment.tileUrl,
                       userAgentPackageName: 'com.grocery.shopping_app',
                     ),
                   ],

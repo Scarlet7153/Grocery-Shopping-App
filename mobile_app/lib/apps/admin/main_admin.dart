@@ -19,7 +19,6 @@ import '../../features/auth/repository/auth_repository_impl.dart';
 import '../../features/admin/bloc/settings_bloc.dart';
 
 import '../../features/auth/presentation/screens/login_screen.dart';
-import '../../features/auth/presentation/screens/otp_screen.dart';
 import '../../features/auth/presentation/screens/admin_dashboard_screen.dart';
 import 'screens/auth/admin_splash_screen.dart'; 
 
@@ -78,10 +77,6 @@ class AdminApp extends StatelessWidget {
               routes: {
                 '/': (context) => const AdminSplashScreen(), 
                 '/login': (context) => const LoginScreen(userRole: UserRole.admin),
-                '/otp-verification': (context) {
-                  final args = ModalRoute.of(context)?.settings.arguments as String?;
-                  return OtpScreen(identifier: args ?? 'admin');
-                },
                 '/admin-dashboard': (context) => const AdminDashboardScreen(),
               },
             ),

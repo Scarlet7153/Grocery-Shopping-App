@@ -92,13 +92,14 @@ class _StoreHomeScreenState extends State<StoreHomeScreen> {
             const StoreProfileScreen(),
           ],
         ),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (i) => setState(() => _currentIndex = i),
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: Theme.of(context).colorScheme.primary,
-          unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
-          items: [
+        bottomNavigationBar: SafeArea(
+          child: BottomNavigationBar(
+            currentIndex: _currentIndex,
+            onTap: (i) => setState(() => _currentIndex = i),
+            type: BottomNavigationBarType.fixed,
+            selectedItemColor: Theme.of(context).colorScheme.primary,
+            unselectedItemColor: Theme.of(context).colorScheme.onSurfaceVariant,
+            items: [
             BottomNavigationBarItem(
                 icon: const Icon(Icons.dashboard),
                 label: tr(vi: 'Tổng quan', en: 'Dashboard')),
@@ -115,6 +116,7 @@ class _StoreHomeScreenState extends State<StoreHomeScreen> {
                 icon: const Icon(Icons.store),
                 label: tr(vi: 'Cửa hàng', en: 'Store')),
           ],
+          ),
         ),
       ),
     );

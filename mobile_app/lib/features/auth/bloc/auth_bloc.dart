@@ -23,7 +23,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<TokenRefreshRequested>(_onTokenRefreshRequested);
     on<CheckStatusRequested>(_onCheckStatusRequested);
     on<ForgotPasswordRequested>(_onForgotPasswordRequested);
-    on<OtpVerificationRequested>(_onOtpVerificationRequested);
     on<PasswordResetRequested>(_onPasswordResetRequested);
     on<ProfileUpdateRequested>(_onProfileUpdateRequested);
     on<ChangePasswordRequested>(_onChangePasswordRequested);
@@ -254,39 +253,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           message: 'Không thể gửi mã xác nhận: ${e.toString()}',
         ),
       );
-    }
-  }
-
-  /// Handle OTP verification request
-  Future<void> _onOtpVerificationRequested(
-    OtpVerificationRequested event,
-    Emitter<AuthState> emit,
-  ) async {
-    try {
-      emit(const AuthOtpVerifying());
-      AppLogger.info('🔢 OTP verification attempt');
-
-      final response = await _authRepository.verifyOtp(
-        otp: event.otp,
-        identifier: event.identifier,
-        resetToken: event.resetToken,
-      );
-
-      if (response.isAuthenticated) {
-        AppLogger.info('✅ OTP verified successfully');
-        emit(AuthOtpVerified(message: response.message));
-      } else {
-        AppLogger.warning('❌ OTP verification failed');
-        emit(AuthOtpError(message: response.message));
-      }
-    } on UnimplementedError catch (e) {
-      AppLogger.warning('⚠️ OTP verification not implemented: ${e.message}');
-      emit(
-        const AuthOtpError(message: 'Tính năng xác nhận OTP chưa được hỗ trợ'),
-      );
-    } catch (e) {
-      AppLogger.error('🔥 OTP verification error: ${e.toString()}', e);
-      emit(AuthOtpError(message: 'Không thể xác nhận OTP: ${e.toString()}'));
     }
   }
 

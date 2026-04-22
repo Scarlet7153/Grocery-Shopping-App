@@ -1,9 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../../core/auth/auth_session.dart';
 import '../../../../core/location/province_api.dart';
 import '../../services/province_api_v2.dart';
 import '../../utils/customer_l10n.dart';
+import '../../../../shared/widgets/searchable_dropdown.dart';
 
 class RecipientAddressResult {
   final String address;
@@ -410,21 +411,15 @@ class _RecipientAddressFormScreenState
     required ValueChanged<LocationItem?>? onChanged,
     LocationItem? value,
   }) {
-    return DropdownButtonFormField<LocationItem>(
-      initialValue: value,
-      items: items
-          .map(
-            (item) => DropdownMenuItem<LocationItem>(
-              value: item,
-              child: Text(item.name),
-            ),
-          )
-          .toList(),
+    return SearchableDropdown<LocationItem>(
+      label: label,
+      items: items,
+      selectedItem: value,
+      displayStringForItem: (item) => item.name,
       onChanged: onChanged,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      ),
+      hintText: context.tr(vi: 'Chọn $label', en: 'Select $label'),
+      searchHint: context.tr(vi: 'Tìm kiếm...', en: 'Search...'),
+      emptyMessage: context.tr(vi: 'Không tìm thấy', en: 'No results found'),
     );
   }
 

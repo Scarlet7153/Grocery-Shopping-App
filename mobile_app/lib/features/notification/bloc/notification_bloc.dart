@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/api/api_client.dart';
 import '../data/notification_model.dart';
 import '../data/notification_service.dart';
 
@@ -81,6 +82,11 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     LoadNotifications event,
     Emitter<NotificationState> emit,
   ) async {
+    final token = await ApiClient().getAccessToken();
+    if (token == null || token.isEmpty) {
+      emit(state.copyWith(isLoading: false, error: null));
+      return;
+    }
     emit(state.copyWith(isLoading: true, error: null));
     try {
       final notifications = await _service.getNotifications();

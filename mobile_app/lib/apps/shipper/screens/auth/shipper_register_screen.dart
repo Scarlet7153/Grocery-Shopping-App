@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:grocery_shopping_app/core/location/province_api.dart';
 import 'package:grocery_shopping_app/core/theme/shipper_theme.dart';
+import '../../../../shared/widgets/searchable_dropdown.dart';
 import 'package:grocery_shopping_app/core/utils/app_localizations.dart';
 import 'package:grocery_shopping_app/shared/widgets/custom_text_field.dart';
 import 'package:grocery_shopping_app/apps/shipper/bloc/shipper_auth_bloc.dart';
@@ -515,23 +516,15 @@ class _ShipperRegisterScreenState extends State<ShipperRegisterScreen> {
     LocationItem? value,
     String? hintText,
   }) {
-    return DropdownButtonFormField<LocationItem>(
-      initialValue: value,
-      items: items
-          .map(
-            (item) => DropdownMenuItem<LocationItem>(
-              value: item,
-              child: Text(item.name),
-            ),
-          )
-          .toList(),
+    return SearchableDropdown<LocationItem>(
+      label: label,
+      items: items,
+      selectedItem: value,
+      displayStringForItem: (item) => item.name,
       onChanged: onChanged,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hintText,
-        border: const OutlineInputBorder(),
-      ),
-      isExpanded: true,
+      hintText: hintText ?? label,
+      searchHint: _tr('Tìm kiếm...', 'Search...'),
+      emptyMessage: _tr('Không tìm thấy', 'No results found'),
     );
   }
 

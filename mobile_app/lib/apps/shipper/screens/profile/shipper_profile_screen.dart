@@ -14,6 +14,7 @@ import '../../repository/shipper_repository.dart';
 import '../../services/shipper_realtime_stomp_service.dart';
 import '../../../../core/location/province_api.dart';
 import '../../../../core/theme/shipper_theme.dart';
+import '../../../../shared/widgets/searchable_dropdown.dart';
 import '../auth/shipper_login_screen.dart';
 import '../../widgets/avatar_cropper.dart';
 
@@ -389,6 +390,9 @@ class _ShipperProfileScreenState extends State<ShipperProfileScreen> {
           ),
         ),
         child: SafeArea(
+          top: false,
+          left: false,
+          right: false,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -919,6 +923,9 @@ class _ShipperProfileScreenState extends State<ShipperProfileScreen> {
             sheetContext.watch<ShipperThemeCubit>().state.preference;
 
         return SafeArea(
+          top: false,
+          left: false,
+          right: false,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1498,23 +1505,15 @@ class _EditProfilePageState extends State<_EditProfilePage> {
     LocationItem? value,
     String? hintText,
   }) {
-    return DropdownButtonFormField<LocationItem>(
-      initialValue: value,
-      items: items
-          .map(
-            (item) => DropdownMenuItem<LocationItem>(
-              value: item,
-              child: Text(item.name),
-            ),
-          )
-          .toList(),
+    return SearchableDropdown<LocationItem>(
+      label: label,
+      items: items,
+      selectedItem: value,
+      displayStringForItem: (item) => item.name,
       onChanged: onChanged,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hintText,
-        border: const OutlineInputBorder(),
-      ),
-      isExpanded: true,
+      hintText: hintText ?? label,
+      searchHint: _tr('Tìm kiếm...', 'Search...'),
+      emptyMessage: _tr('Không tìm thấy', 'No results found'),
     );
   }
 

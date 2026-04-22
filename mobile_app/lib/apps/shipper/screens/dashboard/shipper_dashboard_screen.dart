@@ -315,19 +315,20 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                 _profilePage(),
               ],
             ),
-            bottomNavigationBar: BottomNavigationBar(
-              currentIndex: _currentIndex,
-              selectedItemColor: ShipperTheme.primaryColor,
-              unselectedItemColor: Colors.grey,
-              type: BottomNavigationBarType.fixed,
-              onTap: (idx) {
-                setState(() => _currentIndex = idx);
-                // Refresh user profile when accessing profile tab
-                if (idx == 4) {
-                  _loadUserProfile();
-                }
-              },
-              items: [
+            bottomNavigationBar: SafeArea(
+              child: BottomNavigationBar(
+                currentIndex: _currentIndex,
+                selectedItemColor: ShipperTheme.primaryColor,
+                unselectedItemColor: Colors.grey,
+                type: BottomNavigationBarType.fixed,
+                onTap: (idx) {
+                  setState(() => _currentIndex = idx);
+                  // Refresh user profile when accessing profile tab
+                  if (idx == 4) {
+                    _loadUserProfile();
+                  }
+                },
+                items: [
                 BottomNavigationBarItem(
                   icon: const Icon(Icons.dashboard),
                   label: _tr(context, 'Tổng quan', 'Overview'),
@@ -349,6 +350,7 @@ class _ShipperDashboardScreenState extends State<ShipperDashboardScreen> {
                   label: _tr(context, 'Cá nhân', 'Profile'),
                 ),
               ],
+              ),
             ),
           );
         },

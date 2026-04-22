@@ -60,6 +60,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
       showDragHandle: true,
       builder: (sheetContext) {
         return SafeArea(
+          top: false,
+          left: false,
+          right: false,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -108,6 +111,9 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
       showDragHandle: true,
       builder: (sheetContext) {
         return SafeArea(
+          top: false,
+          left: false,
+          right: false,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

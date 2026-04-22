@@ -36,22 +36,22 @@ android {
         create("customer") {
             dimension = "app"
             applicationId = "com.dichohho.customer"
-            manifestPlaceholders["appLabel"] = "Đi Chợ Hộ - Khách Hàng"
+            manifestPlaceholders["appLabel"] = "Grocery Shopping"
         }
         create("store") {
             dimension = "app"
             applicationId = "com.dichohho.store"
-            manifestPlaceholders["appLabel"] = "Đi Chợ Hộ - Chủ Cửa Hàng"
+            manifestPlaceholders["appLabel"] = "Grocery Store"
         }
         create("shipper") {
             dimension = "app"
             applicationId = "com.dichohho.shipper"
-            manifestPlaceholders["appLabel"] = "Đi Chợ Hộ - Shipper"
+            manifestPlaceholders["appLabel"] = "Grocery Shipper"
         }
         create("admin") {
             dimension = "app"
             applicationId = "com.dichohho.admin"
-            manifestPlaceholders["appLabel"] = "Đi Chợ Hộ - Quản Trị Viên"
+            manifestPlaceholders["appLabel"] = "Grocery Admin"
         }
     }
 

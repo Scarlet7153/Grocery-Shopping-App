@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/enums/app_type.dart';
 import '../../../../core/location/province_api.dart';
 import '../../../../core/theme/store_theme.dart';
+import '../../../../shared/widgets/searchable_dropdown.dart';
 import '../../../../features/auth/bloc/auth_bloc.dart';
 import '../../../../features/auth/bloc/auth_event.dart';
 import '../../../../features/auth/bloc/auth_state.dart';
@@ -227,67 +228,63 @@ class _StoreRegisterScreenState extends State<StoreRegisterScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                DropdownButtonFormField<LocationItem>(
+                FormField<LocationItem>(
                   initialValue: _selectedProvince,
-                  isExpanded: true,
-                  decoration: InputDecoration(
-                    labelText: context.storeTr('province_city'),
-                    prefixIcon: const Icon(Icons.map_outlined),
-                  ),
-                  items: _provinces
-                      .map(
-                        (item) => DropdownMenuItem<LocationItem>(
-                          value: item,
-                          child: Text(item.name, overflow: TextOverflow.ellipsis),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: _isLoadingProvince
-                      ? null
-                      : (value) {
-                          if (value == null) return;
-                          setState(() {
-                            _selectedProvince = value;
-                            _selectedWard = null;
-                          });
-                          _loadWards(value.code);
-                        },
                   validator: (value) {
                     if (value == null) {
                       return context.storeTr('province_required');
                     }
                     return null;
                   },
+                  builder: (field) => SearchableDropdown<LocationItem>(
+                    label: context.storeTr('province_city'),
+                    items: _provinces,
+                    selectedItem: _selectedProvince,
+                    displayStringForItem: (item) => item.name,
+                    onChanged: _isLoadingProvince
+                        ? null
+                        : (value) {
+                            if (value == null) return;
+                            field.didChange(value);
+                            setState(() {
+                              _selectedProvince = value;
+                              _selectedWard = null;
+                            });
+                            _loadWards(value.code);
+                          },
+                    hintText: context.storeTr('province_city'),
+                    searchHint: context.storeTr('search'),
+                    emptyMessage: context.storeTr('no_results'),
+                    prefixIcon: const Icon(Icons.map_outlined),
+                  ),
                 ),
                 const SizedBox(height: 16),
-                DropdownButtonFormField<LocationItem>(
+                FormField<LocationItem>(
                   initialValue: _selectedWard,
-                  isExpanded: true,
-                  decoration: InputDecoration(
-                    labelText: context.storeTr('ward_district'),
-                    prefixIcon: const Icon(Icons.location_city_outlined),
-                  ),
-                  items: _wards
-                      .map(
-                        (item) => DropdownMenuItem<LocationItem>(
-                          value: item,
-                          child: Text(item.name, overflow: TextOverflow.ellipsis),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (_selectedProvince == null || _isLoadingWard)
-                      ? null
-                      : (value) {
-                          setState(() {
-                            _selectedWard = value;
-                          });
-                        },
                   validator: (value) {
                     if (value == null) {
                       return context.storeTr('ward_required');
                     }
                     return null;
                   },
+                  builder: (field) => SearchableDropdown<LocationItem>(
+                    label: context.storeTr('ward_district'),
+                    items: _wards,
+                    selectedItem: _selectedWard,
+                    displayStringForItem: (item) => item.name,
+                    onChanged: (_selectedProvince == null || _isLoadingWard)
+                        ? null
+                        : (value) {
+                            field.didChange(value);
+                            setState(() {
+                              _selectedWard = value;
+                            });
+                          },
+                    hintText: context.storeTr('ward_district'),
+                    searchHint: context.storeTr('search'),
+                    emptyMessage: context.storeTr('no_results'),
+                    prefixIcon: const Icon(Icons.location_city_outlined),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 CustomTextField(

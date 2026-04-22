@@ -90,19 +90,23 @@ Future<void> showVariantSelectionSheet(
         }
 
         return DraggableScrollableSheet(
-          initialChildSize: 0.4,
-          minChildSize: 0.3,
-          maxChildSize: 0.6,
+          initialChildSize: 0.5,
+          minChildSize: 0.35,
+          maxChildSize: 0.9,
           expand: false,
-          builder: (_, controller) => Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+          builder: (_, controller) => SafeArea(
+            top: false,
+            left: false,
+            right: false,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                 Row(
                   children: [
                     Expanded(
@@ -209,7 +213,8 @@ Future<void> showVariantSelectionSheet(
               ],
             ),
           ),
-        );
+        ),
+      );
       });
     },
   );

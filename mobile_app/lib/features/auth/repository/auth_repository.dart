@@ -62,13 +62,6 @@ abstract class AuthRepository {
     required AppType appType, // Bây giờ AppType đã được import
   });
 
-  /// Verify OTP for password reset
-  Future<AuthResponseModel> verifyOtp({
-    required String otp,
-    required String identifier,
-    String? resetToken,
-  });
-
   /// Reset password with new password
   Future<AuthResponseModel> resetPassword({
     required String newPassword,

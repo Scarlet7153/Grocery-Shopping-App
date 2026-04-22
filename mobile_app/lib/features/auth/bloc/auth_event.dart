@@ -91,25 +91,6 @@ class ForgotPasswordRequested extends AuthEvent {
   String toString() => 'ForgotPasswordRequested { identifier: $identifier }';
 }
 
-/// OTP verification event
-class OtpVerificationRequested extends AuthEvent {
-  final String otp;
-  final String identifier;
-  final String? resetToken;
-
-  const OtpVerificationRequested({
-    required this.otp,
-    required this.identifier,
-    this.resetToken,
-  });
-
-  @override
-  List<Object?> get props => [otp, identifier, resetToken];
-
-  @override
-  String toString() => 'OtpVerificationRequested { identifier: $identifier }';
-}
-
 /// Password reset event
 class PasswordResetRequested extends AuthEvent {
   final String newPassword;

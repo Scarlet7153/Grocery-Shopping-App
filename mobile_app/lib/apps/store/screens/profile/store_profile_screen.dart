@@ -125,6 +125,9 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
         final current =
             sheetContext.watch<StoreLanguageCubit>().state.preference;
         return SafeArea(
+          top: false,
+          left: false,
+          right: false,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -180,6 +183,9 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
       builder: (sheetContext) {
         final current = sheetContext.watch<StoreThemeCubit>().state.preference;
         return SafeArea(
+          top: false,
+          left: false,
+          right: false,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

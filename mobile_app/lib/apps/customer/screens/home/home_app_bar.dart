@@ -18,14 +18,15 @@ class HomeBottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    return BottomNavigationBar(
-      currentIndex: currentIndex,
-      onTap: onTap,
-      backgroundColor: scheme.surface,
-      selectedItemColor: scheme.primary,
-      unselectedItemColor: scheme.onSurfaceVariant,
-      type: BottomNavigationBarType.fixed,
-      items: [
+    return SafeArea(
+      child: BottomNavigationBar(
+        currentIndex: currentIndex,
+        onTap: onTap,
+        backgroundColor: scheme.surface,
+        selectedItemColor: scheme.primary,
+        unselectedItemColor: scheme.onSurfaceVariant,
+        type: BottomNavigationBarType.fixed,
+        items: [
         BottomNavigationBarItem(
           icon: const Icon(Icons.home),
           label: context.tr(vi: 'Trang chủ', en: 'Home'),
@@ -47,6 +48,7 @@ class HomeBottomBar extends StatelessWidget {
           label: context.tr(vi: 'Hồ sơ', en: 'Profile'),
         ),
       ],
+      ),
     );
   }
 }

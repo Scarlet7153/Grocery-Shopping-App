@@ -4,7 +4,7 @@ import '../../../../core/cart/cart_session.dart';
 import '../../../../features/customer/home/data/product_model.dart';
 import '../../shared/customer_product_image.dart';
 import '../../utils/customer_l10n.dart';
-import '../cart/customer_cart_screen.dart';
+import '../cart/customer_checkout_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final ProductModel product;
@@ -97,9 +97,25 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   void _buyNow() {
     final added = _addToCart();
     if (!added) return;
+    // Mua ngay → đi thẳng checkout với item vừa chọn
+    final unit = _selectedUnit;
+    final checkoutItem = CartItem(
+      productId: _product.id,
+      productUnitMappingId: unit?.id ?? 0,
+      unitLabel: unit?.unitName ?? '',
+      name: _product.name,
+      unitPrice: _unitPrice,
+      imageUrl: _product.imageUrl,
+      storeName: _product.storeName,
+      storeAddress: _product.storeAddress,
+      stockQuantity: _stockLeft,
+      quantity: _quantity,
+    );
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const CustomerCartScreen()),
+      MaterialPageRoute(
+        builder: (_) => CustomerCheckoutScreen(selectedItems: [checkoutItem]),
+      ),
     );
   }
 

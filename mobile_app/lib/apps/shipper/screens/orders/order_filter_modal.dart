@@ -35,15 +35,19 @@ class _OrderFilterModalState extends State<OrderFilterModal> {
       minChildSize: 0.4,
       maxChildSize: 0.9,
       builder: (context, scrollController) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(20),
-              topRight: Radius.circular(20),
+        return SafeArea(
+          top: false,
+          left: false,
+          right: false,
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
             ),
-          ),
-          child: CustomScrollView(
+            child: CustomScrollView(
             controller: scrollController,
             slivers: [
               // Header
@@ -104,9 +108,10 @@ class _OrderFilterModalState extends State<OrderFilterModal> {
               ),
             ],
           ),
-        );
-      },
-    );
+        ),
+      );
+    },
+  );
   }
 
   /// Distance control with +/- buttons

@@ -340,28 +340,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _showLanguagePicker(BuildContext context, String currentCode) {
     showModalBottomSheet(
       context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              title: const Text('Tiếng Việt'),
-              trailing: currentCode == 'vi' ? const Icon(Icons.check, color: Colors.indigo) : null,
-              onTap: () {
-                context.read<SettingsBloc>().add(LanguageChanged('vi'));
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              title: const Text('English'),
-              trailing: currentCode == 'en' ? const Icon(Icons.check, color: Colors.indigo) : null,
-              onTap: () {
-                context.read<SettingsBloc>().add(LanguageChanged('en'));
-                Navigator.pop(context);
-              },
-            ),
-          ],
+      builder: (context) => SafeArea(
+        top: false,
+        left: false,
+        right: false,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text('Tiếng Việt'),
+                trailing: currentCode == 'vi' ? const Icon(Icons.check, color: Colors.indigo) : null,
+                onTap: () {
+                  context.read<SettingsBloc>().add(LanguageChanged('vi'));
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: const Text('English'),
+                trailing: currentCode == 'en' ? const Icon(Icons.check, color: Colors.indigo) : null,
+                onTap: () {
+                  context.read<SettingsBloc>().add(LanguageChanged('en'));
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

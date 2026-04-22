@@ -200,6 +200,9 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
       context: context,
       builder: (context) {
         return SafeArea(
+          top: false,
+          left: false,
+          right: false,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

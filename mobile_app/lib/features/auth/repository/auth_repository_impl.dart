@@ -406,18 +406,6 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<AuthResponseModel> verifyOtp({
-    required String otp,
-    required String identifier,
-    String? resetToken,
-  }) async {
-    AppLogger.warning(
-      '⚠️ OTP verification requested but not implemented in API',
-    );
-    throw UnimplementedError('OTP verification chưa được implement trong API');
-  }
-
-  @override
   Future<UserModel> updateProfile({
     required Map<String, dynamic> userData,
   }) async {

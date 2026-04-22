@@ -71,6 +71,9 @@ class ImagePickerHelper {
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       builder: (ctx) => SafeArea(
+        top: false,
+        left: false,
+        right: false,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

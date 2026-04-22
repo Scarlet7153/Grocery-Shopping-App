@@ -7,6 +7,7 @@ import '../../../../core/theme/customer_theme.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../../bloc/customer_auth_bloc.dart';
 import '../../utils/customer_l10n.dart';
+import '../../../../shared/widgets/searchable_dropdown.dart';
 
 class CustomerRegisterScreen extends StatefulWidget {
   const CustomerRegisterScreen({super.key});
@@ -583,45 +584,29 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
     FormFieldValidator<LocationItem>? validator,
     ValueChanged<LocationItem?>? onChanged,
   }) {
-    return DropdownButtonFormField<LocationItem>(
+    return FormField<LocationItem>(
       initialValue: value,
-      items: items
-          .map(
-            (item) => DropdownMenuItem<LocationItem>(
-              value: item,
-              child: Text(item.name),
-            ),
-          )
-          .toList(),
-      onChanged: onChanged,
       validator: validator ?? (value) {
         if (value == null) {
           return context.tr(vi: 'Vui lòng chọn', en: 'Please select');
         }
         return null;
       },
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
+      builder: (field) => SearchableDropdown<LocationItem>(
+        label: label,
+        items: items,
+        selectedItem: value,
+        displayStringForItem: (item) => item.name,
+        onChanged: onChanged != null
+            ? (item) {
+                field.didChange(item);
+                onChanged(item);
+              }
+            : null,
+        hintText: hint ?? label,
+        searchHint: context.tr(vi: 'Tìm kiếm...', en: 'Search...'),
+        emptyMessage: context.tr(vi: 'Không tìm thấy', en: 'No results found'),
         prefixIcon: Icon(prefixIcon, color: Theme.of(context).colorScheme.onSurfaceVariant),
-        filled: true,
-        fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-        labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: Theme.of(context).colorScheme.primary,
-            width: 1.5,
-          ),
-        ),
       ),
     );
   }

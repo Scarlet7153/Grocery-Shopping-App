@@ -176,29 +176,6 @@ class AuthPasswordResetError extends AuthState {
   List<Object> get props => [message];
 }
 
-/// OTP verification states
-class AuthOtpVerifying extends AuthState {
-  const AuthOtpVerifying();
-}
-
-class AuthOtpVerified extends AuthState {
-  final String message;
-
-  const AuthOtpVerified({required this.message});
-
-  @override
-  List<Object> get props => [message];
-}
-
-class AuthOtpError extends AuthState {
-  final String message;
-
-  const AuthOtpError({required this.message});
-
-  @override
-  List<Object> get props => [message];
-}
-
 /// Session expired state
 class AuthSessionExpired extends AuthState {
   final String message;
@@ -248,7 +225,6 @@ extension AuthStateExtensions on AuthState {
       this is AuthRegistering ||
       this is AuthTokenRefreshing ||
       this is AuthPasswordResetLoading ||
-      this is AuthOtpVerifying ||
       this is AuthProfileUpdating;
 
   /// Check if has error
@@ -256,7 +232,6 @@ extension AuthStateExtensions on AuthState {
       this is AuthError ||
       this is AuthRegistrationError ||
       this is AuthPasswordResetError ||
-      this is AuthOtpError ||
       this is AuthProfileUpdateError;
 
   /// Get current user if authenticated
@@ -289,8 +264,6 @@ extension AuthStateExtensions on AuthState {
     } else if (state is AuthRegistrationError) {
       return state.message;
     } else if (state is AuthPasswordResetError) {
-      return state.message;
-    } else if (state is AuthOtpError) {
       return state.message;
     } else if (state is AuthProfileUpdateError) {
       return state.message;

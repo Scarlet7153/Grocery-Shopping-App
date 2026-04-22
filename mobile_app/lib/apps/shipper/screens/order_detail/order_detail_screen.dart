@@ -9,7 +9,7 @@ import '../../repository/shipper_repository.dart';
 import '../../repository/shipper_chat_api.dart';
 import '../../services/shipper_realtime_stomp_service.dart';
 import '../../../../core/theme/shipper_theme.dart';
-import '../delivery/proof_of_delivery_screen.dart';
+import '../delivery/delivery_confirmation_screen.dart';
 import '../chat/shipper_chat_screen.dart';
 
 class OrderDetailScreen extends StatefulWidget {
@@ -746,13 +746,24 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   Future<void> _openProofOfDelivery() async {
-    final result = await Navigator.push(
+    final updatedOrder = await Navigator.push<ShipperOrder>(
       context,
-      MaterialPageRoute(builder: (_) => ProofOfDeliveryScreen(order: _order)),
+      MaterialPageRoute(
+        builder: (_) => DeliveryConfirmationScreen(
+          order: _order,
+        ),
+      ),
     );
-    if (mounted && result == true) {
-      context.read<ShipperDashboardBloc>().add(RefreshDashboardData());
+
+    if (!mounted || updatedOrder == null) {
+      return;
     }
+
+    context.read<ShipperDashboardBloc>().add(RefreshDashboardData());
+
+    if (!mounted) return;
+
+    Navigator.of(context).pop(true);
   }
 
   String _formatCurrency(double amount) {

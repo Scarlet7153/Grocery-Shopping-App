@@ -19,6 +19,8 @@ class StoreOrdersScreen extends StatefulWidget {
 
 class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
   String? _filterStatus;
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -26,9 +28,50 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
     context.read<StoreOrdersBloc>().add(LoadStoreOrders());
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  String _norm(String input) {
+    var s = input.trim().toLowerCase();
+    s = s.replaceAll(RegExp(r'[àáạảãâầấậẩẫăằắặẳẵ]'), 'a');
+    s = s.replaceAll(RegExp(r'[èéẹẻẽêềếệểễ]'), 'e');
+    s = s.replaceAll(RegExp(r'[ìíịỉĩ]'), 'i');
+    s = s.replaceAll(RegExp(r'[òóọỏõôồốộổỗơờớợởỡ]'), 'o');
+    s = s.replaceAll(RegExp(r'[ùúụủũưừứựửữ]'), 'u');
+    s = s.replaceAll(RegExp(r'[ỳýỵỷỹ]'), 'y');
+    s = s.replaceAll(RegExp(r'[đ]'), 'd');
+    s = s.replaceAll(RegExp(r'[^a-z0-9]+'), ' ');
+    s = s.replaceAll(RegExp(r'\s+'), ' ').trim();
+    return s;
+  }
+
   List<OrderModel> _filterOrders(List<OrderModel> orders) {
-    if (_filterStatus == null) return orders;
-    return orders.where((o) => o.status == _filterStatus).toList();
+    var result = orders;
+
+    // Filter by status
+    if (_filterStatus != null) {
+      result = result.where((o) => o.status == _filterStatus).toList();
+    }
+
+    // Filter by search query
+    if (_searchQuery.trim().isNotEmpty) {
+      final query = _norm(_searchQuery);
+      result = result.where((o) {
+        final id = _norm(o.id?.toString() ?? '');
+        final customerName = _norm(o.customerName ?? '');
+        final customerPhone = _norm(o.customerPhone ?? '');
+        final items = o.items?.map((i) => _norm(i.productName ?? '')).join(' ') ?? '';
+        return id.contains(query) ||
+            customerName.contains(query) ||
+            customerPhone.contains(query) ||
+            items.contains(query);
+      }).toList();
+    }
+
+    return result;
   }
 
   void _updateStatus(int orderId, String newStatus) {
@@ -72,8 +115,10 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
+      backgroundColor: scheme.surfaceContainerLowest,
       appBar: AppBar(
           title: Text(_storeTr(context, vi: 'Đơn hàng', en: 'Orders')),
           backgroundColor: StoreTheme.primaryColor,
@@ -92,6 +137,39 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
               },
               child: Column(
                 children: [
+                  // Search bar
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: _storeTr(
+                          context,
+                          vi: 'Tìm theo mã, tên KH, SĐT...',
+                          en: 'Search by ID, name, phone...',
+                        ),
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() => _searchQuery = '');
+                                },
+                              )
+                            : null,
+                        filled: true,
+                        fillColor: scheme.surface,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      ),
+                      onChanged: (v) => setState(() => _searchQuery = v),
+                    ),
+                  ),
+                  // Status filter chips
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: SingleChildScrollView(
@@ -119,12 +197,47 @@ class _StoreOrdersScreenState extends State<StoreOrdersScreen> {
                       ),
                     ),
                   ),
+                  // Result count
+                  if (_searchQuery.isNotEmpty || _filterStatus != null)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '${orders.length} ${_storeTr(context, vi: 'đơn hàng', en: 'orders')}',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
+                          if (_filterStatus != null)
+                            TextButton(
+                              onPressed: () => _setFilter(null),
+                              child: Text(
+                                _storeTr(context, vi: 'Xóa lọc', en: 'Clear filter'),
+                                style: TextStyle(fontSize: 13),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
                   Expanded(
                     child: orders.isEmpty
                         ? Center(
-                            child: Text(
-                              _storeTr(context,
-                                  vi: 'Chưa có đơn hàng nào', en: 'No orders yet'),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.search_off,
+                                    size: 48, color: scheme.onSurfaceVariant),
+                                const SizedBox(height: 12),
+                                Text(
+                                  _storeTr(context,
+                                      vi: 'Không tìm thấy đơn hàng',
+                                      en: 'No orders found'),
+                                  style: TextStyle(color: scheme.onSurfaceVariant),
+                                ),
+                              ],
                             ),
                           )
                         : ListView.builder(

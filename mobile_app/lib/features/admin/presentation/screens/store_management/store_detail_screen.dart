@@ -218,7 +218,7 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
     return DefaultTabController(
       length: isPending ? 1 : 3,
       child: Scaffold(
-        backgroundColor: Colors.grey[100],
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           title: Text(_store['storeName'] ?? 'Chi tiết cửa hàng'),
           backgroundColor: const Color(0xFF6A1B9A),
@@ -303,7 +303,7 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
             const SizedBox(height: 16),
             Text(_store['storeName'] ?? 'Chưa có tên', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            Text('Chủ: ${_store['ownerName'] ?? 'N/A'}', style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+            Text('Chủ: ${_store['ownerName'] ?? 'N/A'}', style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodySmall?.color)),
             const Divider(height: 32),
             _buildInfoRow(Icons.location_on, 'Địa chỉ', _store['address'] ?? 'Chưa có địa chỉ'),
             const SizedBox(height: 12),
@@ -375,16 +375,16 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
   Widget _buildInfoRow(IconData icon, String label, String value, {Color? color}) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: Colors.grey[500]),
+        Icon(icon, size: 20, color: Theme.of(context).disabledColor),
         const SizedBox(width: 12),
-        Text(label, style: TextStyle(color: Colors.grey[700], fontSize: 14)),
+        Text(label, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 14)),
         const Spacer(),
         Expanded(
           flex: 2,
           child: Text(
             value,
             textAlign: TextAlign.end,
-            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: color ?? Colors.black87),
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: color ?? Theme.of(context).textTheme.bodyMedium?.color),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -407,7 +407,7 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Tổng doanh thu', style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+                    Text('Tổng doanh thu', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 14)),
                     const SizedBox(height: 4),
                     Text(_currencyFormat.format(_totalMonthlyRevenue), 
                         style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.green)),
@@ -415,8 +415,8 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
                 ),
                 Container(
                   padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: Colors.grey.withValues(alpha: 0.1), shape: BoxShape.circle),
-                  child: const Icon(Icons.show_chart, color: Colors.grey),
+                  decoration: BoxDecoration(color: Theme.of(context).disabledColor.withValues(alpha: 0.1), shape: BoxShape.circle),
+                  child: Icon(Icons.show_chart, color: Theme.of(context).disabledColor),
                 ),
               ],
             ),
@@ -475,9 +475,9 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey[400]),
+            Icon(Icons.inventory_2_outlined, size: 64, color: Theme.of(context).dividerColor),
             const SizedBox(height: 16),
-            const Text('Chưa có sản phẩm nào', style: TextStyle(color: Colors.grey)),
+            Text('Chưa có sản phẩm nào', style: TextStyle(color: Theme.of(context).disabledColor)),
           ],
         ),
       );
@@ -500,7 +500,7 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: isHidden ? Colors.grey[200] : Colors.blue[50],
+                  color: isHidden ? Theme.of(context).dividerColor : Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: prod.imageUrl != null && prod.imageUrl!.isNotEmpty
@@ -509,7 +509,7 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
                         child: Image.network(
                           prod.imageUrl!,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => const Icon(Icons.image, color: Colors.grey),
+                          errorBuilder: (context, error, stackTrace) => Icon(Icons.image, color: Theme.of(context).disabledColor),
                         ),
                       )
                     : const Icon(Icons.image, color: Colors.blue),
@@ -519,7 +519,7 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
                 style: TextStyle(
                   fontWeight: FontWeight.w500,
                   decoration: isHidden ? TextDecoration.lineThrough : null,
-                  color: isHidden ? Colors.grey : Colors.black,
+                  color: isHidden ? Theme.of(context).disabledColor : Theme.of(context).textTheme.bodyMedium?.color,
                 )
               ),
               subtitle: Column(
@@ -541,7 +541,7 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
                   Text(
                     '${prod.price ?? 0}đ', 
                     style: TextStyle(
-                      color: isHidden ? Colors.grey : Colors.green, 
+                      color: isHidden ? Theme.of(context).disabledColor : Colors.green, 
                       fontWeight: FontWeight.bold
                     )
                   ),
@@ -579,9 +579,9 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.receipt_long_outlined, size: 64, color: Colors.grey[400]),
+            Icon(Icons.receipt_long_outlined, size: 64, color: Theme.of(context).dividerColor),
             const SizedBox(height: 16),
-            const Text('Chưa có đơn hàng nào thực tế', style: TextStyle(color: Colors.grey)),
+            Text('Chưa có đơn hàng nào thực tế', style: TextStyle(color: Theme.of(context).disabledColor)),
           ],
         ),
       );
@@ -599,7 +599,7 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: ListTile(
               leading: CircleAvatar(
-                backgroundColor: Colors.blue[50],
+                backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                 child: const Icon(Icons.receipt, color: Colors.blue, size: 20),
               ),
               title: Text('Đơn hàng #${o.id}', style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -612,8 +612,8 @@ class _StoreDetailScreenState extends State<StoreDetailScreen> {
                   const SizedBox(height: 4),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(color: Colors.blue[100], borderRadius: BorderRadius.circular(4)),
-                    child: Text(o.status ?? 'N/A', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.blue)),
+                    decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(4)),
+                    child: Text(o.status ?? 'N/A', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
                   )
                 ],
               ),

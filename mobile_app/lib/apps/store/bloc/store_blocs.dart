@@ -372,11 +372,24 @@ class LoadStoreReviews extends StoreReviewsEvent {
   LoadStoreReviews(this.storeId);
 }
 
+class ReplyToReview extends StoreReviewsEvent {
+  final int reviewId;
+  final String reply;
+  final int storeId;
+  ReplyToReview(this.reviewId, this.reply, this.storeId);
+}
+
 abstract class StoreReviewsState {}
 
 class StoreReviewsInitial extends StoreReviewsState {}
 
 class StoreReviewsLoading extends StoreReviewsState {}
+
+class StoreReviewsReplying extends StoreReviewsState {
+  final List<ReviewModel> reviews;
+  final StoreRatingModel? rating;
+  StoreReviewsReplying({required this.reviews, this.rating});
+}
 
 class StoreReviewsLoaded extends StoreReviewsState {
   final List<ReviewModel> reviews;
@@ -393,6 +406,7 @@ class StoreReviewsBloc extends Bloc<StoreReviewsEvent, StoreReviewsState> {
   final ReviewService _reviewService;
   StoreReviewsBloc(this._reviewService) : super(StoreReviewsInitial()) {
     on<LoadStoreReviews>(_onLoad);
+    on<ReplyToReview>(_onReply);
   }
   Future<void> _onLoad(
       LoadStoreReviews event, Emitter<StoreReviewsState> emit) async {
@@ -405,6 +419,44 @@ class StoreReviewsBloc extends Bloc<StoreReviewsEvent, StoreReviewsState> {
       emit(StoreReviewsLoaded(
           reviews: results[0] as List<ReviewModel>,
           rating: results[1] as StoreRatingModel?));
+    } catch (e) {
+      emit(StoreReviewsError(e.toString()));
+    }
+  }
+
+  Future<void> _onReply(
+      ReplyToReview event, Emitter<StoreReviewsState> emit) async {
+    final currentState = state;
+    if (currentState is StoreReviewsLoaded) {
+      emit(StoreReviewsReplying(reviews: currentState.reviews, rating: currentState.rating));
+    } else if (currentState is StoreReviewsReplying) {
+      emit(StoreReviewsReplying(reviews: currentState.reviews, rating: currentState.rating));
+    }
+    try {
+      final updatedReview = await _reviewService.replyToReview(
+        event.reviewId,
+        event.reply,
+        event.storeId,
+      );
+      if (updatedReview != null) {
+        final current = state;
+        List<ReviewModel> reviews = [];
+        StoreRatingModel? rating;
+        if (current is StoreReviewsLoaded) {
+          reviews = current.reviews;
+          rating = current.rating;
+        } else if (current is StoreReviewsReplying) {
+          reviews = current.reviews;
+          rating = current.rating;
+        }
+        final newReviews = reviews.map((r) {
+          if (r.id == event.reviewId) return updatedReview;
+          return r;
+        }).toList();
+        emit(StoreReviewsLoaded(reviews: newReviews, rating: rating));
+      } else {
+        emit(StoreReviewsError('Phản hồi đánh giá thất bại'));
+      }
     } catch (e) {
       emit(StoreReviewsError(e.toString()));
     }

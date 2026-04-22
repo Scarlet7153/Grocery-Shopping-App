@@ -12,18 +12,57 @@ class StoreReviewsScreen extends StatefulWidget {
 }
 
 class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
+  int? _storeId;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final dashboardState = context.read<StoreDashboardBloc>().state;
       if (dashboardState is StoreDashboardLoaded) {
-        final storeId = dashboardState.store.id;
-        if (storeId != null) {
-          context.read<StoreReviewsBloc>().add(LoadStoreReviews(storeId));
+        _storeId = dashboardState.store.id;
+        if (_storeId != null) {
+          context.read<StoreReviewsBloc>().add(LoadStoreReviews(_storeId!));
         }
       }
     });
+  }
+
+  void _showReplyDialog(int reviewId) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(context.storeTr('reply_review')),
+        content: TextField(
+          controller: controller,
+          decoration: InputDecoration(
+            hintText: context.storeTr('enter_reply'),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(context.storeTr('cancel')),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final text = controller.text.trim();
+              if (text.isNotEmpty && _storeId != null) {
+                Navigator.pop(ctx);
+                context.read<StoreReviewsBloc>().add(
+                  ReplyToReview(reviewId, text, _storeId!),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: StoreTheme.primaryColor),
+            child: Text(context.storeTr('send')),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -40,13 +79,21 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
             return const Center(child: CircularProgressIndicator());
           if (state is StoreReviewsError)
             return Center(child: Text(state.message));
-          if (state is StoreReviewsLoaded) {
-            if (state.reviews.isEmpty) {
+          if (state is StoreReviewsLoaded || state is StoreReviewsReplying) {
+            final reviews = state is StoreReviewsLoaded
+                ? state.reviews
+                : (state as StoreReviewsReplying).reviews;
+            final rating = state is StoreReviewsLoaded
+                ? state.rating
+                : (state as StoreReviewsReplying).rating;
+            final isReplying = state is StoreReviewsReplying;
+
+            if (reviews.isEmpty) {
               return Center(child: Text(context.storeTr('no_reviews')));
             }
             return Column(
               children: [
-                if (state.rating != null)
+                if (rating != null)
                   Container(
                     margin: const EdgeInsets.all(16),
                     padding: const EdgeInsets.all(16),
@@ -61,23 +108,31 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                                '${state.rating!.averageRating?.toStringAsFixed(1) ?? '0'}${context.storeTr('rating_out_of')}',
+                                '${rating.averageRating?.toStringAsFixed(1) ?? '0'}${context.storeTr('rating_out_of')}',
                                 style: const TextStyle(
                                     fontSize: 24, fontWeight: FontWeight.bold)),
                             Text(
-                                '${state.rating!.totalReviews ?? 0} ${context.storeTr('total_reviews_count')}',
+                                '${rating.totalReviews ?? 0} ${context.storeTr('total_reviews_count')}',
                                 style: TextStyle(color: Colors.grey[600])),
                           ],
                         ),
                       ],
                     ),
                   ),
+                if (isReplying)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 4),
+                    child: LinearProgressIndicator(),
+                  ),
                 Expanded(
                   child: ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: state.reviews.length,
+                    itemCount: reviews.length,
                     itemBuilder: (ctx, i) =>
-                        _ReviewCard(review: state.reviews[i]),
+                        _ReviewCard(
+                          review: reviews[i],
+                          onReply: () => _showReplyDialog(reviews[i].id!),
+                        ),
                   ),
                 ),
               ],
@@ -92,15 +147,20 @@ class _StoreReviewsScreenState extends State<StoreReviewsScreen> {
 
 class _ReviewCard extends StatelessWidget {
   final ReviewModel review;
-  const _ReviewCard({required this.review});
+  final VoidCallback onReply;
+
+  const _ReviewCard({required this.review, required this.onReply});
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final hasReply = review.storeReply != null && review.storeReply!.isNotEmpty;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
+          color: scheme.surface,
           borderRadius: BorderRadius.circular(12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -129,6 +189,67 @@ class _ReviewCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(_formatDate(review.createdAt!),
                 style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+          ],
+          // Store reply
+          if (hasReply) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: StoreTheme.primaryColor.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(10),
+                border: Border(
+                  left: BorderSide(color: StoreTheme.primaryColor, width: 3),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.store, size: 14, color: StoreTheme.primaryColor),
+                      const SizedBox(width: 6),
+                      Text(
+                        context.storeTr('store_reply'),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: StoreTheme.primaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    review.storeReply!,
+                    style: TextStyle(fontSize: 13, color: Colors.grey[800]),
+                  ),
+                  if (review.storeReplyAt != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      _formatDate(review.storeReplyAt!),
+                      style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+          // Reply button
+          if (!hasReply && review.id != null) ...[
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: onReply,
+                icon: Icon(Icons.reply, size: 18, color: StoreTheme.primaryColor),
+                label: Text(
+                  context.storeTr('reply'),
+                  style: TextStyle(color: StoreTheme.primaryColor),
+                ),
+              ),
+            ),
           ],
         ],
       ),

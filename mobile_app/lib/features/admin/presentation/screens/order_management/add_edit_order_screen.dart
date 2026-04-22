@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:grocery_shopping_app/core/utils/app_localizations.dart';
 import 'package:grocery_shopping_app/features/orders/data/order_model.dart';
 import 'package:grocery_shopping_app/features/orders/data/order_service.dart';
 import 'package:intl/intl.dart';
@@ -114,7 +115,7 @@ class _AddEditOrderScreenState extends State<AddEditOrderScreen> {
 
   void _addItem() {
     if (_selectedStore == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng chọn cửa hàng trước')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.byLocale(vi: 'Vui lòng chọn cửa hàng trước', en: 'Please select a store first'))));
       return;
     }
     showModalBottomSheet(
@@ -144,15 +145,15 @@ class _AddEditOrderScreenState extends State<AddEditOrderScreen> {
   Future<void> _saveOrder() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCustomer == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng chọn khách hàng')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.byLocale(vi: 'Vui lòng chọn khách hàng', en: 'Please select a customer'))));
       return;
     }
     if (_selectedStore == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng chọn cửa hàng')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.byLocale(vi: 'Vui lòng chọn cửa hàng', en: 'Please select a store'))));
       return;
     }
     if (_items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng thêm ít nhất một sản phẩm')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.byLocale(vi: 'Vui lòng thêm ít nhất một sản phẩm', en: 'Please add at least one product'))));
       return;
     }
 
@@ -179,11 +180,11 @@ class _AddEditOrderScreenState extends State<AddEditOrderScreen> {
     
     if (success) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đã lưu đơn hàng (Mô phỏng)')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.byLocale(vi: 'Đã lưu đơn hàng (Mô phỏng)', en: 'Order saved (simulated)'))));
         Navigator.pop(context, true);
       }
     } else {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lỗi khi lưu đơn hàng')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.byLocale(vi: 'Lỗi khi lưu đơn hàng', en: 'Order save failed'))));
     }
   }
 
@@ -191,7 +192,7 @@ class _AddEditOrderScreenState extends State<AddEditOrderScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.order == null ? 'Thêm Đơn hàng' : 'Chi tiết Đơn hàng'),
+        title: Text(widget.order == null ? AppLocalizations.of(context)!.byLocale(vi: 'Thêm Đơn hàng', en: 'Add order') : AppLocalizations.of(context)!.byLocale(vi: 'Chi tiết Đơn hàng', en: 'Order details')),
         actions: [
           if (!_isLoading && !_isReadOnly)
             IconButton(onPressed: _saveOrder, icon: const Icon(Icons.check, color: Colors.green)),
@@ -204,34 +205,34 @@ class _AddEditOrderScreenState extends State<AddEditOrderScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  _buildSectionTitle('Thông tin đối tác'),
+                  _buildSectionTitle(AppLocalizations.of(context)!.byLocale(vi: 'Thông tin đối tác', en: 'Partner information')),
                   _buildCustomerAutocomplete(),
                   const SizedBox(height: 16),
                   _buildStoreAutocomplete(),
                   const SizedBox(height: 16),
                   _buildShipperAutocomplete(),
                   const SizedBox(height: 24),
-                  _buildSectionTitle('Thông tin giao hàng'),
+                  _buildSectionTitle(AppLocalizations.of(context)!.byLocale(vi: 'Thông tin giao hàng', en: 'Shipping information')),
                   TextFormField(
                     controller: _addressController,
-                    decoration: const InputDecoration(
-                      labelText: 'Địa chỉ nhận hàng',
-                      prefixIcon: Icon(Icons.location_on_outlined),
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context)!.byLocale(vi: 'Địa chỉ nhận hàng', en: 'Delivery address'),
+                      prefixIcon: const Icon(Icons.location_on_outlined),
+                      border: const OutlineInputBorder(),
                     ),
                     enabled: !_isReadOnly,
-                    validator: (v) => v == null || v.isEmpty ? 'Không được để trống' : null,
+                    validator: (v) => v == null || v.isEmpty ? AppLocalizations.of(context)!.byLocale(vi: 'Không được để trống', en: 'This field is required') : null,
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     initialValue: _status,
-                    decoration: const InputDecoration(labelText: 'Trạng thái', border: OutlineInputBorder()),
-                    items: const [
-                      DropdownMenuItem(value: 'PENDING', child: Text('Chờ xử lý')),
-                      DropdownMenuItem(value: 'CONFIRMED', child: Text('Đã xác nhận')),
-                      DropdownMenuItem(value: 'DELIVERING', child: Text('Đang giao')),
-                      DropdownMenuItem(value: 'DELIVERED', child: Text('Hoàn thành')),
-                      DropdownMenuItem(value: 'CANCELLED', child: Text('Đã hủy')),
+                    decoration: InputDecoration(labelText: AppLocalizations.of(context)!.byLocale(vi: 'Trạng thái', en: 'Status'), border: const OutlineInputBorder()),
+                    items: [
+                      DropdownMenuItem(value: 'PENDING', child: Text(AppLocalizations.of(context)!.byLocale(vi: 'Chờ xử lý', en: 'Pending'))),
+                      DropdownMenuItem(value: 'CONFIRMED', child: Text(AppLocalizations.of(context)!.byLocale(vi: 'Đã xác nhận', en: 'Confirmed'))),
+                      DropdownMenuItem(value: 'DELIVERING', child: Text(AppLocalizations.of(context)!.byLocale(vi: 'Đang giao', en: 'Delivering'))),
+                      DropdownMenuItem(value: 'DELIVERED', child: Text(AppLocalizations.of(context)!.byLocale(vi: 'Hoàn thành', en: 'Delivered'))),
+                      DropdownMenuItem(value: 'CANCELLED', child: Text(AppLocalizations.of(context)!.byLocale(vi: 'Đã hủy', en: 'Cancelled'))),
                     ],
                     onChanged: _isReadOnly ? null : (v) => setState(() => _status = v!),
                   ),
@@ -239,26 +240,26 @@ class _AddEditOrderScreenState extends State<AddEditOrderScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildSectionTitle('Danh sách món ăn'),
+                      _buildSectionTitle(AppLocalizations.of(context)!.byLocale(vi: 'Danh sách món ăn', en: 'Item list')),
                       if (!_isReadOnly)
                         TextButton.icon(
                           onPressed: _addItem,
                           icon: const Icon(Icons.add),
-                          label: const Text('Thêm món'),
+                          label: Text(AppLocalizations.of(context)!.byLocale(vi: 'Thêm món', en: 'Add item')),
                         ),
                     ],
                   ),
                   ..._items.asMap().entries.map((entry) => _buildItemTile(entry.key, entry.value)),
                   if (_items.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 20),
-                      child: Center(child: Text('Chưa có món ăn nào', style: TextStyle(color: Colors.grey))),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      child: Center(child: Text(AppLocalizations.of(context)!.byLocale(vi: 'Chưa có món ăn nào', en: 'No items added yet'), style: const TextStyle(color: Colors.grey))),
                     ),
                   const Divider(height: 40),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('TỔNG CỘNG', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                      Text(AppLocalizations.of(context)!.byLocale(vi: 'TỔNG CỘNG', en: 'TOTAL'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                       Text(_currencyFormat.format(_totalAmount), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.indigo)),
                     ],
                   ),
@@ -297,7 +298,7 @@ class _AddEditOrderScreenState extends State<AddEditOrderScreen> {
           options: options,
           onSelected: onSelected,
           titleBuilder: (u) => u['fullName'],
-          subtitleBuilder: (u) => 'SĐT: ${u['phoneNumber']} • Trạng thái: ${u['status']}',
+          subtitleBuilder: (u) => '${AppLocalizations.of(context)!.byLocale(vi: 'SĐT:', en: 'Phone:')} ${u['phoneNumber']} • ${AppLocalizations.of(context)!.byLocale(vi: 'Trạng thái:', en: 'Status:')} ${u['status']}',
           icon: Icons.person_outline,
         );
       },
@@ -305,11 +306,11 @@ class _AddEditOrderScreenState extends State<AddEditOrderScreen> {
         return TextFormField(
           controller: controller,
           focusNode: focusNode,
-          decoration: const InputDecoration(
-            labelText: 'Khách hàng', 
-            prefixIcon: Icon(Icons.person_outline), 
-            border: OutlineInputBorder(), 
-            hintText: 'Tìm khách hàng...',
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context)!.byLocale(vi: 'Khách hàng', en: 'Customer'), 
+            prefixIcon: const Icon(Icons.person_outline), 
+            border: const OutlineInputBorder(), 
+            hintText: AppLocalizations.of(context)!.byLocale(vi: 'Tìm khách hàng...', en: 'Search customer...'),
             floatingLabelBehavior: FloatingLabelBehavior.always,
           ),
           enabled: !_isReadOnly,
@@ -344,7 +345,7 @@ class _AddEditOrderScreenState extends State<AddEditOrderScreen> {
           options: options,
           onSelected: onSelected,
           titleBuilder: (u) => u['fullName'],
-          subtitleBuilder: (u) => 'SĐT: ${u['phoneNumber']} • Trạng thái: ${u['status']}',
+          subtitleBuilder: (u) => '${AppLocalizations.of(context)!.byLocale(vi: 'SĐT:', en: 'Phone:')} ${u['phoneNumber']} • ${AppLocalizations.of(context)!.byLocale(vi: 'Trạng thái:', en: 'Status:')} ${u['status']}',
           icon: Icons.delivery_dining_outlined,
         );
       },
@@ -352,11 +353,11 @@ class _AddEditOrderScreenState extends State<AddEditOrderScreen> {
         return TextFormField(
           controller: controller,
           focusNode: focusNode,
-          decoration: const InputDecoration(
-            labelText: 'Shipper (Không bắt buộc)', 
-            prefixIcon: Icon(Icons.delivery_dining_outlined), 
-            border: OutlineInputBorder(), 
-            hintText: 'Tìm shipper...',
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context)!.byLocale(vi: 'Shipper (Không bắt buộc)', en: 'Shipper (optional)'), 
+            prefixIcon: const Icon(Icons.delivery_dining_outlined), 
+            border: const OutlineInputBorder(), 
+            hintText: AppLocalizations.of(context)!.byLocale(vi: 'Tìm shipper...', en: 'Search shipper...'),
             floatingLabelBehavior: FloatingLabelBehavior.always,
           ),
           enabled: !_isReadOnly,
@@ -390,7 +391,7 @@ class _AddEditOrderScreenState extends State<AddEditOrderScreen> {
           options: options,
           onSelected: onSelected,
           titleBuilder: (s) => s['storeName'] ?? s['name'],
-          subtitleBuilder: (s) => 'Chủ: ${s['ownerName']} • ĐC: ${s['address']}',
+          subtitleBuilder: (s) => '${AppLocalizations.of(context)!.byLocale(vi: 'Chủ:', en: 'Owner:')} ${s['ownerName']} • ${AppLocalizations.of(context)!.byLocale(vi: 'ĐC:', en: 'Addr:')} ${s['address']}',
           icon: Icons.storefront_outlined,
         );
       },
@@ -398,11 +399,11 @@ class _AddEditOrderScreenState extends State<AddEditOrderScreen> {
         return TextFormField(
           controller: controller,
           focusNode: focusNode,
-          decoration: const InputDecoration(
-            labelText: 'Cửa hàng', 
-            prefixIcon: Icon(Icons.storefront_outlined), 
-            border: OutlineInputBorder(), 
-            hintText: 'Tìm cửa hàng...',
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context)!.byLocale(vi: 'Cửa hàng', en: 'Store'), 
+            prefixIcon: const Icon(Icons.storefront_outlined), 
+            border: const OutlineInputBorder(), 
+            hintText: AppLocalizations.of(context)!.byLocale(vi: 'Tìm cửa hàng...', en: 'Search store...'),
             floatingLabelBehavior: FloatingLabelBehavior.always,
           ),
           enabled: !_isReadOnly,
@@ -477,8 +478,8 @@ class _AddEditOrderScreenState extends State<AddEditOrderScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
-        title: Text(item.productName ?? 'Sản phẩm'),
-        subtitle: Text('Số lượng: ${item.quantity} x ${_currencyFormat.format(item.unitPrice ?? 0)}'),
+        title: Text(item.productName ?? AppLocalizations.of(context)!.byLocale(vi: 'Sản phẩm', en: 'Product')),
+        subtitle: Text('${AppLocalizations.of(context)!.byLocale(vi: 'Số lượng:', en: 'Quantity:')} ${item.quantity} x ${_currencyFormat.format(item.unitPrice ?? 0)}'),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -516,17 +517,17 @@ class _ProductPickerState extends State<_ProductPicker> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('Thêm sản phẩm từ cửa hàng', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(AppLocalizations.of(context)!.byLocale(vi: 'Thêm sản phẩm từ cửa hàng', en: 'Add product from store'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           TextField(
-            decoration: const InputDecoration(hintText: 'Tìm sản phẩm...', prefixIcon: Icon(Icons.search), border: OutlineInputBorder()),
+            decoration: InputDecoration(hintText: AppLocalizations.of(context)!.byLocale(vi: 'Tìm sản phẩm...', en: 'Search product...'), prefixIcon: const Icon(Icons.search), border: const OutlineInputBorder()),
             onChanged: (v) => setState(() => _search = v),
           ),
           const SizedBox(height: 8),
           SizedBox(
             height: 250,
             child: filtered.isEmpty 
-              ? const Center(child: Text('Không tìm thấy sản phẩm nào'))
+              ? Center(child: Text(AppLocalizations.of(context)!.byLocale(vi: 'Không tìm thấy sản phẩm nào', en: 'No products found')))
               : ListView.builder(
                   itemCount: filtered.length,
                   itemBuilder: (context, index) {
@@ -549,7 +550,7 @@ class _ProductPickerState extends State<_ProductPicker> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Số lượng:'),
+                Text(AppLocalizations.of(context)!.byLocale(vi: 'Số lượng:', en: 'Quantity:')),
                 Row(
                   children: [
                     IconButton(onPressed: _quantity > 1 ? () => setState(() => _quantity--) : null, icon: const Icon(Icons.remove)),
@@ -568,7 +569,7 @@ class _ProductPickerState extends State<_ProductPicker> {
                   Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo, foregroundColor: Colors.white),
-                child: const Text('Thêm vào đơn hàng'),
+                child: Text(AppLocalizations.of(context)!.byLocale(vi: 'Thêm vào đơn hàng', en: 'Add to order')),
               ),
             ),
           ],

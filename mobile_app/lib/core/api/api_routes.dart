@@ -62,6 +62,7 @@ class ApiRoutes {
   static String reviewById(Object id) => '/reviews/$id';
   static String storeReviews(Object storeId) => '/reviews/store/$storeId';
   static String storeRating(Object storeId) => '/reviews/store/$storeId/rating';
+  static String replyToReview(Object reviewId) => '/reviews/$reviewId/reply';
 
   // ─── Monitoring ──────────────────────────────────────────────────────
   static const String stats = '/admin/stats';

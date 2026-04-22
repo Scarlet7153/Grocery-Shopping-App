@@ -6,7 +6,7 @@ import '../../../features/customer/home/data/product_model.dart';
 import 'customer_product_image.dart';
 
 import '../utils/customer_l10n.dart';
-import '../screens/cart/customer_cart_screen.dart';
+import '../screens/cart/customer_checkout_screen.dart';
 
 Future<void> showVariantSelectionSheet(
   BuildContext context,
@@ -36,7 +36,7 @@ Future<void> showVariantSelectionSheet(
         final unit = product.units[selectedIndex];
         final stock = unit.stockQuantity;
 
-        void doAddToCart({required bool goToCart}) {
+        void doAddToCart({required bool goToCheckout}) {
           if (stock <= 0) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(context.tr(vi: 'Biến thể này đã hết hàng', en: 'This variant is out of stock'))),
@@ -64,10 +64,25 @@ Future<void> showVariantSelectionSheet(
             SnackBar(content: Text(context.tr(vi: 'Đã thêm vào giỏ hàng', en: 'Added to cart'))),
           );
 
-          if (goToCart) {
+          if (goToCheckout) {
+            // Mua ngay → đi thẳng checkout với item vừa chọn
+            final checkoutItem = CartItem(
+              productId: product.id,
+              productUnitMappingId: unit.id,
+              unitLabel: unit.unitName,
+              name: product.name,
+              unitPrice: unit.price,
+              imageUrl: product.imageUrl,
+              storeName: product.storeName,
+              storeAddress: product.storeAddress,
+              stockQuantity: stock,
+              quantity: quantity,
+            );
             Navigator.of(context).pop();
             Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const CustomerCartScreen()),
+              MaterialPageRoute(
+                builder: (_) => CustomerCheckoutScreen(selectedItems: [checkoutItem]),
+              ),
             );
           } else {
             Navigator.of(context).pop();
@@ -75,9 +90,9 @@ Future<void> showVariantSelectionSheet(
         }
 
         return DraggableScrollableSheet(
-          initialChildSize: 0.6,
+          initialChildSize: 0.4,
           minChildSize: 0.3,
-          maxChildSize: 0.9,
+          maxChildSize: 0.6,
           expand: false,
           builder: (_, controller) => Container(
             padding: const EdgeInsets.all(16),
@@ -102,9 +117,9 @@ Future<void> showVariantSelectionSheet(
                     CustomerProductImage(imageUrl: product.imageUrl, width: 64, height: 64, borderRadius: BorderRadius.circular(8)),
                   ],
                 ),
-                const SizedBox(height: 12),
-                Text(context.tr(vi: 'Chọn phân loại', en: 'Choose variant'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
+                Text(context.tr(vi: 'Chọn phân loại', en: 'Choose variant'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 6),
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
@@ -125,9 +140,9 @@ Future<void> showVariantSelectionSheet(
                     }),
                   ),
                 ),
-                const SizedBox(height: 12),
-                Text(context.tr(vi: 'Số lượng', en: 'Quantity'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
+                Text(context.tr(vi: 'Số lượng', en: 'Quantity'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 4),
                 Row(
                   children: [
                     IconButton(
@@ -145,11 +160,37 @@ Future<void> showVariantSelectionSheet(
                   ],
                 ),
                 const Spacer(),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      top: BorderSide(color: Theme.of(context).dividerColor),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        context.tr(vi: 'Tổng tiền (chưa ship)', en: 'Subtotal'),
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                      ),
+                      Text(
+                        formatVnd(unit.price * quantity),
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 Row(
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: stock > 0 ? () => doAddToCart(goToCart: false) : null,
+                        onPressed: stock > 0 ? () => doAddToCart(goToCheckout: false) : null,
                         icon: const Icon(Icons.add_shopping_cart),
                         label: Text(context.tr(vi: 'Thêm giỏ', en: 'Add to cart')),
                       ),
@@ -157,14 +198,14 @@ Future<void> showVariantSelectionSheet(
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: stock > 0 ? () => doAddToCart(goToCart: true) : null,
+                        onPressed: stock > 0 ? () => doAddToCart(goToCheckout: true) : null,
                         icon: const Icon(Icons.shopping_cart_checkout),
                         label: Text(context.tr(vi: 'Mua ngay', en: 'Buy now')),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
               ],
             ),
           ),

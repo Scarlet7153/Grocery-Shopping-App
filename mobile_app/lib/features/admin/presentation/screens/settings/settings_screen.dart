@@ -132,7 +132,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           trailing: Switch(
                           value: _notificationsEnabled,
                           onChanged: (v) => setState(() => _notificationsEnabled = v),
-                          activeThumbColor: Colors.indigo,
+                          activeThumbColor: Theme.of(context).colorScheme.primary,
                         ),
                       ),
                       _SettingsItem(
@@ -178,7 +178,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(height: 24),
                     _buildLogoutButton(context, l.translate('settings_logout')),
                     const SizedBox(height: 16),
-                    Text('Admin Dashboard v3.1.5-final', style: TextStyle(color: Colors.grey[400], fontSize: 11)),
+                    Text('Admin Dashboard v3.1.5-final', style: TextStyle(color: Theme.of(context).disabledColor, fontSize: 11)),
                     const SizedBox(height: 48),
                   ],
                 ),
@@ -236,7 +236,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.indigo,
+                backgroundColor: Theme.of(context).colorScheme.primary,
                 minimumSize: const Size(double.infinity, 50),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
@@ -295,7 +295,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('HỦY', style: TextStyle(color: Colors.grey))),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text('HỦY', style: TextStyle(color: Theme.of(context).disabledColor))),
           ElevatedButton(
             onPressed: () {
               final oldP = _oldPassController.text;
@@ -304,6 +304,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               if (oldP.isEmpty || newP.isEmpty || confirmP.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vui lòng nhập đầy đủ thông tin')));
+                return;
+              }
+              if (newP == oldP) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mật khẩu mới không được trùng với mật khẩu cũ')));
                 return;
               }
               if (newP != confirmP) {
@@ -323,7 +327,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.indigo,
+              backgroundColor: Theme.of(context).colorScheme.primary,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             child: const Text('THAY ĐỔI', style: TextStyle(color: Colors.white)),
@@ -410,17 +414,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Text(name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 2),
-                Text(phone, style: TextStyle(fontSize: 13, color: Colors.grey[600], letterSpacing: 0.5)),
+                Text(phone, style: TextStyle(fontSize: 13, color: Theme.of(context).textTheme.bodySmall?.color, letterSpacing: 0.5)),
                 const SizedBox(height: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                  decoration: BoxDecoration(color: Colors.indigo.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                  child: const Text('Administrators', style: TextStyle(color: Colors.indigo, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                  decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                  child: Text('Administrators', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
                 ),
               ],
             ),
           ),
-          IconButton(onPressed: () {}, icon: Icon(Icons.qr_code_scanner, color: Colors.grey[400])),
+          IconButton(onPressed: () {}, icon: Icon(Icons.qr_code_scanner, color: Theme.of(context).disabledColor)),
         ],
       ),
     );
@@ -432,14 +436,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-          child: Text(title, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey[500], letterSpacing: 1.1)),
+          child: Text(title, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Theme.of(context).disabledColor, letterSpacing: 1.1)),
         ),
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
-            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.03), blurRadius: 10, offset: const Offset(0, 4))],
+            border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
+            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 6))],
           ),
           child: Column(
             children: List.generate(items.length, (index) {
@@ -504,8 +509,8 @@ class _SettingsItem extends StatelessWidget {
         child: Icon(icon, color: color, size: 20),
       ),
       title: Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-      subtitle: subtitle != null ? Text(subtitle!, style: TextStyle(fontSize: 11, color: Colors.grey[500])) : null,
-      trailing: trailing ?? Icon(Icons.chevron_right, color: Colors.grey[300], size: 20),
+      subtitle: subtitle != null ? Text(subtitle!, style: TextStyle(fontSize: 11, color: Theme.of(context).disabledColor)) : null,
+      trailing: trailing ?? Icon(Icons.chevron_right, color: Theme.of(context).dividerColor, size: 20),
       dense: true,
     );
   }

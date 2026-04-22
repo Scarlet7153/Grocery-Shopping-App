@@ -43,4 +43,22 @@ class ReviewService {
       return null;
     }
   }
+
+  /// POST /reviews/{id}/reply?storeId={storeId} — phản hồi đánh giá từ cửa hàng.
+  Future<ReviewModel?> replyToReview(int reviewId, String reply, int storeId) async {
+    try {
+      final response = await _client.post<Map<String, dynamic>>(
+        '${ApiRoutes.replyToReview(reviewId)}?storeId=$storeId',
+        data: {'reply': reply},
+      );
+      final raw = response.data;
+      if (raw == null) return null;
+      final data = (raw['data'] ?? raw);
+      return ReviewModel.fromJson(data is Map<String, dynamic>
+          ? data
+          : Map<String, dynamic>.from(data as Map));
+    } catch (e) {
+      return null;
+    }
+  }
 }

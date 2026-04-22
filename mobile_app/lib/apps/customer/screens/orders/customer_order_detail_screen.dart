@@ -781,6 +781,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
     if (orderIdInt == null) return;
     final shipperId = _order!['shipperId'] as int?;
     final shipperName = (_order!['shipperName'] ?? 'Shipper').toString();
+    final shipperAvatar = _order!['shipperAvatar']?.toString();
 
     if (shipperId == null) {
       if (mounted) {
@@ -804,6 +805,7 @@ class _CustomerOrderDetailScreenState extends State<CustomerOrderDetailScreen> {
           builder: (_) => CustomerChatScreen(
             conversationId: conv.id,
             shipperName: shipperName,
+            shipperAvatar: shipperAvatar,
             orderId: orderIdInt,
           ),
         ),

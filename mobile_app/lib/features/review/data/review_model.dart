@@ -7,6 +7,8 @@ class ReviewModel {
   final String? storeName;
   final int? rating;
   final String? comment;
+  final String? storeReply;
+  final DateTime? storeReplyAt;
   final DateTime? createdAt;
   const ReviewModel(
       {this.id,
@@ -17,6 +19,8 @@ class ReviewModel {
       this.storeName,
       this.rating,
       this.comment,
+      this.storeReply,
+      this.storeReplyAt,
       this.createdAt});
   factory ReviewModel.fromJson(Map<String, dynamic> json) => ReviewModel(
         id: (json['id'] as num?)?.toInt(),
@@ -27,6 +31,10 @@ class ReviewModel {
         storeName: json['storeName'] as String?,
         rating: (json['rating'] as num?)?.toInt(),
         comment: json['comment'] as String?,
+        storeReply: json['storeReply'] as String?,
+        storeReplyAt: json['storeReplyAt'] != null
+            ? DateTime.tryParse(json['storeReplyAt'])
+            : null,
         createdAt: json['createdAt'] != null
             ? DateTime.tryParse(json['createdAt'])
             : null,

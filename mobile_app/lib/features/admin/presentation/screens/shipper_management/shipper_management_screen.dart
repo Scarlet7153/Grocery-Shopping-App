@@ -24,15 +24,15 @@ class _ShipperManagementScreenState extends State<ShipperManagementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Quản lý Shipper', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: Theme.of(context).cardColor,
+        foregroundColor: Theme.of(context).textTheme.titleLarge?.color,
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.file_download_outlined, color: Colors.indigo),
+            icon: Icon(Icons.file_download_outlined, color: Theme.of(context).colorScheme.primary),
             onPressed: () => _exportShippers(context),
             tooltip: 'Xuất Excel',
           ),
@@ -45,9 +45,9 @@ class _ShipperManagementScreenState extends State<ShipperManagementScreen> {
             child: TextField(
               decoration: InputDecoration(
                 hintText: 'Tìm kiếm shipper theo tên/SĐT...',
-                prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                prefixIcon: Icon(Icons.search, color: Theme.of(context).hintColor),
                 filled: true,
-                fillColor: const Color(0xFFF0F2F5),
+                fillColor: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).cardColor : const Color(0xFFF0F2F5),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
                 contentPadding: const EdgeInsets.symmetric(vertical: 0),
               ),
@@ -63,7 +63,7 @@ class _ShipperManagementScreenState extends State<ShipperManagementScreen> {
         ]),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: Colors.indigo));
+            return Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary));
           }
 
           final shippers = snapshot.data?[0] as List<UserModel>? ?? [];
@@ -118,25 +118,25 @@ class _ShipperManagementScreenState extends State<ShipperManagementScreen> {
   Widget _buildStatsHeader(int total, int online, double revenue) {
     return Container(
       padding: const EdgeInsets.all(16),
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildStatItem('Tổng Shipper', total.toString(), Icons.group),
           _buildStatItem('Đang Online', online.toString(), Icons.online_prediction, color: Colors.green),
-          _buildStatItem('Tổng thu nhập', _currencyFormat.format(revenue), Icons.account_balance_wallet, color: Colors.indigo),
+          _buildStatItem('Tổng thu nhập', _currencyFormat.format(revenue), Icons.account_balance_wallet, color: Theme.of(context).colorScheme.primary),
         ],
       ),
     );
   }
 
-  Widget _buildStatItem(String title, String value, IconData icon, {Color color = Colors.grey}) {
+  Widget _buildStatItem(String title, String value, IconData icon, {Color? color}) {
     return Column(
       children: [
-        Icon(icon, color: color, size: 20),
+        Icon(icon, color: color ?? Theme.of(context).disabledColor, size: 20),
         const SizedBox(height: 4),
         Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-        Text(title, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+        Text(title, style: TextStyle(fontSize: 10, color: Theme.of(context).textTheme.bodySmall?.color)),
       ],
     );
   }
@@ -144,73 +144,72 @@ class _ShipperManagementScreenState extends State<ShipperManagementScreen> {
   Widget _buildShipperCard(UserModel shipper, int completedOrders, double earnings) {
     final bool isOnline = shipper.status == UserStatus.active;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 24,
-                      backgroundColor: Colors.orange[50],
-                      child: Text(shipper.fullName.substring(0, 1), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.orange)),
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Container(
-                        width: 14,
-                        height: 14,
-                        decoration: BoxDecoration(
-                          color: isOnline ? Colors.green : Colors.grey,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
+    return InkWell(
+      onTap: () async {
+        await Navigator.push(context, MaterialPageRoute(builder: (_) => UserDetailScreen(user: shipper)));
+        setState(() {});
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Theme.of(context).dividerColor.withValues(alpha: 0.5)),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 6))],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Stack(
+                    children: [
+                      CircleAvatar(
+                        radius: 24,
+                        backgroundColor: Colors.orange[50],
+                        child: Text(shipper.fullName.substring(0, 1), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.orange)),
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          width: 14,
+                          height: 14,
+                          decoration: BoxDecoration(
+                            color: isOnline ? Colors.green : Theme.of(context).disabledColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Theme.of(context).cardColor, width: 2),
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(shipper.fullName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                      Text(shipper.phoneNumber, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
                     ],
                   ),
-                ),
-                _buildLockIndicator(shipper.status),
-              ],
-            ),
-            const Divider(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildMiniStat('Tổng đơn', completedOrders.toString(), Icons.local_mall_outlined),
-                _buildMiniStat('Thu nhập', _currencyFormat.format(earnings), Icons.account_balance_wallet_outlined),
-                TextButton(
-                  onPressed: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => UserDetailScreen(user: shipper)),
-                    );
-                    setState(() {});
-                  },
-                  child: const Text('Chi tiết', style: TextStyle(fontSize: 12, color: Colors.indigo)),
-                ),
-              ],
-            ),
-          ],
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(shipper.fullName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                        Text(shipper.phoneNumber, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 13)),
+                      ],
+                    ),
+                  ),
+                  _buildLockIndicator(shipper.status),
+                ],
+              ),
+              const Divider(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  _buildMiniStat('Tổng đơn', completedOrders.toString(), Icons.local_mall_outlined),
+                  const SizedBox(width: 32),
+                  _buildMiniStat('Thu nhập', _currencyFormat.format(earnings), Icons.account_balance_wallet_outlined),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -219,13 +218,13 @@ class _ShipperManagementScreenState extends State<ShipperManagementScreen> {
   Widget _buildMiniStat(String title, String value, IconData icon) {
     return Row(
       children: [
-        Icon(icon, size: 14, color: Colors.grey),
+        Icon(icon, size: 14, color: Theme.of(context).disabledColor),
         const SizedBox(width: 4),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-            Text(title, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+            Text(title, style: TextStyle(fontSize: 10, color: Theme.of(context).textTheme.bodySmall?.color)),
           ],
         ),
       ],
@@ -271,6 +270,6 @@ class _ShipperManagementScreenState extends State<ShipperManagementScreen> {
   }
 
   Widget _buildEmptyState() {
-    return const Center(child: Text('Không tìm thấy shipper phù hợp', style: TextStyle(color: Colors.grey)));
+    return Center(child: Text('Không tìm thấy shipper phù hợp', style: TextStyle(color: Theme.of(context).disabledColor)));
   }
 }

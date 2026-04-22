@@ -4,8 +4,9 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:grocery_shopping_app/core/utils/app_localizations.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../../../core/utils/image_picker_helper.dart';
 import '../../bloc/shipper_auth_bloc.dart';
 import '../../bloc/shipper_language_cubit.dart';
 import '../../bloc/shipper_theme_cubit.dart';
@@ -523,8 +524,9 @@ class _ShipperProfileScreenState extends State<ShipperProfileScreen> {
     try {
       debugPrint('Picking image from: $source');
 
-      final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(source: source);
+      final XFile? image = source == ImageSource.gallery
+          ? await ImagePickerHelper.pickFromGallery(context)
+          : await ImagePickerHelper.pickFromCamera(context);
 
       debugPrint('Picked image: ${image?.path}');
 

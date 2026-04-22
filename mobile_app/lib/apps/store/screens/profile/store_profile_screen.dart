@@ -10,6 +10,7 @@ import '../../bloc/store_theme_cubit.dart';
 import '../../../../features/auth/bloc/auth_bloc.dart';
 import '../../../../features/auth/bloc/auth_event.dart';
 import '../../../../features/auth/repository/auth_repository.dart';
+import '../../../../features/notification/presentation/widgets/notification_icon_button.dart';
 import 'store_profile_edit_screen.dart';
 
 String _tr(BuildContext context, {required String vi, required String en}) {
@@ -72,13 +73,6 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
   void initState() {
     super.initState();
     context.read<StoreDashboardBloc>().add(LoadStoreDashboard());
-  }
-
-  void _toggleStoreStatus() {
-    final state = context.read<StoreDashboardBloc>().state;
-    if (state is StoreDashboardLoaded && state.store.id != null) {
-      context.read<StoreDashboardBloc>().add(ToggleStoreStatus(state.store.id!));
-    }
   }
 
   Future<void> _openEditPage(StoreModel store) async {
@@ -260,7 +254,10 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
           title: Text(_tr(context, vi: 'Cửa hàng', en: 'Store')),
           backgroundColor: StoreTheme.primaryColor,
           foregroundColor: Colors.white,
-          elevation: 0),
+          elevation: 0,
+          actions: const [
+            NotificationIconButton(color: Colors.white),
+          ]),
       body: BlocBuilder<StoreDashboardBloc, StoreDashboardState>(
         builder: (context, state) {
           if (state is StoreDashboardLoading)
@@ -296,12 +293,6 @@ class _StoreProfileScreenState extends State<StoreProfileScreen> {
                   _StoreHeader(
                     store: store,
                     onEdit: () => _openEditPage(store),
-                  ),
-                  const SizedBox(height: 16),
-                  _StatusToggle(
-                    isOpen: store.isOpen ?? false,
-                    isUpdating: state.isStatusUpdating,
-                    onToggle: _toggleStoreStatus,
                   ),
                   const SizedBox(height: 16),
                   _QuickPreferencesSection(
@@ -528,90 +519,6 @@ class _StoreHeader extends StatelessWidget {
                   ),
                 ),
               ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatusToggle extends StatelessWidget {
-  final bool isOpen;
-  final bool isUpdating;
-  final VoidCallback onToggle;
-  const _StatusToggle({
-    required this.isOpen,
-    required this.isUpdating,
-    required this.onToggle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
-            ),
-          ]),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-                color: isOpen
-                    ? StoreTheme.primaryColor.withValues(alpha: 0.1)
-                    : Colors.grey.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12)),
-            child: Icon(isOpen ? Icons.storefront : Icons.store,
-                color: isOpen ? StoreTheme.primaryColor : Colors.grey),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(_tr(context, vi: 'Trạng thái cửa hàng', en: 'Store status'),
-                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-                Text(isOpen
-                    ? _tr(context, vi: 'Đang mở cửa', en: 'Open now')
-                    : _tr(context, vi: 'Đã đóng cửa', en: 'Closed'),
-                    style: TextStyle(
-                        color: isOpen ? StoreTheme.primaryColor : Colors.grey,
-                        fontSize: 12)),
-              ],
-            ),
-          ),
-          Theme(
-            data: Theme.of(context).copyWith(
-              splashFactory: NoSplash.splashFactory,
-              splashColor: Colors.transparent,
-              highlightColor: Colors.transparent,
-              hoverColor: Colors.transparent,
-            ),
-            child: Switch(
-              value: isOpen,
-              onChanged: isUpdating ? null : (_) => onToggle(),
-              overlayColor: const WidgetStatePropertyAll(Colors.transparent),
-              trackOutlineColor:
-                  const WidgetStatePropertyAll(Colors.transparent),
-              splashRadius: 0,
-              thumbIcon: WidgetStateProperty.resolveWith<Icon?>((states) {
-                if (states.contains(WidgetState.selected)) {
-                  return const Icon(Icons.check, size: 14);
-                }
-                return const Icon(Icons.close, size: 14);
-              }),
-              activeThumbColor: StoreTheme.primaryColor,
-              activeTrackColor: StoreTheme.primaryColor.withValues(alpha: 0.5),
-              inactiveThumbColor: Colors.white,
-              inactiveTrackColor: Colors.grey.shade500,
             ),
           ),
         ],
@@ -890,6 +797,13 @@ class _ChangePasswordPageState extends State<_ChangePasswordPage> {
                         context,
                         vi: 'Mật khẩu mới phải ít nhất 6 ký tự',
                         en: 'New password must be at least 6 characters',
+                      );
+                    }
+                    if (text == _oldPasswordController.text.trim()) {
+                      return _tr(
+                        context,
+                        vi: 'Mật khẩu mới không được trùng với mật khẩu cũ',
+                        en: 'New password must not be the same as old password',
                       );
                     }
                     return null;

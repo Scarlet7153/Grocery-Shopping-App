@@ -275,6 +275,8 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   }
 
   Widget _buildStoreCard() {
+    final isMultiStore = _order.stores.length > 1;
+
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       elevation: 2,
@@ -299,7 +301,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'Cửa hàng',
+                  isMultiStore ? 'Cửa hàng (${_order.stores.length})' : 'Cửa hàng',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.w700,
                           ) ??
@@ -311,9 +313,23 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            _buildInfoRow(Icons.storefront, 'Tên', _order.storeName),
-            const SizedBox(height: 8),
-            _buildInfoRow(Icons.location_on, 'Địa chỉ', _order.storeAddress),
+            if (isMultiStore)
+              ..._order.stores.asMap().entries.expand((entry) {
+                final i = entry.key;
+                final store = entry.value;
+                return [
+                  _buildInfoRow(Icons.storefront, 'Tên', store.name),
+                  const SizedBox(height: 4),
+                  _buildInfoRow(Icons.location_on, 'Địa chỉ', store.address),
+                  if (i < _order.stores.length - 1)
+                    Divider(color: Colors.grey[200], height: 20),
+                ];
+              })
+            else ...[
+              _buildInfoRow(Icons.storefront, 'Tên', _order.storeName),
+              const SizedBox(height: 8),
+              _buildInfoRow(Icons.location_on, 'Địa chỉ', _order.storeAddress),
+            ],
           ],
         ),
       ),

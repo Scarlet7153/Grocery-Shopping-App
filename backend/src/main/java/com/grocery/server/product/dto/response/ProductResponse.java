@@ -19,6 +19,7 @@ import java.util.List;
  *   "description": "Thịt ba rọi tươi ngon",
  *   "imageUrl": "https://...",
  *   "storeName": "Tạp hóa Cô Ba",
+ *   "storeAddress": "123 Nguyễn Văn A, Quận 1",
  *   "categoryName": "Thịt, Cá, Trứng",
  *   "units": [
  *     {
@@ -41,6 +42,7 @@ public class ProductResponse {
     private String description;
     private String imageUrl;
     private String storeName;
+    private String storeAddress;
     private String categoryName;
     private String status;
     

@@ -166,9 +166,9 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     final bool isShipper = _user.role == UserRole.shipper;
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Chi tiết người dùng'),
+        title: const Text('Chi tiết ngưởi dùng'),
         backgroundColor: const Color(0xFF6A1B9A),
         foregroundColor: Colors.white,
         actions: [
@@ -242,8 +242,8 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
         subtitle: Text('Tổng: ${_currencyFormat.format(order.totalAmount)}'),
         trailing: Container(
           padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(color: Colors.blue[50], borderRadius: BorderRadius.circular(4)),
-          child: Text(order.status ?? 'N/A', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blue)),
+          decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
+          child: Text(order.status ?? 'N/A', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.primary)),
         ),
       ),
     );
@@ -258,9 +258,9 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
         child: Center(
           child: Column(
             children: [
-              Icon(Icons.inventory_2_outlined, size: 48, color: Colors.grey[300]),
+              Icon(Icons.inventory_2_outlined, size: 48, color: Theme.of(context).dividerColor),
               const SizedBox(height: 12),
-              Text(message, style: TextStyle(color: Colors.grey[500], fontSize: 14)),
+              Text(message, style: TextStyle(color: Theme.of(context).disabledColor, fontSize: 14)),
             ],
           ),
         ),
@@ -305,7 +305,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
             const SizedBox(height: 16),
             Text(_user.fullName, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            Text(_user.roleDisplayName, style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+            Text(_user.roleDisplayName, style: TextStyle(fontSize: 16, color: Theme.of(context).textTheme.bodySmall?.color)),
             const Divider(height: 32),
             _buildInfoRow(Icons.phone, 'Số điện thoại', _user.phoneNumber),
             const SizedBox(height: 12),
@@ -350,13 +350,13 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   Widget _buildInfoRow(IconData icon, String label, String value, {Color? color}) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: Colors.grey[500]),
+        Icon(icon, size: 20, color: Theme.of(context).disabledColor),
         const SizedBox(width: 12),
-        Text(label, style: TextStyle(color: Colors.grey[700], fontSize: 14)),
+        Text(label, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 14)),
         const Spacer(),
         Text(
           value,
-          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: color ?? Colors.black87),
+          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: color ?? Theme.of(context).textTheme.bodyMedium?.color),
         ),
       ],
     );

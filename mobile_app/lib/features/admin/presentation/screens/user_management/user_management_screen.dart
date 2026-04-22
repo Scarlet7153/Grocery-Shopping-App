@@ -56,7 +56,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> with Single
           builder: (context, setDialogState) {
             return AlertDialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: const Text('Thêm người dùng mới', style: TextStyle(fontWeight: FontWeight.bold)),
+              title: const Text('Thêm ngưởi dùng mới', style: TextStyle(fontWeight: FontWeight.bold)),
               content: Form(
                 key: formKey,
                 child: SingleChildScrollView(
@@ -124,7 +124,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> with Single
                       }
                     }
                   },
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo, foregroundColor: Colors.white),
+                  style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary, foregroundColor: Colors.white),
                   child: const Text('Thêm'),
                 ),
               ],
@@ -147,15 +147,15 @@ class _UserManagementScreenState extends State<UserManagementScreen> with Single
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Quản lý Người dùng', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        title: const Text('Quản lý Ngưởi dùng', style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Theme.of(context).cardColor,
+        foregroundColor: Theme.of(context).textTheme.titleLarge?.color,
         elevation: 0,
         actions: [
           IconButton(
-            icon: Icon(_statusFilter == null ? Icons.filter_list : Icons.filter_list_off, color: Colors.indigo),
+            icon: Icon(_statusFilter == null ? Icons.filter_list : Icons.filter_list_off, color: Theme.of(context).colorScheme.primary),
             onPressed: () {
               setState(() {
                 if (_statusFilter == null) {
@@ -173,7 +173,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> with Single
             },
           ),
           IconButton(
-            icon: const Icon(Icons.file_download_outlined, color: Colors.indigo),
+            icon: Icon(Icons.file_download_outlined, color: Theme.of(context).colorScheme.primary),
             onPressed: _exportUsers,
             tooltip: 'Xuất Excel',
           ),
@@ -187,9 +187,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> with Single
                 child: TextField(
                   decoration: InputDecoration(
                     hintText: 'Tìm kiếm theo tên hoặc SĐT...',
-                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                    prefixIcon: Icon(Icons.search, color: Theme.of(context).hintColor),
                     filled: true,
-                    fillColor: const Color(0xFFF0F2F5),
+                    fillColor: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).cardColor : const Color(0xFFF0F2F5),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(30), borderSide: BorderSide.none),
                     contentPadding: const EdgeInsets.symmetric(vertical: 0),
                   ),
@@ -199,10 +199,10 @@ class _UserManagementScreenState extends State<UserManagementScreen> with Single
               TabBar(
                 controller: _tabController,
                 isScrollable: true,
-                indicatorColor: Colors.indigo,
+                indicatorColor: Theme.of(context).colorScheme.primary,
                 indicatorWeight: 3,
-                labelColor: Colors.indigo,
-                unselectedLabelColor: Colors.grey,
+                labelColor: Theme.of(context).colorScheme.primary,
+                unselectedLabelColor: Theme.of(context).disabledColor,
                 labelStyle: const TextStyle(fontWeight: FontWeight.bold),
                 tabs: _roles.map((role) => Tab(text: _getRoleDisplayName(role))).toList(),
               ),
@@ -212,7 +212,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> with Single
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddUserDialog,
-        backgroundColor: Colors.indigo,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         child: const Icon(Icons.add, color: Colors.white),
       ),
       body: TabBarView(
@@ -236,7 +236,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> with Single
       future: _userRepository.getUsers(role: role),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: Colors.indigo));
+          return Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary));
         }
         
         final List<UserModel> allUsers = snapshot.data ?? [];
@@ -311,9 +311,9 @@ class _UserManagementScreenState extends State<UserManagementScreen> with Single
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.search_off, size: 64, color: Colors.grey[300]),
+          Icon(Icons.search_off, size: 64, color: Theme.of(context).dividerColor),
           const SizedBox(height: 16),
-          Text('Không tìm thấy người dùng phù hợp', style: TextStyle(color: Colors.grey[600], fontSize: 16)),
+          Text('Không tìm thấy ngưởi dùng phù hợp', style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 16)),
         ],
       ),
     );

@@ -9,10 +9,12 @@ import '../../bloc/shipper_dashboard_bloc.dart';
 import '../../models/shipper_order.dart';
 import '../../repository/shipper_repository.dart';
 import '../../repository/shipper_chat_api.dart';
-import '../../services/routing_service.dart';
+import '../../../../core/config/routing_service.dart';
+import '../../../../core/config/routing_service_factory.dart';
 import '../../services/shipper_realtime_stomp_service.dart';
 import '../../../../core/theme/shipper_theme.dart';
 import '../../../../core/utils/app_localizations.dart';
+import '../../../../core/config/environment.dart';
 import 'delivery_confirmation_screen.dart';
 import '../order_detail/order_detail_screen.dart';
 import '../chat/shipper_chat_screen.dart';
@@ -20,14 +22,14 @@ import '../chat/shipper_chat_screen.dart';
 class OrderMapScreen extends StatefulWidget {
   final ShipperOrder order;
   final bool showDeliveryRoute;
-  final String graphHopperApiKey;
+  final String? graphHopperApiKey;
   final VoidCallback? onStartDelivery;
 
   const OrderMapScreen({
     super.key,
     required this.order,
     this.showDeliveryRoute = false,
-    this.graphHopperApiKey = 'c251cd70-5c14-49fe-a134-0ad33f0bf0ed',
+    this.graphHopperApiKey,
     this.onStartDelivery,
   });
 
@@ -53,7 +55,7 @@ class _OrderMapScreenState extends State<OrderMapScreen>
   MultiStopRouteResult? _routeResult;
   StreamSubscription<Position>? _positionStream;
   StreamSubscription<ShipperRealtimeEvent>? _realtimeSubscription;
-  final GraphHopperRoutingService _routingService;
+  final RoutingService _routingService;
   final ShipperRealtimeStompService _realtimeService =
       ShipperRealtimeStompService();
   bool _isRealtimeSyncing = false;
@@ -65,9 +67,7 @@ class _OrderMapScreenState extends State<OrderMapScreen>
   Animation<double>? _rotationAnimation;
 
   _OrderMapScreenState()
-      : _routingService = GraphHopperRoutingService(
-          apiKey: 'c251cd70-5c14-49fe-a134-0ad33f0bf0ed',
-        );
+      : _routingService = RoutingServiceFactory.instance;
 
   @override
   void initState() {
@@ -205,19 +205,10 @@ class _OrderMapScreenState extends State<OrderMapScreen>
     setState(() => _isLoadingRoute = true);
 
     try {
-      // Nếu đang ở PICKING_UP và chưa ấn "Bắt đầu giao hàng",
-      // chỉ hiển thị route đến store (không đến khách hàng)
-      final isGoingToStoreOnly = _order.status == OrderStatus.PICKING_UP &&
-          !_isDelivering &&
-          !widget.showDeliveryRoute;
+      // Luôn hiển thị route đến khách hàng để shipper biết toàn bộ quãng đường
+      final waypoints = <LatLng>[_currentPosition!, ..._storeLocations, _destination];
 
-      final waypoints = isGoingToStoreOnly
-          ? <LatLng>[_currentPosition!, ..._storeLocations]
-          : <LatLng>[_currentPosition!, ..._storeLocations, _destination];
-
-      final labels = isGoingToStoreOnly
-          ? <String>['Vị trí hiện tại', ..._storeLabels]
-          : <String>['Vị trí hiện tại', ..._storeLabels, 'Khách hàng'];
+      final labels = <String>['Vị trí hiện tại', ..._storeLabels, 'Khách hàng'];
 
       final result = await _routingService.getMultiStopRoute(
         waypoints: waypoints,
@@ -434,8 +425,7 @@ class _OrderMapScreenState extends State<OrderMapScreen>
                       ),
                       children: [
                         TileLayer(
-                          urlTemplate:
-                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          urlTemplate: Environment.tileUrl,
                           userAgentPackageName: 'com.grocery.shopping_app',
                         ),
                         if (_routePoints.isNotEmpty)
@@ -613,7 +603,32 @@ class _OrderMapScreenState extends State<OrderMapScreen>
               // ===== BEFORE DELIVERY - Route info =====
               if (_routeResult != null && _routeResult!.segments.isNotEmpty)
                 ..._buildStoreSteps()
-              else
+              else if (widget.order.stores.isNotEmpty) ...[
+                // Hiển thị tất cả cửa hàng khi chưa có route
+                for (int i = 0; i < widget.order.stores.length; i++) ...[
+                  _buildLocationStep(
+                    icon: Icons.store,
+                    title: widget.order.stores[i].name,
+                    subtitle: widget.order.stores[i].address,
+                    color: Colors.purple,
+                    isActive: true,
+                    distance: null,
+                    duration: null,
+                  ),
+                  if (i < widget.order.stores.length - 1)
+                    const SizedBox(height: 12),
+                ],
+                const SizedBox(height: 12),
+                _buildLocationStep(
+                  icon: Icons.location_on,
+                  title: 'Khách hàng',
+                  subtitle: widget.order.deliveryAddress,
+                  color: Colors.green,
+                  isActive: true,
+                  distance: null,
+                  duration: null,
+                ),
+              ] else ...[
                 _buildLocationStep(
                   icon: Icons.store,
                   title: widget.order.storeName,
@@ -623,6 +638,17 @@ class _OrderMapScreenState extends State<OrderMapScreen>
                   distance: null,
                   duration: null,
                 ),
+                const SizedBox(height: 12),
+                _buildLocationStep(
+                  icon: Icons.location_on,
+                  title: 'Khách hàng',
+                  subtitle: widget.order.deliveryAddress,
+                  color: Colors.green,
+                  isActive: true,
+                  distance: null,
+                  duration: null,
+                ),
+              ],
               const SizedBox(height: 12),
 
               // Action buttons row
@@ -1398,11 +1424,15 @@ class _OrderMapScreenState extends State<OrderMapScreen>
 
     for (int i = 0; i < _routeResult!.segments.length; i++) {
       final segment = _routeResult!.segments[i];
-      final isLastStore = i == _routeResult!.segments.length - 1 ||
-          segment.label.contains('Khách');
+      final isLastSegment = i == _routeResult!.segments.length - 1;
+      final isCustomerSegment = segment.label.contains('Khách');
 
       String subtitle = '';
-      if (isLastStore) {
+      bool isLastStore = false;
+
+      if (isCustomerSegment || isLastSegment) {
+        // Điểm cuối luôn là khách hàng
+        isLastStore = true;
         subtitle = order.deliveryAddress;
       } else if (order.stores.isNotEmpty && i < order.stores.length) {
         subtitle = order.stores[i].address;

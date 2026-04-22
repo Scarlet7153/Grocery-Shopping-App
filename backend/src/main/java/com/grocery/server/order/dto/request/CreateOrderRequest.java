@@ -33,6 +33,11 @@ public class CreateOrderRequest {
     private String deliveryAddress;
 
     /**
+     * Phí vận chuyển (tùy chọn, FE tính theo khoảng cách)
+     */
+    private java.math.BigDecimal shippingFee;
+
+    /**
      * Danh sách sản phẩm trong đơn hàng
      */
     @NotEmpty(message = "Đơn hàng phải có ít nhất một sản phẩm")

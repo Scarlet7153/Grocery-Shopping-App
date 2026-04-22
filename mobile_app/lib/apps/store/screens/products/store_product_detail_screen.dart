@@ -1,8 +1,8 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/store_theme.dart';
+import '../../../../core/utils/image_picker_helper.dart';
 import '../../../../features/products/data/product_model.dart';
 import '../../../../features/products/data/unit_model.dart';
 import '../../../../features/products/data/unit_service.dart';
@@ -28,7 +28,6 @@ class StoreProductDetailScreen extends StatefulWidget {
 
 class _StoreProductDetailScreenState extends State<StoreProductDetailScreen> {
   final UnitService _unitService = UnitService();
-  final ImagePicker _imagePicker = ImagePicker();
   List<Unit> _dbUnits = [];
   late ProductModel _currentProduct;
   Uint8List? _pendingImageBytes;
@@ -218,11 +217,7 @@ class _StoreProductDetailScreenState extends State<StoreProductDetailScreen> {
 
   Future<void> _pickProductImage() async {
     try {
-      final picked = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 85,
-        maxWidth: 1600,
-      );
+      final picked = await ImagePickerHelper.pickFromGallery(context);
       if (picked == null) {
         return;
       }

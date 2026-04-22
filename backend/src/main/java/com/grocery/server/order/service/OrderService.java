@@ -8,6 +8,8 @@ import com.grocery.server.order.dto.request.CreateOrderRequest;
 import com.grocery.server.order.dto.request.UpdateOrderStatusRequest;
 import com.grocery.server.order.dto.response.OrderItemResponse;
 import com.grocery.server.order.dto.response.OrderResponse;
+import com.grocery.server.order.dto.response.OrderStatisticsResponse;
+import com.grocery.server.order.dto.response.OrderStatisticsResponse.MonthlyRevenueDto;
 import com.grocery.server.order.entity.Order;
 import com.grocery.server.order.entity.Order.OrderStatus;
 import com.grocery.server.order.entity.OrderItem;
@@ -80,11 +82,16 @@ public class OrderService {
         BigDecimal totalAmount = BigDecimal.ZERO;
         List<Store> involvedStores = new ArrayList<>();
 
+        // Dùng phí ship từ FE nếu có, ngược lại fallback về mặc định
+        BigDecimal shippingFee = (request.getShippingFee() != null && request.getShippingFee().compareTo(BigDecimal.ZERO) > 0)
+                ? request.getShippingFee()
+                : SHIPPING_FEE;
+
         Order order = Order.builder()
                 .customer(customer)
                 .status(OrderStatus.PENDING)
                 .deliveryAddress(request.getDeliveryAddress())
-                .shippingFee(SHIPPING_FEE)
+                .shippingFee(shippingFee)
                 .build();
 
         for (var itemRequest : request.getItems()) {
@@ -706,6 +713,14 @@ public class OrderService {
         String storeName = isMultiStore ? "Đơn hàng liên cửa hàng" : (involvedStores.isEmpty() ? "Nhiều cửa hàng" : involvedStores.get(0).getStoreName());
         String storeAddress = isMultiStore ? "Nhiều địa chỉ" : (involvedStores.isEmpty() ? "" : involvedStores.get(0).getAddress());
 
+        List<com.grocery.server.order.dto.response.StoreInfoResponse> storeInfos = involvedStores.stream()
+                .map(s -> com.grocery.server.order.dto.response.StoreInfoResponse.builder()
+                        .id(s.getId())
+                        .name(s.getStoreName())
+                        .address(s.getAddress())
+                        .build())
+                .collect(Collectors.toList());
+
         return OrderResponse.builder()
                 .id(order.getId())
                 .customerId(order.getCustomer().getId())
@@ -729,6 +744,68 @@ public class OrderService {
                 .paymentMethod(order.getPayments() != null && !order.getPayments().isEmpty()
                         ? order.getPayments().get(0).getPaymentMethod().name()
                         : null)
+                .stores(storeInfos)
+                .build();
+    }
+
+    /**
+     * Lấy thống kê đơn hàng cho Dashboard Admin
+     */
+    public OrderStatisticsResponse getOrderStatistics() {
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+
+        // Tháng hiện tại
+        java.time.LocalDateTime currentMonthStart = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
+        java.time.LocalDateTime nextMonthStart = currentMonthStart.plusMonths(1);
+        java.math.BigDecimal currentMonthRevenue = orderRepository.getRevenueBetween(currentMonthStart, nextMonthStart);
+        if (currentMonthRevenue == null) currentMonthRevenue = java.math.BigDecimal.ZERO;
+
+        // Tháng trước
+        java.time.LocalDateTime prevMonthStart = currentMonthStart.minusMonths(1);
+        java.math.BigDecimal previousMonthRevenue = orderRepository.getRevenueBetween(prevMonthStart, currentMonthStart);
+        if (previousMonthRevenue == null) previousMonthRevenue = java.math.BigDecimal.ZERO;
+
+        // % tăng trưởng
+        Double growth = 0.0;
+        if (previousMonthRevenue.compareTo(java.math.BigDecimal.ZERO) > 0) {
+            growth = currentMonthRevenue.subtract(previousMonthRevenue)
+                    .divide(previousMonthRevenue, 4, java.math.RoundingMode.HALF_UP)
+                    .multiply(new java.math.BigDecimal("100"))
+                    .doubleValue();
+        }
+
+        // Doanh thu 12 tháng
+        List<Object[]> monthlyData = orderRepository.getMonthlyRevenueLast12Months();
+        List<MonthlyRevenueDto> monthlyRevenue = monthlyData.stream()
+                .map(row -> {
+                    String month = (String) row[0];
+                    String monthLabel = month;
+                    try {
+                        String[] parts = month.split("-");
+                        monthLabel = parts[1] + "/" + parts[0];
+                    } catch (Exception ignored) {}
+                    return MonthlyRevenueDto.builder()
+                            .month(month)
+                            .monthLabel(monthLabel)
+                            .revenue(row[1] != null ? (java.math.BigDecimal) row[1] : java.math.BigDecimal.ZERO)
+                            .orderCount(row[2] != null ? ((Number) row[2]).longValue() : 0L)
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        // Tổng doanh thu và tổng đơn
+        java.math.BigDecimal totalRevenue = orderRepository.getTotalRevenue();
+        if (totalRevenue == null) totalRevenue = java.math.BigDecimal.ZERO;
+
+        Long totalOrders = orderRepository.count();
+
+        return OrderStatisticsResponse.builder()
+                .currentMonthRevenue(currentMonthRevenue)
+                .previousMonthRevenue(previousMonthRevenue)
+                .monthOverMonthGrowth(growth)
+                .totalRevenue(totalRevenue)
+                .totalOrders(totalOrders)
+                .monthlyRevenue(monthlyRevenue)
                 .build();
     }
 }

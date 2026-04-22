@@ -192,8 +192,11 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
         ),
       ),
       const SizedBox(height: 16),
-      const Text(
-        'Create a new account',
+      Text(
+        context.tr(
+          vi: 'Tạo tài khoản mới',
+          en: 'Create a new account',
+        ),
         style: TextStyle(
           fontSize: 28,
           fontWeight: FontWeight.bold,
@@ -218,8 +221,11 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
   Widget _buildPersonalInfo() => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      const Text(
-        'Personal information',
+      Text(
+         context.tr(
+          vi: 'Thông tin cá nhân',
+          en: 'Personal information',
+        ),
         style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
@@ -240,8 +246,8 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
       CustomTextField(
         label: context.tr(vi: 'Số điện thoại *', en: 'Phone number *'),
         hint: context.tr(
-          vi: 'Nhập số điện thoại (vd: 0352773474)',
-          en: 'Enter phone number (e.g. 0352773474)',
+          vi: 'Nhập số điện thoại',
+          en: 'Enter phone number',
         ),
         controller: _phoneController,
         keyboardType: TextInputType.phone,
@@ -281,6 +287,7 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
         const SizedBox(height: 16),
         _buildLocationDropdown(
           label: context.tr(vi: 'Quận/Huyện *', en: 'District *'),
+          hint: context.tr(vi: 'Chọn quận/huyện', en: 'Select district'),
           value: _selectedDistrict,
           items: _districts,
           onChanged: _selectedProvince == null ? null : _onDistrictChanged,
@@ -296,6 +303,7 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
       const SizedBox(height: 16),
       _buildLocationDropdown(
         label: context.tr(vi: 'Phường/Xã *', en: 'Ward/Commune *'),
+        hint: context.tr(vi: 'Chọn phường/xã', en: 'Select ward/commune'),
         value: _selectedWard,
         items: _wards,
         onChanged:
@@ -326,8 +334,11 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
   Widget _buildSecurityInfo() => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      const Text(
-        'Security',
+      Text(
+         context.tr(
+          vi: 'Bảo mật',
+          en: 'Security',
+        ),
         style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
@@ -338,8 +349,8 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
       CustomTextField(
         label: context.tr(vi: 'Mật khẩu *', en: 'Password *'),
         hint: context.tr(
-          vi: 'Nhập mật khẩu (tối thiểu 6 ký tự)',
-          en: 'Enter password (at least 6 characters)',
+          vi: 'Nhập mật khẩu',
+          en: 'Enter password',
         ),
         controller: _passwordController,
         isPassword: true,
@@ -565,6 +576,7 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
 
   Widget _buildLocationDropdown({
     required String label,
+    String? hint,
     required List<LocationItem> items,
     required IconData prefixIcon,
     LocationItem? value,
@@ -590,6 +602,7 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
       },
       decoration: InputDecoration(
         labelText: label,
+        hintText: hint,
         prefixIcon: Icon(prefixIcon, color: Theme.of(context).colorScheme.onSurfaceVariant),
         filled: true,
         fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,

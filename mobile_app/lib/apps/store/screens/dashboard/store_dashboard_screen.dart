@@ -8,6 +8,7 @@ import '../orders/store_order_detail_screen.dart';
 import '../../utils/store_localizations.dart';
 import '../../../../features/notification/presentation/widgets/notification_icon_button.dart';
 
+
 class StoreDashboardScreen extends StatefulWidget {
   final VoidCallback? onViewAllOrders;
 
@@ -55,59 +56,8 @@ class _StoreDashboardScreenState extends State<StoreDashboardScreen> {
           backgroundColor: StoreTheme.primaryColor,
           foregroundColor: Colors.white,
           elevation: 0,
-          actions: [
-            const NotificationIconButton(color: Colors.white),
-            BlocBuilder<StoreDashboardBloc, StoreDashboardState>(
-              builder: (context, state) {
-                if (state is StoreDashboardLoaded) {
-                  final isOpen = state.store.isOpen == true;
-                  final isUpdating = state.isStatusUpdating;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: Tooltip(
-                      message: isOpen ? loc.tr('open_now') : loc.tr('closed'),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Theme(
-                          data: Theme.of(context).copyWith(
-                            splashFactory: NoSplash.splashFactory,
-                            splashColor: Colors.transparent,
-                            highlightColor: Colors.transparent,
-                            hoverColor: Colors.transparent,
-                          ),
-                          child: Switch(
-                            value: isOpen,
-                            onChanged: isUpdating ? null : (_) => _toggleStoreStatus(),
-                            overlayColor:
-                                const WidgetStatePropertyAll(Colors.transparent),
-                            trackOutlineColor:
-                                const WidgetStatePropertyAll(Colors.transparent),
-                            splashRadius: 0,
-                            thumbIcon:
-                                WidgetStateProperty.resolveWith<Icon?>((states) {
-                              if (states.contains(WidgetState.selected)) {
-                                return const Icon(Icons.check, size: 14);
-                              }
-                              return const Icon(Icons.close, size: 14);
-                            }),
-                            activeThumbColor: StoreTheme.primaryColor,
-                            activeTrackColor: Colors.white,
-                            inactiveThumbColor: Colors.white,
-                            inactiveTrackColor: Colors.grey.shade700,
-                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }
-                return const SizedBox.shrink();
-              },
-            ),
+          actions: const [
+            NotificationIconButton(color: Colors.white),
           ]),
       body: BlocBuilder<StoreDashboardBloc, StoreDashboardState>(
         builder: (context, state) {
@@ -142,7 +92,7 @@ class _StoreDashboardScreenState extends State<StoreDashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _StoreInfoCard(store: store, onToggle: _toggleStoreStatus),
+                    _StoreInfoCard(store: store, isUpdating: state.isStatusUpdating, onToggle: _toggleStoreStatus),
                     const SizedBox(height: 16),
                     BlocBuilder<StoreOrdersBloc, StoreOrdersState>(
                       builder: (ctx, orderState) {
@@ -182,8 +132,9 @@ class _StoreDashboardScreenState extends State<StoreDashboardScreen> {
 
 class _StoreInfoCard extends StatelessWidget {
   final StoreModel store;
+  final bool isUpdating;
   final VoidCallback onToggle;
-  const _StoreInfoCard({required this.store, required this.onToggle});
+  const _StoreInfoCard({required this.store, required this.isUpdating, required this.onToggle});
 
   @override
   Widget build(BuildContext context) {
@@ -239,47 +190,69 @@ class _StoreInfoCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis),
                 const SizedBox(height: 4),
-                GestureDetector(
-                  onTap: onToggle,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                        color: (store.isOpen ?? false)
-                            ? StoreTheme.primaryColor.withValues(alpha: 0.1)
-                            : Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(12)),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                            store.isOpen == true
-                                ? Icons.check_circle
-                                : Icons.cancel,
-                            size: 12,
-                            color: store.isOpen == true
-                                ? StoreTheme.primaryColor
-                                : Colors.grey),
-                        const SizedBox(width: 4),
-                        Text(
-                            store.isOpen == true
-                                ? loc.tr('open_now')
-                                : loc.tr('closed'),
-                            style: TextStyle(
-                                fontSize: 12,
-                                color: store.isOpen == true
-                                    ? StoreTheme.primaryColor
-                                    : Colors.grey)),
-                      ],
-                    ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                      color: (store.isOpen ?? false)
+                          ? StoreTheme.primaryColor.withValues(alpha: 0.1)
+                          : Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(12)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                          store.isOpen == true
+                              ? Icons.check_circle
+                              : Icons.cancel,
+                          size: 12,
+                          color: store.isOpen == true
+                              ? StoreTheme.primaryColor
+                              : Colors.grey),
+                      const SizedBox(width: 4),
+                      Text(
+                          store.isOpen == true
+                              ? loc.tr('open_now')
+                              : loc.tr('closed'),
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: store.isOpen == true
+                                  ? StoreTheme.primaryColor
+                                  : Colors.grey)),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.edit, size: 20),
-            onPressed: () {},
+          Tooltip(
+            message: (store.isOpen ?? false) ? loc.tr('open_now') : loc.tr('closed'),
+            child: Theme(
+              data: Theme.of(context).copyWith(
+                splashFactory: NoSplash.splashFactory,
+                splashColor: Colors.transparent,
+                highlightColor: Colors.transparent,
+                hoverColor: Colors.transparent,
+              ),
+              child: Switch(
+                value: store.isOpen == true,
+                onChanged: isUpdating ? null : (_) => onToggle(),
+                overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+                trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
+                splashRadius: 0,
+                thumbIcon: WidgetStateProperty.resolveWith<Icon?>((states) {
+                  if (states.contains(WidgetState.selected)) {
+                    return const Icon(Icons.check, size: 14);
+                  }
+                  return const Icon(Icons.close, size: 14);
+                }),
+                activeThumbColor: StoreTheme.primaryColor,
+                activeTrackColor: StoreTheme.primaryColor.withValues(alpha: 0.5),
+                inactiveThumbColor: Colors.white,
+                inactiveTrackColor: Colors.grey.shade500,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
           ),
         ],
       ),

@@ -187,6 +187,11 @@ class StoreLocalizations {
     'rating_out_of': {'vi': '/ 5.0', 'en': '/ 5.0'},
     'total_reviews_count': {'vi': 'đánh giá', 'en': 'reviews'},
     'anonymous': {'vi': 'Ẩn danh', 'en': 'Anonymous'},
+    'reply': {'vi': 'Phản hồi', 'en': 'Reply'},
+    'reply_review': {'vi': 'Phản hồi đánh giá', 'en': 'Reply to review'},
+    'enter_reply': {'vi': 'Nhập nội dung phản hồi...', 'en': 'Enter your reply...'},
+    'send': {'vi': 'Gửi', 'en': 'Send'},
+    'store_reply': {'vi': 'Phản hồi của cửa hàng', 'en': 'Store reply'},
 
     // Profile
     'language': {'vi': 'Ngôn ngữ', 'en': 'Language'},

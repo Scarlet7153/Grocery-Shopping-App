@@ -116,7 +116,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Tiện Ích Quản Trị'),
         backgroundColor: Colors.teal[600],
@@ -156,7 +156,7 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> {
           _buildUtilityCard(
             Icons.table_view,
             'Xuất Excel Danh Sách User',
-            'Tải file Excel báo cáo tổng hợp danh sách người dùng, cửa hàng và shipper.',
+            'Tải file Excel báo cáo tổng hợp danh sách ngưởi dùng, cửa hàng và shipper.',
             () => _executeAction('Xuất file Excel'),
           ),
         ],
@@ -190,12 +190,12 @@ class _UtilitiesScreenState extends State<UtilitiesScreen> {
                   children: [
                     Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4),
-                    Text(description, style: TextStyle(fontSize: 13, color: Colors.grey[600])),
+                    Text(description, style: TextStyle(fontSize: 13, color: Theme.of(context).textTheme.bodySmall?.color)),
                   ],
                 ),
               ),
               const SizedBox(width: 8),
-              const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+              Icon(Icons.arrow_forward_ios, size: 16, color: Theme.of(context).disabledColor),
             ],
           ),
         ),
